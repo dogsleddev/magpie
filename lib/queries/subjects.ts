@@ -16,6 +16,13 @@ export async function getSubjectsWithCounts(): Promise<SubjectWithCount[]> {
   }));
 }
 
+export async function getSubject(id: string): Promise<Subject | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('subjects').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function createSubject(name: string): Promise<Subject> {
   const supabase = await createClient();
   const user = await requireUser();

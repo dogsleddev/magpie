@@ -1,28 +1,50 @@
 import { Plus, Shuffle } from 'lucide-react';
+import { getSubjectsWithCounts } from '@/lib/queries/subjects';
+import { convoRoulette } from '@/lib/actions/convo-roulette';
 import { Button } from '@/components/ui/button';
+import SubjectList from '@/components/home/subject-list';
+import WelcomeHint from '@/components/home/welcome-hint';
+import EmptyOnboarding from '@/components/home/empty-onboarding';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const subjects = await getSubjectsWithCounts();
+
+  if (subjects.length === 0) {
+    return <EmptyOnboarding />;
+  }
+
+  const hasTopics = subjects.some((s) => s.topic_count > 0);
+
   return (
-    <div className="flex flex-col gap-8 py-4">
+    <div className="flex flex-col gap-6 py-2">
       <div className="flex gap-3">
-        {/* Add Topic ships in Phase 7, Convo Roulette in Phase 3. Disabled
-            until topics exist, per the build plan. */}
         <Button variant="primary" size="md" className="flex-1" disabled>
           <Plus className="h-4 w-4" strokeWidth={2.5} />
           Add topic
         </Button>
-        <Button variant="secondary" size="md" className="flex-1" disabled>
-          <Shuffle className="h-4 w-4" strokeWidth={2.5} />
-          Convo Roulette
-        </Button>
+        <form action={convoRoulette} className="flex-1">
+          <Button
+            type="submit"
+            variant="secondary"
+            size="md"
+            className="w-full"
+            disabled={!hasTopics}
+          >
+            <Shuffle className="h-4 w-4" strokeWidth={2.5} />
+            Convo Roulette
+          </Button>
+        </form>
       </div>
 
-      <div className="mt-12 flex flex-col items-center text-center">
-        <h2 className="font-display text-2xl font-medium text-text">Your nest is empty.</h2>
-        <p className="mt-2 max-w-xs text-sm leading-relaxed text-text-muted">
-          The topics you collect will land here.
-        </p>
-      </div>
+      <WelcomeHint />
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-display text-lg font-medium text-text">Subjects</h2>
+          <p className="text-xs italic text-text-dim">the buckets you care about</p>
+        </div>
+        <SubjectList subjects={subjects} />
+      </section>
     </div>
   );
 }
