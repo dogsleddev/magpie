@@ -3,7 +3,7 @@
  * cookie on each request.
  */
 
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
@@ -17,7 +17,7 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
@@ -29,12 +29,23 @@ export async function updateSession(request: NextRequest) {
   );
 
   // This refreshes the session if expired
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Redirect unauthenticated users to login for protected routes
-  const protectedPaths = ['/', '/subject', '/topic', '/facet', '/facets', '/discover', '/journal', '/settings'];
-  const isProtected = protectedPaths.some((p) =>
-    request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith(p + '/'),
+  const protectedPaths = [
+    '/',
+    '/subject',
+    '/topic',
+    '/facet',
+    '/facets',
+    '/discover',
+    '/journal',
+    '/settings',
+  ];
+  const isProtected = protectedPaths.some(
+    (p) => request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith(p + '/'),
   );
 
   if (isProtected && !user && request.nextUrl.pathname !== '/login') {
