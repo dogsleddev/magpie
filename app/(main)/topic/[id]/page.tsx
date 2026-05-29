@@ -31,6 +31,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <ModeTabs
+        topicId={topic.id}
         personaName={settings.persona_name}
         defaultMode={settings.default_mode}
         thoughts={topic.thoughts}

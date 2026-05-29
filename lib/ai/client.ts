@@ -5,14 +5,26 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-if (!process.env.ANTHROPIC_API_KEY) {
-  // Throw at boot rather than silently failing on first AI call
-  throw new Error('ANTHROPIC_API_KEY is missing. Add it to .env.local');
-}
+const PLACEHOLDER_KEY = 'REPLACE_WITH_YOUR_ANTHROPIC_KEY';
 
-export const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+/**
+ * Lazily build the Anthropic client. We do NOT throw at module load: route
+ * handlers import this file, and `next build` evaluates every route module when
+ * collecting page data, so a load-time throw breaks the build whenever the key
+ * is absent. Instead we throw at call time with a 401 tag, which the AI routes
+ * catch and turn into a friendly "add your key" response.
+ */
+function getClient(): Anthropic {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey || apiKey === PLACEHOLDER_KEY) {
+    const err = new Error('ANTHROPIC_API_KEY is missing. Add it to .env.local') as Error & {
+      status?: number;
+    };
+    err.status = 401;
+    throw err;
+  }
+  return new Anthropic({ apiKey });
+}
 
 // ============================================
 // Model selection
@@ -80,7 +92,7 @@ export async function callClaude(args: CallClaudeArgs): Promise<string> {
   if (messages.length === 0) {
     throw new Error('callClaude needs either user or messages');
   }
-  const response = await anthropic.messages.create({
+  const response = await getClient().messages.create({
     model: args.model,
     max_tokens: args.maxTokens,
     system: args.system,
@@ -99,7 +111,7 @@ export async function callClaude(args: CallClaudeArgs): Promise<string> {
 
 export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string> {
   const messages = args.messages ?? (args.user ? [{ role: 'user' as const, content: args.user }] : []);
-  const stream = await anthropic.messages.stream({
+  const stream = await getClient().messages.stream({
     model: args.model,
     max_tokens: args.maxTokens,
     system: args.system,

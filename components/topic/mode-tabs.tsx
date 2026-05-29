@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import PersonaMode from '@/components/topic/persona-mode';
 import type { Thought } from '@/lib/queries/types';
 
 type ModeKey = 'persona' | 'brief' | 'challenge' | 'questions' | 'convo';
@@ -16,10 +17,12 @@ const TAGLINES: Record<Exclude<ModeKey, 'persona'>, string> = {
 };
 
 export default function ModeTabs({
+  topicId,
   personaName,
   defaultMode,
   thoughts,
 }: {
+  topicId: string;
   personaName: string;
   defaultMode: string;
   thoughts: Thought[];
@@ -57,36 +60,14 @@ export default function ModeTabs({
         ))}
       </div>
 
-      {active === 'persona' && <PersonaPanel thoughts={thoughts} />}
+      {active === 'persona' && (
+        <PersonaMode key={topicId} topicId={topicId} initialThoughts={thoughts} />
+      )}
       {active !== 'persona' && (
         <ModePlaceholder
           label={tabs.find((t) => t.key === active)?.label ?? ''}
           tagline={TAGLINES[active]}
         />
-      )}
-    </div>
-  );
-}
-
-function PersonaPanel({ thoughts }: { thoughts: Thought[] }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <p className="text-xs italic text-text-dim">what&apos;s on your mind?</p>
-      {thoughts.length === 0 ? (
-        <p className="text-sm text-text-muted">
-          No thoughts captured yet. Capture arrives in the next build.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {thoughts.map((thought) => (
-            <li
-              key={thought.id}
-              className="rounded-lg border border-border bg-bg-card px-3 py-2 text-sm text-text"
-            >
-              {thought.content}
-            </li>
-          ))}
-        </ul>
       )}
     </div>
   );
