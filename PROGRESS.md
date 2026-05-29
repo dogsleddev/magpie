@@ -1,7 +1,7 @@
 # Magpie · Progress
 
 **Last updated:** 2026-05-29 (session 3)
-**Status:** Phases 1 to 5 complete and committed. Phase 6 is next.
+**Status:** Phases 1 to 5 complete and committed. Immediate focus: deploy + the hackathon split (see `docs/SOP_SPLIT.md`), NOT Phase 6. Phase 6 is deferred until after the hackathon.
 **Branch:** `master`
 **Hackathon clock:** Krava x Linq, Saturday May 30 2026, Frontier Tower SF. Base product (Phases 1 to 9) should be live before then.
 
@@ -104,16 +104,18 @@ Secret hygiene: the DB password and Supabase keys passed through chat this sessi
 
 ---
 
-## Next steps: Phase 6 (Facets navigation)
+## Next steps: get to the hackathon split (tonight)
 
-Browse by Facet, the cross-subject lens. The query spine already has the facets query in `lib/queries/facets.ts` and `getTopicsByFacet` in `lib/queries/topics.ts` (confirmed working).
+The hackathon (Sat May 30) reorders the plan. Before any more feature phases, get a tested, deployed base live and branch off it. **Full runbook: `docs/SOP_SPLIT.md`.** The short version:
 
-1. `app/(main)/facets/page.tsx`: list all facets with topic counts. The Facets bottom-tab routes nowhere today.
-2. `app/(main)/facet/[id]/page.tsx`: one facet's topics across subjects via `getTopicsByFacet`. Each row shows its subject so the cross-cutting nature is visible.
-3. Enable the Facets tab in `components/nav/bottom-tab-bar.tsx` (disabled stub today, same for Discover/Journal until their phases).
-4. Header microcopy is locked: "where the connections live" (MICROCOPY.md).
+1. **Close the Level 1 identity seam** (base plumbing, ~30 min): thread `userId` through `callClaude`/`streamClaude` and the four AI routes so `master` is Krava-ready. Not Krava code, just plumbing.
+2. **Test pass** (`docs/SOP_SPLIT.md` Step 2): auth + magic link, capture, all four modes, RLS with a second user, no-key-leak, mobile 375px.
+3. **Deploy `master` to magpie.wiki**: push to GitHub (repo is local-only right now), Vercel project + env vars, the apex domain, Supabase Auth URLs, then verify magic link works on the live domain.
+4. **Nail the split**: branch `hackathon` off the tested commit, assign hackathon.magpie.wiki to it. `master` stays clean.
 
-After Phase 6: 7 (discover/add), 8 (settings/polish), 9 (deploy). Then branch to `hackathon` for the Krava + Linq integration.
+Stop there. The Krava + Linq build is a separate session on the `hackathon` branch: see the "locked decisions" section at the bottom of `docs/HACKATHON_KRAVA_LINQ.md`.
+
+After the hackathon: resume the normal build at Phase 6 (Facets), then 7 (Discover/Add), 8 (Settings/Polish), 9 (full deploy hardening).
 
 ---
 

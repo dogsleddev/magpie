@@ -276,3 +276,48 @@ Per the hackathon submission form on the Luma event:
 The strategic reason for this hackathon is not just the prize money. Chris met the Krava founder previously and likes them. Showing up with a real product that integrates the Krava SDK as a real architectural decision (not a prop) is the strongest possible signal of taking their thesis seriously.
 
 Walk in with magpie.wiki already live and the bootstrap visible. Most other teams will be wrapping LLMs with no product around them. We have a product. We are adding privacy. That is a much better story for a privacy-themed hackathon.
+
+---
+
+## Update: locked decisions (2026-05-29, pre-event)
+
+These sharpen the plan above, decided the night before the event. **Read this section first when starting the hackathon session.**
+
+### Where the build is
+Phases 1 to 5 are done, tested, and deployed. The base app (grid, capture, Brief/Challenge/Questions/Convo, persisted conversations) is live on **magpie.wiki**. The Level 1 identity seam is closed on `master`: `callClaude`/`streamClaude` accept a `userId` and every AI route threads the authenticated user's id. So Krava is a one-file change with zero route edits.
+
+### The split (done before the event)
+- `master` = the clean product → **magpie.wiki**. No Krava/Linq code ever lands here.
+- `hackathon` branch = master + Krava + Linq + the iMessage inbox + `0002_hackathon.sql` → **hackathon.magpie.wiki** (Vercel domain assigned to the branch).
+- The public submission repo is this repo with the `hackathon` branch made public.
+- Optional during the event: redirect magpie.wiki → hackathon.magpie.wiki so visitors land on the demo. Flip back after.
+
+### Krava (primary track: Best Krava Project, BYO path)
+- Wrap `lib/ai/client.ts` only. `callClaude` and `streamClaude` already receive `args.userId`. Fill in the Krava branch: `getOrCreate(args.userId)` then a Krava-mediated call; keep the direct-Anthropic fallback gated on `!process.env.KRAVA_APP_KEY` so the demo survives an SDK hiccup.
+- Level 2 (Krava PasskeyID as the actual login) is intentionally skipped. Level 1 (per-user id to the inference layer) is enough to demo the privacy thesis. Reconsider only if a judge specifically wants passwordless.
+- Confirm the exact SDK shape from the BYO quickstart at kickoff before wiring.
+
+### Linq (bonus track), confirmed from docs.linqapp.com
+- Auth: `Authorization: Bearer <LINQ_API_KEY>`. Token + phone number from the Linq rep at the event.
+- Inbound webhook at `app/api/linq/webhook/route.ts`. Headers: `X-Webhook-Timestamp`, `X-Webhook-Signature`, `X-Webhook-Event`. Verify HMAC-SHA256 over `"{timestamp}.{rawBody}"` with the signing secret. Read `req.text()` for the raw body BEFORE parsing, constant-time compare, reject stale timestamps. Handle `message.received`. Return 2xx within 10s, dedupe on `event_id` (at-least-once delivery, up to 10 retries).
+- Outbound via `lib/linq/send.ts`: POST `https://api.linqapp.com/api/partner/v3/chats` (new chat) or `/chats/{chatId}/messages` (reply). Body `{ from, to: ["+1..."], message: { parts: [{ type: "text", value }] } }`. **No links in outbound messages** (URLs are rejected). Maggie speaks prose, so fine.
+- The webhook needs a public URL: `https://hackathon.magpie.wiki/api/linq/webhook` (already public from the deploy, no tunnel needed).
+- Link your own phone to your user: one update to `user_settings.phone_number` once you have the Linq number.
+
+### Tiered demo goal (lock Tier 0 first)
+- **Tier 0 (must-have):** text Maggie at the Linq number from your phone on stage, she replies in voice over iMessage. Needs webhook + send + your phone linked.
+- **Tier 1 (the wow):** text "save", a "From iMessage" card appears on the grid, open it to show the captured convo + proposed topic.
+- **Tier 2 (stretch):** accept, topic appears with the Convo preserved, continuable from the web. Never bet the demo on this.
+
+### Scaffolding (first tasks of the hackathon session, on the `hackathon` branch)
+1. `supabase/migrations/0002_hackathon.sql` (phone_number, topics.source, conversations.kind, imessage_inbox) per the schema section above. Apply to the shared Supabase project; it is additive, master ignores it.
+2. `app/api/linq/webhook/route.ts` HMAC verification + parse (the shape is testable before the token arrives).
+3. `lib/linq/send.ts` outbound helper.
+4. The Krava branch inside `lib/ai/client.ts`.
+Then wire the real tokens, link your phone, and drill the demo loop three times.
+
+### Collect at the event
+Krava `APP_KEY` + the BYO quickstart. Linq bearer token, a Linq Blue number, and the webhook signing secret.
+
+### Pre-decided
+Tracks: Best Krava Project (primary) + Best Krava + Linq Integration (bonus). Demo seed: the dystopias/utopias prompt (pre-tested). Team name: TODO, set before submission.
