@@ -1,7 +1,7 @@
 # Magpie · Progress
 
-**Last updated:** 2026-05-29 (session 2)
-**Status:** Phases 1 to 4 complete and committed. Phase 5 is next.
+**Last updated:** 2026-05-29 (session 3)
+**Status:** Phases 1 to 5 complete and committed. Phase 6 is next.
 **Branch:** `master`
 **Hackathon clock:** Krava x Linq, Saturday May 30 2026, Frontier Tower SF. Base product (Phases 1 to 9) should be live before then.
 
@@ -33,8 +33,8 @@ The account is already seeded (13 subjects, ~113 topics, 18 facets). You land on
 | 2 | Schema + Queries | DONE |
 | 3 | Home + Subject Navigation | DONE |
 | 4 | {persona} capture (bullets, mic, organize) | DONE |
-| 5 | AI modes (Brief, Challenge, Questions, Convo) | NEXT |
-| 6 | Facets navigation | not started |
+| 5 | AI modes (Brief, Challenge, Questions, Convo) | DONE |
+| 6 | Facets navigation | NEXT |
 | 7 | Discover + Add Topic | not started |
 | 8 | Settings + Polish | not started |
 | 9 | Deploy to magpie.wiki | not started |
@@ -49,7 +49,7 @@ Post-MVP and hackathon work tracked in `docs/BUILD_PLAN.md` and `docs/HACKATHON_
 |---|---|
 | Supabase project | `magpie`, ref `tbmdwivhekzfkeidbwia`, region East US (Ohio) / us-east-2 |
 | `.env.local` Supabase URL + anon + project id | SET |
-| `ANTHROPIC_API_KEY` | SET (real `sk-ant` key in `.env.local`). BUT the Anthropic account has ZERO credits: live calls return HTTP 400 "credit balance too low." Organize is wired and verified to degrade gracefully ("Maggie is out of Anthropic credits"). Add credits at console.anthropic.com (Plans and Billing) before Phase 5, or no AI mode produces real output. |
+| `ANTHROPIC_API_KEY` | SET and FUNDED. Real `sk-ant` key in `.env.local`; account has credits. All five AI calls (Brief, Challenge, Questions, Convo, Organize) verified live against Sonnet 4.5 + Haiku 4.5. If live calls ever return HTTP 400 "credit balance too low," top up at console.anthropic.com (Plans and Billing). |
 | DB pooler (admin scripts only) | `aws-1-us-east-2.pooler.supabase.com:5432`, user `postgres.tbmdwivhekzfkeidbwia` |
 | Dev user | `dogsled@dogsled.dev` / `dogsled` (email-confirmed, works via password) |
 | Supabase Auth URL config (Site URL + `/auth/callback`) | NOT confirmed. Magic-link sign-in needs it; dev password sign-in does not. Do this before testing magic link in the browser. |
@@ -59,7 +59,7 @@ Secret hygiene: the DB password and Supabase keys passed through chat this sessi
 
 ---
 
-## What is built (Phases 1 to 3)
+## What is built (Phases 1 to 5)
 
 **Phase 1 (commit `db1f977`):** app shell on the existing scaffold (not a fresh create-next-app). Root layout, magic-link login + dev password sign-in, `/auth/callback`, `(main)` shell (app bar + bottom tab bar), plumage-token `Button`/`Input`/`Wordmark`, root `middleware.ts`.
 
@@ -68,6 +68,8 @@ Secret hygiene: the DB password and Supabase keys passed through chat this sessi
 **Phase 3 (commit `e358cc2`):** home grid (`getSubjectsWithCounts`, dismissible welcome hint, Add topic [disabled until Phase 7] + Convo Roulette), starter-pack onboarding, subject page (facet chips with counts + client-side filter + topic list), topic detail (meta pills + 5 mode tabs, persona tab default with label from `user_settings.persona_name`). All verified end-to-end in the browser.
 
 **Phase 4 (commit this session):** {persona} capture. New files: `components/mic/use-speech-to-text.ts` (Web Speech API, feature-detected) + `components/mic/mic-button.tsx` + ambient `components/mic/speech-recognition.d.ts`; `lib/actions/thoughts.ts` (add/edit/remove server actions over the query spine); `components/topic/persona-mode.tsx` (riff timer, input + mic + add, optimistic bullet list, click-to-edit, hover-delete, auto-save on Enter and mic-stop, Organize button at 3+, organize result card); `app/api/ai/organize/route.ts` (Sonnet via `organizePrompt`, JSON parse, seeds `discover_items` learn_more when `ai_suggestions` on, billing-aware errors). Wired into `mode-tabs.tsx` + the topic page (old placeholder removed). Refactored `lib/ai/client.ts` to lazy client init (it was throwing at module load, which broke `next build`). Verified in the browser: add/edit/delete persist across reload, Organize gates at 3+ and degrades cleanly with no credits, mic renders enabled in Chromium, no console errors.
+
+**Phase 5 (commit this session):** AI modes. New files: `lib/ai/errors.ts` (`aiErrorResponse`, shared billing-aware 401/402/502 mapping); `lib/ai/text-mode.ts` (`handleTextMode`: read-through `ai_cache`, reroll clears + recalls); `app/api/ai/{brief,challenge,questions}/route.ts` (thin wrappers, Brief + Questions on Haiku, Challenge on Sonnet); `app/api/ai/convo/route.ts` (Sonnet streaming via `streamClaude`, reads history + persists the user turn, streams the reply); `lib/actions/conversations.ts` (`saveAssistantMessage`); `components/topic/text-mode.tsx` (fetch-on-mount, loading, `AIContent` formatter for numbered lists + the `*Tag.*` lead, Reroll) and `components/topic/convo-mode.tsx` (chat with opener, typing dots, streamed reply, Enter-to-send). Wired into `mode-tabs.tsx`; the topic page now also fetches `getConversation`. Refactored the Organize route onto the shared `aiErrorResponse`. Verified all four modes live in the browser (credits funded): Brief/Questions render numbered lists, Challenge renders the paradox tag, Convo streams and persists across reload. No console errors.
 
 ---
 
@@ -83,42 +85,43 @@ Secret hygiene: the DB password and Supabase keys passed through chat this sessi
 - **`lib/ai/client.ts` is now lazy.** It threw on a missing key at module load, and `next build` imports every route module when collecting page data, so the first AI route broke the build. Now `getClient()` checks the key at call time and throws a 401-tagged error the routes catch. Still compatible with the planned Krava wrap.
 - **Thought CRUD = server actions; Organize = API route.** CRUD is pure DB (server actions + optimistic client state for snappy capture, no revalidate on every keystroke). AI stays in `app/api/ai/*` per the doc, so the Krava wrap stays a one-file change.
 - **mic-stop IS the save** (per the gotcha). Stopping the mic commits the live transcript as a bullet; click-to-edit fixes messy dictation after.
-- **Organize errors are billing-aware.** 401/403 maps to "add your key", credit-balance/quota maps to "out of Anthropic credits" (HTTP 402), everything else to a generic retry.
+- **Organize errors are billing-aware.** 401/403 maps to "add your key", credit-balance/quota maps to "out of Anthropic credits" (HTTP 402), everything else to a generic retry. Phase 5 extracted this into the shared `lib/ai/errors.ts` used by every AI route.
+- **Text modes share one handler + cache.** `handleTextMode` runs the read-through `ai_cache` for Brief/Challenge/Questions, so those three routes are one-liners. Lazy fetch on tab activate (not all-on-load) keeps Anthropic spend down; the cache makes tab revisits instant.
+- **Convo persistence avoids the cookies-in-stream trap.** All Supabase reads plus the user-message write happen at the route's handler top (request scope), before the streaming Response. The assistant turn is saved by the client via a server action once the stream finishes. The stream body only talks to Anthropic.
+- **Convo opener is display-only.** "hey, what's pulling you on this one?" shows when there is no history; it is not persisted, so the saved thread is real exchanges only.
 
 ---
 
 ## Known issues and watch-outs
 
 - **Welcome hint dismiss is session-only** (reappears on hard refresh). Persistent dismissal parked for Phase 8 polish.
-- **Preview MCP screenshots time out on this machine.** Verification used accessibility snapshots instead (they prove structure + copy). Eyeball the visual via `npm run dev`.
+- **Preview MCP is usable but finicky here.** Screenshots work (sometimes slow). Start ONE dev instance and wait for compile; a second `preview_start` on port 3000 collides and kills the server. The session cookie expires between sessions, so re-sign-in via the dev panel; `preview_fill` may not trigger React `onChange`, so set values via the native input setter scoped to the dev form.
 - **Magic link is untested in-browser** until the Supabase Auth URL config is set (see secrets table). Dev password sign-in is the working path for now.
 - **`pg` is a devDependency** used only by `scripts/db/*` admin helpers (apply migration, create user, smoke test). Not used by the app.
-- **Anthropic account has ZERO credits.** Live AI returns HTTP 400 (credit balance too low). Organize is verified to degrade gracefully, but no AI mode produces real output until credits are added. Blocks Phase 5 testing.
+- **Anthropic credits: funded and verified.** All AI modes return real output. The routes still degrade gracefully (HTTP 402 "out of Anthropic credits") if the balance hits zero again.
 - **No ESLint config yet.** `npm run lint` drops into `next lint`'s interactive setup prompt (and `next lint` is deprecated in Next 16). type-check + build are the real gates. Set up a flat ESLint config in a polish pass.
-- **`next build` on OneDrive can hit `EINVAL readlink .next`.** A crashed or partial build leaves OneDrive-virtualized artifacts that break the next build. Fix: delete `.next` before rebuilding. `npm run dev` is fine, just do not start two dev instances on port 3000 (they collide and both die).
+- **`next build` on OneDrive can hit `EINVAL readlink .next`.** A crashed or partial build leaves OneDrive-virtualized artifacts that break the next build. Fix: delete `.next` before rebuilding. Also delete `.next` before `npm run dev` if you just ran a production build (a prod `.next` makes the dev server crash on start).
 
 ---
 
-## Next steps: Phase 5 (AI modes)
+## Next steps: Phase 6 (Facets navigation)
 
-The other big AI lift. All four are server routes under `app/api/ai/*`, same pattern as Organize. **Every one needs Anthropic credits to return real output (see the blocker above), so top up the account first.**
+Browse by Facet, the cross-subject lens. The query spine already has the facets query in `lib/queries/facets.ts` and `getTopicsByFacet` in `lib/queries/topics.ts` (confirmed working).
 
-1. `app/api/ai/brief/route.ts`: Haiku + `briefPrompt`. Cache in `ai_cache` per topic. Reroll deletes the cache row and re-calls.
-2. `app/api/ai/challenge/route.ts`: Sonnet + `challengePrompt`. Cached like Brief.
-3. `app/api/ai/questions/route.ts`: Haiku + `questionsPrompt`. The MVP charisma feature.
-4. `app/api/ai/convo/route.ts`: Sonnet streaming (SSE) via `streamClaude`, persisted to `conversations`, with the pacing rules in `convoSystemPrompt`.
-5. Replace the four `ModePlaceholder` panels in `components/topic/mode-tabs.tsx` with real mode components. Brief/Challenge are read-through-cache with a reroll, Questions a list, Convo a streamed chat.
+1. `app/(main)/facets/page.tsx`: list all facets with topic counts. The Facets bottom-tab routes nowhere today.
+2. `app/(main)/facet/[id]/page.tsx`: one facet's topics across subjects via `getTopicsByFacet`. Each row shows its subject so the cross-cutting nature is visible.
+3. Enable the Facets tab in `components/nav/bottom-tab-bar.tsx` (disabled stub today, same for Discover/Journal until their phases).
+4. Header microcopy is locked: "where the connections live" (MICROCOPY.md).
 
-The query spine already has `ai-cache.ts` and `conversations.ts`. Reuse the billing-aware error handling from the Organize route.
-
-After Phase 5: 6 (facets nav), 7 (discover/add), 8 (settings/polish), 9 (deploy). Then branch to `hackathon` for the Krava + Linq integration.
+After Phase 6: 7 (discover/add), 8 (settings/polish), 9 (deploy). Then branch to `hackathon` for the Krava + Linq integration.
 
 ---
 
 ## Commits this session
 
 ```
-feat(phase-4): persona capture, mic-to-text, organize route (this commit)
+feat(phase-5): AI modes (Brief, Challenge, Questions, Convo) (this commit)
+56b2ebe  feat(phase-4): persona capture, mic-to-text, organize route
 e358cc2  feat(phase-3): home grid, subject + topic navigation, onboarding
 592bae8  feat(phase-2): schema applied, typed query spine, seed action
 db1f977  feat(phase-1): app shell, magic-link auth, branded home
@@ -144,4 +147,13 @@ b6ed98e  chore: baseline scaffold snapshot before Phase 1
 - Refactored `lib/ai/client.ts` to lazy init after a module-load throw broke `next build`.
 - Verified in the browser on the History "empire" topic: add/edit/delete persist across reload, Organize gates at 3+, mic renders enabled. Cleaned up the test thoughts after.
 - Found the Anthropic account is out of credits (live AI returns HTTP 400). Organize degrades gracefully; flagged credits as the Phase 5 blocker.
+- type-check and production build both green.
+
+### 2026-05-29 (session 3): Phase 5
+
+- Credits got funded; verified both models live before building (Sonnet + Haiku each answered a ping).
+- Built the four AI modes: shared `aiErrorResponse` + `handleTextMode` (cached), the Brief/Challenge/Questions routes, the streaming Convo route + `saveAssistantMessage`, and the `TextMode`/`ConvoMode` components. Refactored Organize onto the shared error helper.
+- Verified all four live in the browser on the History "empire" topic: Brief (Haiku numbered list), Challenge (Sonnet paradox tag), Questions (Haiku open questions), Convo (Sonnet streamed reply, persisted across reload). No console errors.
+- Gotchas hit: a stale prod `.next` crashes `next dev` (clear it first); the session cookie expired (re-signed in); `preview_fill` needed the React-native value setter scoped to the dev form.
+- Left a sample Convo thread + cached Brief/Challenge/Questions on the empire topic from testing (harmless; caching is intended behavior).
 - type-check and production build both green.

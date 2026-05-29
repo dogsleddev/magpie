@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import PersonaMode from '@/components/topic/persona-mode';
-import type { Thought } from '@/lib/queries/types';
+import TextMode from '@/components/topic/text-mode';
+import ConvoMode from '@/components/topic/convo-mode';
+import type { ConversationMessage, Thought } from '@/lib/queries/types';
 
 type ModeKey = 'persona' | 'brief' | 'challenge' | 'questions' | 'convo';
 
@@ -21,11 +23,13 @@ export default function ModeTabs({
   personaName,
   defaultMode,
   thoughts,
+  conversationMessages,
 }: {
   topicId: string;
   personaName: string;
   defaultMode: string;
   thoughts: Thought[];
+  conversationMessages: ConversationMessage[];
 }) {
   const initial = (MODE_KEYS as string[]).includes(defaultMode)
     ? (defaultMode as ModeKey)
@@ -63,21 +67,34 @@ export default function ModeTabs({
       {active === 'persona' && (
         <PersonaMode key={topicId} topicId={topicId} initialThoughts={thoughts} />
       )}
-      {active !== 'persona' && (
-        <ModePlaceholder
-          label={tabs.find((t) => t.key === active)?.label ?? ''}
-          tagline={TAGLINES[active]}
+      {active === 'brief' && (
+        <TextMode key={`brief-${topicId}`} topicId={topicId} mode="brief" tagline={TAGLINES.brief} />
+      )}
+      {active === 'challenge' && (
+        <TextMode
+          key={`challenge-${topicId}`}
+          topicId={topicId}
+          mode="challenge"
+          tagline={TAGLINES.challenge}
         />
       )}
-    </div>
-  );
-}
-
-function ModePlaceholder({ label, tagline }: { label: string; tagline: string }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="text-xs italic text-text-dim">{tagline}</p>
-      <p className="text-sm text-text-muted">{label} arrives in the next build.</p>
+      {active === 'questions' && (
+        <TextMode
+          key={`questions-${topicId}`}
+          topicId={topicId}
+          mode="questions"
+          tagline={TAGLINES.questions}
+        />
+      )}
+      {active === 'convo' && (
+        <ConvoMode
+          key={`convo-${topicId}`}
+          topicId={topicId}
+          personaName={personaName}
+          initialMessages={conversationMessages}
+          tagline={TAGLINES.convo}
+        />
+      )}
     </div>
   );
 }

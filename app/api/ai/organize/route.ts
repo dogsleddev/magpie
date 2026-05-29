@@ -4,6 +4,7 @@ import { getSettings } from '@/lib/queries/settings';
 import { addDiscoverItems } from '@/lib/queries/discover';
 import { callClaude, modelFor, MAX_TOKENS } from '@/lib/ai/client';
 import { organizePrompt, extractJSON, type OrganizeOutput } from '@/lib/ai/prompts';
+import { aiErrorResponse } from '@/lib/ai/errors';
 
 export async function POST(request: Request) {
   let topicId: string | undefined;
@@ -38,24 +39,7 @@ export async function POST(request: Request) {
       maxTokens: MAX_TOKENS.organize,
     });
   } catch (err) {
-    const status = (err as { status?: number }).status;
-    const message = String((err as { message?: string }).message ?? '');
-    if (status === 401 || status === 403) {
-      return NextResponse.json(
-        { error: 'Add your Anthropic key to .env.local to organize.' },
-        { status: 422 },
-      );
-    }
-    if (/credit balance|billing|insufficient|quota/i.test(message)) {
-      return NextResponse.json(
-        { error: 'Maggie is out of Anthropic credits. Add credits to organize.' },
-        { status: 402 },
-      );
-    }
-    return NextResponse.json(
-      { error: 'Maggie could not organize those right now. Try again.' },
-      { status: 502 },
-    );
+    return aiErrorResponse(err);
   }
 
   const result = extractJSON<OrganizeOutput>(raw);

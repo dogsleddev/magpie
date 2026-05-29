@@ -1,13 +1,21 @@
 import { notFound } from 'next/navigation';
 import { getTopic } from '@/lib/queries/topics';
 import { getSettings } from '@/lib/queries/settings';
+import { getConversation } from '@/lib/queries/conversations';
 import BackLink from '@/components/nav/back-link';
 import ModeTabs from '@/components/topic/mode-tabs';
+import type { ConversationMessage } from '@/lib/queries/types';
 
 export default async function TopicPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [topic, settings] = await Promise.all([getTopic(id), getSettings()]);
+  const [topic, settings, conversation] = await Promise.all([
+    getTopic(id),
+    getSettings(),
+    getConversation(id),
+  ]);
   if (!topic) notFound();
+
+  const conversationMessages = (conversation?.messages ?? []) as unknown as ConversationMessage[];
 
   return (
     <div className="flex flex-col gap-4 py-2">
@@ -35,6 +43,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
         personaName={settings.persona_name}
         defaultMode={settings.default_mode}
         thoughts={topic.thoughts}
+        conversationMessages={conversationMessages}
       />
     </div>
   );
