@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0A0A09">
+<title>Magpie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0A09;
+  --bg-card:#161513;
+  --bg-card-2:#1F1D1A;
+  --bg-input:#100F0D;
+  --border:#2A2925;
+  --border-strong:#3A3833;
+  --text:#F5F4EF;
+  --text-muted:#A5A39A;
+  --text-dim:#76746C;
+  --teal:#1D9E75;
+  --teal-soft:#0F6E56;
+  --blue:#378ADD;
+  --blue-soft:#185FA5;
+  --purple:#7F77DD;
+  --purple-soft:#534AB7;
+  --danger:#E24B4A;
+  --warn:#EF9F27;
+  --radius-sm:6px;
+  --radius:10px;
+  --radius-lg:16px;
+  --radius-xl:22px;
+  --font-display:'Fraunces','Georgia',serif;
+  --font-body:'DM Sans',system-ui,-apple-system,sans-serif;
+  --shadow-soft:0 1px 0 rgba(255,255,255,0.04) inset;
+  --transition:160ms cubic-bezier(.4,0,.2,1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow:hidden;overscroll-behavior:none}
+button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+input,textarea{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;outline:none;-webkit-appearance:none}
+textarea{resize:none}
+::selection{background:var(--purple-soft);color:var(--text)}
+::-webkit-scrollbar{width:0;height:0}
+
+/* Layout shell */
+.bg-glow{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;background:radial-gradient(ellipse at 50% -10%,rgba(15,110,86,0.18),transparent 50%),radial-gradient(ellipse at 100% 100%,rgba(83,74,183,0.10),transparent 60%)}
+#app{position:relative;height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;background:var(--bg);z-index:1}
+@media (min-width:481px){
+  body{display:flex;align-items:center;justify-content:center;padding:24px 0}
+  #app{height:min(900px,calc(100dvh - 48px));max-height:900px;border:0.5px solid var(--border);border-radius:28px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.5),0 0 0 1px rgba(15,110,86,0.04)}
+}
+
+/* App bar */
+#appbar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;border-bottom:0.5px solid var(--border);background:var(--bg)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:var(--text)}
+.brand-name{font-family:var(--font-display);font-size:20px;font-weight:500;letter-spacing:-0.4px;color:var(--text);line-height:1}
+.brand-shiny{width:5px;height:5px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px rgba(29,158,117,0.6);position:relative;top:-7px;left:-3px}
+.appbar-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);color:var(--text-muted);transition:background var(--transition),color var(--transition)}
+.icon-btn:hover{background:var(--bg-card);color:var(--text)}
+.icon-btn:active{transform:scale(.95)}
+.appbar-back{display:flex;align-items:center;gap:4px;color:var(--blue);font-size:14px;font-weight:500;padding:6px 8px 6px 4px;border-radius:var(--radius);margin-left:-4px}
+.appbar-back:hover{background:var(--bg-card)}
+.appbar-title{font-family:var(--font-display);font-size:18px;font-weight:500;letter-spacing:-0.3px;color:var(--text);max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;flex:1}
+
+/* Screen container */
+#screen{flex:1;overflow-y:auto;overflow-x:hidden;padding:0;-webkit-overflow-scrolling:touch}
+.screen-pad{padding:18px 18px 24px}
+
+/* Tab bar */
+#tabbar{flex-shrink:0;display:flex;border-top:0.5px solid var(--border);background:var(--bg);padding:8px 8px calc(8px + env(safe-area-inset-bottom));gap:4px}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:var(--radius);color:var(--text-dim);font-size:10px;font-weight:500;letter-spacing:0.2px;transition:color var(--transition)}
+.tab-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.tab.active{color:var(--text)}
+.tab:active{transform:scale(.96)}
+
+/* Typography helpers */
+.eyebrow{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.4px;font-weight:500;margin:0 0 10px}
+.h2{font-family:var(--font-display);font-size:22px;font-weight:500;letter-spacing:-0.4px;line-height:1.2;color:var(--text);margin:0}
+.h3{font-family:var(--font-display);font-size:17px;font-weight:500;letter-spacing:-0.2px;line-height:1.3;color:var(--text);margin:0}
+.body{font-size:14px;line-height:1.55;color:var(--text)}
+.muted{color:var(--text-muted)}
+.tagline{font-family:var(--font-display);font-style:italic;font-size:14px;color:var(--text-muted)}
+
+/* Home screen */
+.spin-row{display:flex;gap:10px;margin:0 0 26px}
+.btn-spin,.btn-add{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:16px 12px;border-radius:var(--radius);font-size:13px;font-weight:600;letter-spacing:0.2px;transition:transform var(--transition),background var(--transition),border-color var(--transition);position:relative;overflow:hidden}
+.btn-spin{background:var(--text);color:var(--bg);box-shadow:0 1px 0 rgba(255,255,255,0.06) inset, 0 10px 30px -8px rgba(245,244,239,0.15)}
+.btn-spin:hover{background:#fff}
+.btn-spin:active{transform:scale(.97)}
+.btn-spin .iridescent{position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(29,158,117,0.18) 45%,rgba(55,138,221,0.18) 55%,rgba(127,119,221,0.18) 65%,transparent 80%);transform:translateX(-100%);transition:transform 600ms ease-out;pointer-events:none}
+.btn-spin:hover .iridescent{transform:translateX(100%)}
+.btn-add{background:transparent;color:var(--text);border:0.5px solid var(--border-strong)}
+.btn-add:hover{border-color:var(--text-muted);background:var(--bg-card)}
+.btn-add:active{transform:scale(.97)}
+.btn-add .ic,.btn-spin .ic{width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+
+/* Subject list */
+.subj-list{display:flex;flex-direction:column;border-radius:var(--radius);background:var(--bg-card);overflow:hidden;border:0.5px solid var(--border)}
+.subj-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:0.5px solid var(--border);transition:background var(--transition)}
+.subj-row:last-child{border-bottom:none}
+.subj-row:active{background:var(--bg-card-2)}
+.subj-row-name{font-size:15px;font-weight:500;color:var(--text)}
+.subj-row-meta{display:flex;align-items:center;gap:10px;color:var(--text-dim);font-size:12px}
+.subj-row-count{font-variant-numeric:tabular-nums}
+.chev{width:16px;height:16px;color:var(--text-dim)}
+
+.empty-state{text-align:center;padding:48px 24px;color:var(--text-muted)}
+.empty-state .h3{margin-bottom:6px}
+
+/* Subject drill-down: angle chips */
+.angle-row{display:flex;gap:6px;overflow-x:auto;padding:0 18px 14px;margin:0 -18px 6px;scrollbar-width:none}
+.angle-row::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:7px 13px;background:var(--bg-card);border:0.5px solid var(--border);border-radius:999px;font-size:12px;color:var(--text-muted);font-weight:500;transition:all var(--transition);white-space:nowrap}
+.chip:hover{border-color:var(--text-muted);color:var(--text)}
+.chip.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+.topic-list{display:flex;flex-direction:column;gap:8px}
+.topic-card{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;transition:all var(--transition)}
+.topic-card:active{transform:scale(.99);background:var(--bg-card-2)}
+.topic-card-meta{display:flex;align-items:center;gap:8px;margin:0 0 6px;flex-wrap:wrap}
+.topic-pill{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);padding:2px 6px;background:var(--bg);border-radius:var(--radius-sm);border:0.5px solid var(--border)}
+.topic-card-title{font-size:14px;line-height:1.4;color:var(--text);font-weight:500;margin:0}
+
+/* Topic Detail */
+.topic-detail-meta{display:flex;align-items:center;gap:6px;margin:0 0 8px;flex-wrap:wrap}
+.topic-detail-title{font-family:var(--font-display);font-size:24px;font-weight:500;letter-spacing:-0.5px;line-height:1.2;color:var(--text);margin:0 0 18px}
+.mode-tabs{display:flex;gap:2px;margin:0 -2px 16px;border-bottom:0.5px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.mode-tabs::-webkit-scrollbar{display:none}
+.mode-tab{padding:9px 12px;font-size:12px;font-weight:500;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all var(--transition);position:relative}
+.mode-tab:hover{color:var(--text)}
+.mode-tab.active{color:var(--text);border-bottom-color:var(--text)}
+
+.ai-block{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin:0 0 18px;position:relative;min-height:120px}
+.ai-block.loading{display:flex;align-items:center;justify-content:center;color:var(--text-dim)}
+.ai-label{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin:0 0 10px}
+.ai-label .ic{width:12px;height:12px}
+.ai-content{font-size:14px;line-height:1.65;color:var(--text);white-space:pre-wrap}
+.ai-content em{font-family:var(--font-display);font-style:italic;color:var(--text);font-weight:500;font-size:15px;display:block;margin:0 0 6px}
+.ai-content ol{padding-left:18px;margin:0;display:flex;flex-direction:column;gap:8px}
+.ai-content ol li{padding-left:4px}
+.ai-content p{margin:0 0 10px}
+.ai-content p:last-child{margin:0}
+.ai-actions{display:flex;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border)}
+.ai-reroll{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);font-weight:500;padding:4px 8px;border-radius:var(--radius-sm);transition:all var(--transition)}
+.ai-reroll:hover{color:var(--text);background:var(--bg-card-2)}
+.ai-reroll .ic{width:12px;height:12px}
+
+.ai-error{color:var(--danger);font-size:13px;text-align:center;padding:12px}
+
+/* Riff mode (thought capture) */
+.riff-card{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin:0 0 18px}
+.riff-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;padding:0 2px 10px;border-bottom:0.5px solid var(--border)}
+.riff-timer-row{display:flex;align-items:center;gap:4px}
+.riff-timer-toggle{display:inline-flex;align-items:center;gap:5px;padding:4px 9px 4px 7px;border-radius:999px;background:var(--bg-input);font-size:11px;font-weight:500;color:var(--text-muted);font-variant-numeric:tabular-nums;transition:all var(--transition);border:0.5px solid var(--border)}
+.riff-timer-toggle:hover{color:var(--text);background:var(--bg-card-2)}
+.riff-timer-toggle.running{color:var(--teal);border-color:rgba(29,158,117,0.35)}
+.riff-timer-toggle.paused{color:var(--warn);border-color:rgba(239,159,39,0.35)}
+.riff-timer-toggle .ic{width:10px;height:10px}
+.riff-reset-btn{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text-dim);transition:all var(--transition);background:transparent}
+.riff-reset-btn:hover{color:var(--text);background:var(--bg-card-2)}
+.riff-reset-btn .ic{width:11px;height:11px}
+.riff-thought-count{font-size:11px;color:var(--text-dim);font-weight:500;font-variant-numeric:tabular-nums}
+.riff-input-row{display:flex;gap:6px;margin:0 0 4px}
+.riff-input{flex:1;background:var(--bg-input);border:0.5px solid var(--border);border-radius:var(--radius);padding:11px 12px;font-size:14px;color:var(--text);transition:border-color var(--transition)}
+.riff-input:focus{border-color:var(--teal-soft)}
+.riff-input::placeholder{color:var(--text-dim)}
+.riff-add-btn{width:42px;display:flex;align-items:center;justify-content:center;background:var(--text);color:var(--bg);border-radius:var(--radius);transition:all var(--transition)}
+.riff-add-btn:hover{background:#fff}
+.riff-add-btn:active{transform:scale(.95)}
+.riff-thoughts-list{display:flex;flex-direction:column;gap:0;margin:6px -4px 0}
+.riff-thought{display:flex;align-items:flex-start;gap:8px;padding:9px 8px;border-radius:var(--radius-sm);transition:background var(--transition);position:relative;animation:fadeIn 220ms cubic-bezier(.4,0,.2,1) both}
+.riff-thought:hover{background:var(--bg-card-2)}
+.riff-thought-dot{color:var(--teal);font-size:18px;line-height:1.2;margin-top:-3px;flex-shrink:0;font-weight:700}
+.riff-thought-text{flex:1;font-size:14px;line-height:1.55;color:var(--text);cursor:text;padding:2px 0;word-break:break-word}
+.riff-thought-x{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);color:var(--text-dim);opacity:0.35;transition:all var(--transition);flex-shrink:0;background:transparent}
+.riff-thought:hover .riff-thought-x{opacity:1}
+.riff-thought-x:hover{color:var(--danger);background:rgba(226,75,74,0.1);opacity:1}
+.riff-thought.editing{background:var(--bg-card-2);align-items:center;padding-top:6px;padding-bottom:6px}
+.riff-thought-edit{flex:1;background:var(--bg-input);border:0.5px solid var(--teal-soft);border-radius:var(--radius-sm);padding:6px 10px;font-size:14px;color:var(--text);line-height:1.5}
+.riff-thoughts-empty{text-align:center;padding:22px 12px 8px;color:var(--text-dim);font-size:13px;font-family:var(--font-display);font-style:italic}
+.riff-organize-row{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:14px 0 0;padding:10px 0 0;border-top:0.5px solid var(--border)}
+
+/* Notes list bullets in journal view */
+.note-bullets{list-style:none;padding:0;margin:6px 0 0;display:flex;flex-direction:column;gap:3px}
+.note-bullets li{display:flex;gap:7px;align-items:flex-start;font-size:13px;line-height:1.5;color:var(--text-muted)}
+.note-bullets li::before{content:'·';color:var(--teal);font-weight:700;font-size:16px;line-height:1.2;margin-top:-2px;flex-shrink:0}
+
+/* Notes block */
+.notes-label-row{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
+.notes-textarea{width:100%;min-height:90px;padding:12px 14px;background:var(--bg-input);border:0.5px solid var(--border);border-radius:var(--radius);font-size:14px;line-height:1.55;color:var(--text);transition:border-color var(--transition)}
+.notes-textarea:focus{border-color:var(--text-muted)}
+.notes-textarea::placeholder{color:var(--text-dim)}
+.organize-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--purple);font-weight:500;padding:4px 8px;border-radius:var(--radius-sm);transition:all var(--transition)}
+.organize-btn:hover{background:rgba(127,119,221,0.1)}
+.organize-btn .ic{width:12px;height:12px}
+.organize-result{margin-top:10px;padding:12px 14px;background:rgba(127,119,221,0.06);border:0.5px solid rgba(127,119,221,0.2);border-radius:var(--radius);font-size:13px;line-height:1.6}
+.organize-result h4{font-size:10px;color:var(--purple);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin:0 0 4px}
+.organize-result ul{list-style:none;padding:0;margin:0 0 10px;display:flex;flex-direction:column;gap:4px}
+.organize-result ul:last-child{margin:0}
+.organize-result li{padding-left:12px;position:relative;color:var(--text-muted)}
+.organize-result li::before{content:'·';position:absolute;left:4px;color:var(--purple)}
+
+/* Related topics */
+.related-section{margin:24px 0 0}
+.related-header{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}
+.related-title{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.4px;font-weight:500;display:flex;align-items:center;gap:5px}
+.related-title .ic{width:11px;height:11px;color:var(--teal)}
+.ai-toggle{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;font-weight:500}
+.toggle-switch{width:28px;height:16px;background:var(--border-strong);border-radius:8px;position:relative;transition:background var(--transition);flex-shrink:0}
+.toggle-switch.on{background:var(--teal-soft)}
+.toggle-knob{position:absolute;top:2px;left:2px;width:12px;height:12px;background:var(--text);border-radius:50%;transition:transform var(--transition)}
+.toggle-switch.on .toggle-knob{transform:translateX(12px)}
+.related-list{display:flex;flex-direction:column;gap:6px}
+.related-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius);transition:all var(--transition)}
+.related-item:active{background:var(--bg-card-2)}
+.related-item-text{font-size:13px;color:var(--text);line-height:1.4;flex:1}
+.related-add{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);color:var(--teal);transition:all var(--transition);flex-shrink:0}
+.related-add:hover{background:rgba(29,158,117,0.1)}
+.related-add.added{color:var(--text-dim);pointer-events:none}
+
+/* Save action */
+.save-row{margin:24px 0 8px}
+.btn-primary{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--text);color:var(--bg);border-radius:var(--radius);font-size:14px;font-weight:600;transition:all var(--transition)}
+.btn-primary:hover{background:#fff}
+.btn-primary:active{transform:scale(.99)}
+.btn-secondary{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:transparent;color:var(--text);border:0.5px solid var(--border-strong);border-radius:var(--radius);font-size:14px;font-weight:500;transition:all var(--transition)}
+.btn-secondary:hover{border-color:var(--text-muted)}
+
+/* Convo screen */
+.convo-screen{display:flex;flex-direction:column;height:100%}
+.convo-meta{padding:12px 18px;border-bottom:0.5px solid var(--border);background:var(--bg)}
+.convo-meta-eyebrow{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-weight:500;margin:0 0 4px}
+.convo-meta-topic{font-family:var(--font-display);font-size:14px;color:var(--text);font-weight:500;line-height:1.3}
+.convo-messages{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:80%;padding:9px 13px;border-radius:var(--radius-lg);font-size:14px;line-height:1.5;word-wrap:break-word}
+.msg-ai{background:var(--bg-card);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px}
+.msg-user{background:var(--teal-soft);color:var(--text);align-self:flex-end;border-bottom-right-radius:4px}
+.msg-typing{display:inline-flex;gap:3px;padding:12px 14px}
+.msg-typing span{width:6px;height:6px;background:var(--text-muted);border-radius:50%;animation:typing 1.2s infinite ease-in-out}
+.msg-typing span:nth-child(2){animation-delay:0.15s}
+.msg-typing span:nth-child(3){animation-delay:0.3s}
+@keyframes typing{0%,80%,100%{opacity:0.3;transform:scale(0.85)}40%{opacity:1;transform:scale(1)}}
+.convo-input-row{flex-shrink:0;display:flex;gap:8px;padding:12px 14px;border-top:0.5px solid var(--border);background:var(--bg);align-items:flex-end}
+.convo-input{flex:1;background:var(--bg-input);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:10px 14px;font-size:14px;color:var(--text);min-height:40px;max-height:120px;line-height:1.4}
+.convo-input:focus{border-color:var(--text-muted)}
+.convo-input::placeholder{color:var(--text-dim)}
+.convo-send{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--teal-soft);color:var(--text);border-radius:50%;flex-shrink:0;transition:all var(--transition)}
+.convo-send:hover{background:var(--teal)}
+.convo-send:active{transform:scale(.95)}
+.convo-send:disabled{opacity:0.4;pointer-events:none}
+
+/* Add topic modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);z-index:50;opacity:0;pointer-events:none;transition:opacity var(--transition)}
+.modal-backdrop.open{opacity:1;pointer-events:auto}
+.modal{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);transform:translateY(100%);transition:transform 280ms cubic-bezier(.32,.72,0,1);max-width:480px;margin:0 auto;border-radius:0}
+@media (min-width:481px){
+  .modal{border-radius:28px;height:min(900px,calc(100dvh - 48px));max-height:900px;position:relative;inset:auto;border:0.5px solid var(--border)}
+  .modal-backdrop{display:flex;align-items:center;justify-content:center;padding:24px 0}
+}
+.modal.open{transform:translateY(0)}
+.modal-header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:0.5px solid var(--border)}
+.modal-title{font-family:var(--font-display);font-size:18px;font-weight:500;color:var(--text)}
+.modal-body{flex:1;overflow-y:auto;padding:18px}
+.modal-footer{flex-shrink:0;padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:0.5px solid var(--border);display:flex;gap:8px}
+
+.add-mode-tabs{display:flex;gap:4px;background:var(--bg-card);border-radius:var(--radius);padding:4px;margin:0 0 18px}
+.add-mode-tab{flex:1;padding:8px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;color:var(--text-muted);transition:all var(--transition);text-align:center}
+.add-mode-tab.active{background:var(--bg);color:var(--text);box-shadow:0 1px 0 rgba(255,255,255,0.04) inset}
+
+.field{margin:0 0 14px}
+.field-label{display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:500;margin:0 0 6px}
+.field-input,.field-select,.field-textarea{width:100%;padding:12px 14px;background:var(--bg-input);border:0.5px solid var(--border);border-radius:var(--radius);font-size:14px;color:var(--text);transition:border-color var(--transition)}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--text-muted)}
+.field-textarea{min-height:90px;line-height:1.55}
+.field-help{font-size:11px;color:var(--text-dim);margin:6px 0 0;line-height:1.4}
+
+.ai-assist-help{padding:14px;background:rgba(29,158,117,0.06);border:0.5px solid rgba(29,158,117,0.2);border-radius:var(--radius);font-size:12px;color:var(--text-muted);line-height:1.5;margin:0 0 16px;display:flex;gap:10px;align-items:flex-start}
+.ai-assist-help .ic{color:var(--teal);width:16px;height:16px;flex-shrink:0;margin-top:1px}
+.ai-extract-result{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin:0 0 18px}
+.ai-extract-subj{margin:0 0 12px}
+.ai-extract-subj:last-child{margin:0}
+.ai-extract-subj-name{font-size:11px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin:0 0 6px}
+.ai-extract-list{display:flex;flex-direction:column;gap:4px}
+.ai-extract-topic{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:var(--text);line-height:1.4}
+.ai-extract-check{width:18px;height:18px;border:0.5px solid var(--border-strong);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all var(--transition);cursor:pointer;color:transparent}
+.ai-extract-check.checked{background:var(--teal-soft);border-color:var(--teal-soft);color:var(--text)}
+.ai-extract-check.checked .ic{width:12px;height:12px}
+
+/* Settings */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:0.5px solid var(--border)}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:14px;color:var(--text);font-weight:500}
+.setting-desc{font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.4}
+.setting-input{padding:8px 10px;background:var(--bg-input);border:0.5px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text);max-width:160px;text-align:right}
+.setting-group-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.4px;font-weight:500;margin:18px 0 8px;padding-top:8px}
+.setting-group-label:first-child{margin-top:0;padding-top:0}
+
+/* Lists shared */
+.list-empty{text-align:center;color:var(--text-muted);padding:60px 24px 40px}
+.list-empty .h3{margin-bottom:6px}
+.list-empty .tagline{font-size:13px}
+
+.note-list-item{padding:14px 0;border-bottom:0.5px solid var(--border)}
+.note-list-item:last-child{border-bottom:none}
+.note-list-topic{font-size:13px;color:var(--text-muted);margin:0 0 4px;font-weight:500}
+.note-list-text{font-size:14px;color:var(--text);line-height:1.5;white-space:pre-wrap}
+
+.discover-card{padding:14px 16px;background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius);margin:0 0 8px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.discover-text{flex:1}
+.discover-title{font-size:14px;color:var(--text);line-height:1.4;margin:0 0 4px}
+.discover-from{font-size:11px;color:var(--text-dim)}
+.discover-actions{display:flex;gap:4px;flex-shrink:0}
+.discover-actions button{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);transition:all var(--transition)}
+.discover-add{background:var(--teal-soft);color:var(--text)}
+.discover-add:hover{background:var(--teal)}
+.discover-skip{color:var(--text-dim);border:0.5px solid var(--border)}
+.discover-skip:hover{color:var(--text);background:var(--bg-card-2)}
+.discover-generate{display:flex;justify-content:center;margin:20px 0 8px}
+
+/* Loading */
+.spinner{width:18px;height:18px;border:1.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 700ms linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translate(-50%,20px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:13px;font-weight:500;z-index:100;opacity:0;transition:all 240ms;pointer-events:none;white-space:nowrap}
+.toast.show{transform:translate(-50%,0);opacity:1}
+
+/* First visit hint */
+.welcome-hint{padding:16px;background:rgba(127,119,221,0.06);border:0.5px solid rgba(127,119,221,0.18);border-radius:var(--radius);margin:0 0 20px;display:flex;gap:12px}
+.welcome-hint .ic{color:var(--purple);flex-shrink:0;margin-top:2px}
+.welcome-hint p{font-size:13px;line-height:1.55;color:var(--text-muted);margin:0}
+.welcome-hint em{font-family:var(--font-display);font-style:italic;color:var(--text)}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+.fade-in{animation:fadeIn 280ms cubic-bezier(.4,0,.2,1) both}
+.stagger-1{animation-delay:40ms}
+.stagger-2{animation-delay:80ms}
+.stagger-3{animation-delay:120ms}
+.stagger-4{animation-delay:160ms}
+.stagger-5{animation-delay:200ms}
+
+/* Mobile-only overrides */
+@media (max-width:480px){
+  body{padding:0}
+  #appbar{padding-top:max(14px,env(safe-area-inset-top))}
+}
+
+/* Hide scrollbars but allow scroll */
+.no-scroll{overflow:hidden}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<div id="app">
+  <header id="appbar"></header>
+  <main id="screen"></main>
+  <nav id="tabbar"></nav>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" id="modal"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========== ICONS ========== */
+const I = {
+  dice: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r=".5" fill="currentColor"/><circle cx="15.5" cy="8.5" r=".5" fill="currentColor"/><circle cx="12" cy="12" r=".5" fill="currentColor"/><circle cx="15.5" cy="15.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="15.5" r=".5" fill="currentColor"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  chevronR: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  chevronL: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  sparkles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M19 14l.5 1.5L21 16l-1.5.5L19 18l-.5-1.5L17 16l1.5-.5z"/><path d="M5 17l.5 1.5L7 19l-1.5.5L5 21l-.5-1.5L3 19l1.5-.5z"/></svg>',
+  send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-5 16-3.5-5.5L4 12z"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  notebook: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h13a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM4 7h2M4 12h2M4 17h2"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 14.85-6.85L20 7M20 4v3h-3M21 12a9 9 0 0 1-14.85 6.85L4 17M4 20v-3h3"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l13 8-13 8V4z"/></svg>',
+  bookmark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>',
+  brain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3 3 3 0 0 1-3-3v-1a3 3 0 0 1 0-6V8a3 3 0 0 1 3-3z"/><path d="M15 5a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3 3 3 0 0 0 3-3v-1a3 3 0 0 0 0-6V8a3 3 0 0 0-3-3z"/></svg>',
+  network: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v3M5.5 17.5L11 11M18.5 17.5L13 11"/></svg>',
+  bird: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M5 11c0 3.5 3.5 6 7 6 2 0 4-1 4-1l-1-4-2-1c0-3 2-5 3-5h2c1 0 2-1 2-2 0 0-2 1-3 0-1-1-1-2-1-2s-2 1-4 2c-2 1-2 2-2 2H5c-1 0-2 1-2 2l1 1 1 2z"/></svg>',
+  magnify: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'
+};
+function icon(name, size = 20) {
+  return `<span class="ic" style="width:${size}px;height:${size}px;display:inline-flex">${I[name] || ''}</span>`;
+}
+
+/* ========== SEED DATA ========== */
+const SEED = {
+  subjects: [
+    { id: 'sub_history', name: 'History', order: 0 },
+    { id: 'sub_books', name: 'Books', order: 1 },
+    { id: 'sub_ai', name: 'AI & Tech', order: 2 },
+    { id: 'sub_music', name: 'Music', order: 3 },
+    { id: 'sub_wildlife', name: 'Wildlife', order: 4 },
+    { id: 'sub_astro', name: 'Astronomy & Physics', order: 5 },
+    { id: 'sub_hobbies', name: 'Hobbies', order: 6 },
+    { id: 'sub_food', name: 'Food', order: 7 }
+  ],
+  topics: [
+    // History
+    { id: 't_empires', subjectId: 'sub_history', title: 'Why every empire thinks it is the last one', angles: ['paradox','history'], thoughts: [] },
+    { id: 't_alex', subjectId: 'sub_history', title: "The Library of Alexandria's lost catalog", angles: ['fun facts','discoveries'], thoughts: [] },
+    { id: 't_bronze', subjectId: 'sub_history', title: 'The Bronze Age Collapse: 12 civilizations falling at once', angles: ['history','paradox'], thoughts: [] },
+    { id: 't_greek', subjectId: 'sub_history', title: 'Greek philosophers and their wildly different agorae', angles: ['philosophy','history'], thoughts: [] },
+    // Books
+    { id: 't_aichiang', subjectId: 'sub_books', title: 'AI consciousness as imagined by Asimov vs Ted Chiang', angles: ['philosophy','future'], thoughts: [] },
+    { id: 't_dune', subjectId: 'sub_books', title: 'Dune on prescience as a curse, not a gift', angles: ['philosophy','thought experiment'], thoughts: [] },
+    { id: 't_foundation', subjectId: 'sub_books', title: 'Foundation predicted behavioral econ by 60 years', angles: ['fun facts','future'], thoughts: [] },
+    { id: 't_villains', subjectId: 'sub_books', title: 'Why most sci-fi villains are bad economists', angles: ['thought experiment','fun facts'], thoughts: [] },
+    // AI & Tech
+    { id: 't_intuition', subjectId: 'sub_ai', title: 'Can a model have intuition, or just very fast pattern matching?', angles: ['philosophy','thought experiment'], thoughts: [] },
+    { id: 't_swarms', subjectId: 'sub_ai', title: 'Agent swarms and the org chart of 2030', angles: ['future','trends'], thoughts: [] },
+    { id: 't_rhymes', subjectId: 'sub_ai', title: 'LLMs can rhyme but cannot count letters, and why', angles: ['fun facts','paradox'], thoughts: [] },
+    { id: 't_evals', subjectId: 'sub_ai', title: 'The smarter the model, the harder it is to evaluate', angles: ['paradox','challenges'], thoughts: [] },
+    // Music
+    { id: 't_metal', subjectId: 'sub_music', title: 'Why metal subgenres splinter every four years', angles: ['trends','evolution'], thoughts: [] },
+    { id: 't_edm', subjectId: 'sub_music', title: 'Is EDM the new classical? The compositional case', angles: ['philosophy','evolution'], thoughts: [] },
+    { id: 't_aimusic', subjectId: 'sub_music', title: 'AI-generated music and the death of the demo tape', angles: ['future','trends'], thoughts: [] },
+    { id: 't_mozart', subjectId: 'sub_music', title: 'The Mozart effect: what the science actually says', angles: ['fun facts','discoveries'], thoughts: [] },
+    // Wildlife
+    { id: 't_snowlep', subjectId: 'sub_wildlife', title: 'Snow leopards: the cat that never roars', angles: ['fun facts','extremes'], thoughts: [] },
+    { id: 't_liger', subjectId: 'sub_wildlife', title: 'Liger biology: why hybrids get huge', angles: ['discoveries','evolution'], thoughts: [] },
+    { id: 't_magpie', subjectId: 'sub_wildlife', title: 'Magpies pass the mirror self-recognition test', angles: ['fun facts','discoveries'], thoughts: [] },
+    { id: 't_wolves', subjectId: 'sub_wildlife', title: 'Why wolves return ecosystems to balance', angles: ['evolution','discoveries'], thoughts: [] },
+    // Astronomy
+    { id: 't_fermi', subjectId: 'sub_astro', title: 'The Fermi paradox revisited', angles: ['paradox','thought experiment'], thoughts: [] },
+    { id: 't_time', subjectId: 'sub_astro', title: 'Time dilation in everyday life', angles: ['fun facts','future'], thoughts: [] },
+    { id: 't_expand', subjectId: 'sub_astro', title: 'What is the universe expanding into?', angles: ['thought experiment','paradox'], thoughts: [] },
+    { id: 't_blackhole', subjectId: 'sub_astro', title: "Black holes as the universe's hard drives", angles: ['future','thought experiment'], thoughts: [] },
+    // Hobbies
+    { id: 't_carniv', subjectId: 'sub_hobbies', title: 'Carnivorous plants and convergent evolution', angles: ['fun facts','evolution'], thoughts: [] },
+    { id: 't_zelda', subjectId: 'sub_hobbies', title: "Why Zelda's Hyrule maps borrow from medieval cartography", angles: ['history','fun facts'], thoughts: [] },
+    { id: 't_pi', subjectId: 'sub_hobbies', title: 'Raspberry Pi as a teaching tool for systems thinking', angles: ['skills','trends'], thoughts: [] },
+    // Food
+    { id: 't_terroir', subjectId: 'sub_food', title: 'Wine terroir: real science or marketing magic?', angles: ['fun facts','paradox'], thoughts: [] },
+    { id: 't_maillard', subjectId: 'sub_food', title: 'Maillard reaction: the chemistry of why food tastes good', angles: ['discoveries','fun facts'], thoughts: [] },
+    { id: 't_dumplings', subjectId: 'sub_food', title: 'Why every cuisine independently invented dumplings', angles: ['history','evolution'], thoughts: [] }
+  ],
+  discoverQueue: [],
+  conversations: {},
+  modeCache: {},
+  settings: { aiSuggestions: true, personaName: 'Riff' },
+  meta: { firstVisitDone: false, version: 1 }
+};
+
+const ANGLES = ['fun facts','philosophy','trends','history','future','thought experiment','paradox','discoveries','evolution','skills','extremes','challenges'];
+
+/* ========== STATE ========== */
+let state = JSON.parse(JSON.stringify(SEED));
+let ui = {
+  view: 'home',
+  history: ['home'],
+  currentSubjectId: null,
+  currentTopicId: null,
+  currentMode: 'brief',
+  activeAngle: null,
+  tab: 'home',
+  spinning: false
+};
+let editingIdx = null;
+
+/* ========== STORAGE ========== */
+async function saveState() {
+  try {
+    await window.storage.set('magpie:state', JSON.stringify(state));
+  } catch (e) {
+    console.error('Save failed:', e);
+  }
+}
+async function loadState() {
+  try {
+    const result = await window.storage.get('magpie:state');
+    if (result && result.value) {
+      const loaded = JSON.parse(result.value);
+      // Merge with seed to handle schema additions
+      state = { ...SEED, ...loaded };
+      state.settings = { ...SEED.settings, ...(loaded.settings || {}) };
+      state.meta = { ...SEED.meta, ...(loaded.meta || {}) };
+    }
+  } catch (e) {
+    // Likely first run, use seed
+  }
+  // Schema migration: notes (string) -> thoughts (array)
+  state.topics.forEach(t => {
+    if (t.thoughts === undefined || t.thoughts === null) {
+      if (typeof t.notes === 'string' && t.notes.trim()) {
+        t.thoughts = t.notes.split(/\r?\n/).map(l => l.replace(/^[\s\-•·\u2022]*(?:\d+[.)]\s*)?/, '').trim()).filter(Boolean);
+      } else {
+        t.thoughts = [];
+      }
+    }
+    delete t.notes;
+  });
+}
+const saveDebounced = debounce(saveState, 400);
+function debounce(fn, ms) {
+  let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
+
+/* ========== UTILS ========== */
+function uid(prefix = 'id') { return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`; }
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function topicsBySubject(subjectId) { return state.topics.filter(t => t.subjectId === subjectId); }
+function findTopic(id) { return state.topics.find(t => t.id === id); }
+function findSubject(id) { return state.subjects.find(s => s.id === id); }
+function escapeHTML(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+/* ========== API ========== */
+async function callClaude({ system, user, messages, maxTokens = 800 }) {
+  const body = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: maxTokens
+  };
+  if (system) body.system = system;
+  if (messages) body.messages = messages;
+  else body.messages = [{ role: 'user', content: user }];
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) {
+    const txt = await response.text();
+    throw new Error('API error: ' + response.status + ' ' + txt.slice(0, 200));
+  }
+  const data = await response.json();
+  return data.content
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join('\n')
+    .trim();
+}
+
+/* ========== AI PROMPTS ========== */
+const PROMPTS = {
+  brief: (topic) => ({
+    system: `You generate 3 to 5 sharp talking points that prepare someone to riff for 3 to 5 minutes on a conversation topic. Output ONLY a numbered list of 3 to 5 points. Each point is ONE tight sentence with a concrete hook, fact, or angle. No introduction, no conclusion, no "Here are some talking points." Just the numbered list, plain prose, no bold or italics.`,
+    user: `Topic: "${topic.title}"`
+  }),
+  challenge: (topic) => ({
+    system: `You generate ONE compelling challenge per call about a conversation topic. Pick exactly ONE of: a steelman of an unpopular view, a hot take, or a paradox. Lead with the type tag wrapped in single asterisks like "*Paradox.*" or "*Hot take.*" or "*Steelman.*" on its own line. Then the challenge in 3 to 5 sentences. Punchy, vivid, makes the reader uncomfortable in a productive way. No preamble. Pick whichever type best fits THIS topic, varying between calls.`,
+    user: `Topic: "${topic.title}"`
+  }),
+  convo: (topic, personaName) => ({
+    system: `You are ${personaName}, the user's casual conversation partner. You speak like a smart friend at a party who happens to know everything they have ever riffed about. Style rules: lowercase by default, brief (1 to 3 sentences usually), casual, never start with "Great question!" or "That's interesting!" or any opener like that. Share your own take, not just questions back. Occasionally suggest adjacent topics. Match the user's energy and length. Topic context for this session: "${topic.title}". Riff with them like you both have already been talking about this for a while.`
+  }),
+  organize: (topic, notes) => ({
+    system: `The user has freeform notes from a conversation riff. Extract structure. Output ONLY valid JSON with this exact shape, no other text: {"insights":["item",...],"counters":["item",...],"followups":["item",...],"learn_more":["item",...]}. Each item under 15 words. If a category is empty, use [].`,
+    user: `Topic: "${topic.title}"\n\nNotes:\n${notes}`
+  }),
+  extract: (text) => ({
+    system: `The user is describing their interests. Extract conversation topics they could practice riffing on. Output ONLY valid JSON with this exact shape: {"subjects":[{"name":"Subject Name","topics":["specific conversation topic","another one"]}]}. Generate 2 to 4 subjects with 3 to 5 topics each. Topics should be specific conversation PROMPTS that someone could speak about for 3-5 minutes, not categories. Example topic: "Why every empire thinks it is the last one" not "Empires". No markdown, no commentary, just JSON.`,
+    user: `Interests: "${text}"`
+  }),
+  related: (topic, existingTitles) => ({
+    system: `Suggest 3 adjacent conversation topics that someone who finds this topic interesting would also enjoy. Each suggestion is a specific conversation prompt, not a category. Output ONLY valid JSON: {"suggestions":["topic 1","topic 2","topic 3"]}. No commentary. Make them genuinely interesting, not obvious extensions.`,
+    user: `Current topic: "${topic.title}"\n\nThe user already has these related topics, don't repeat: ${existingTitles.slice(0, 30).join('; ')}`
+  })
+};
+
+async function aiBrief(topic) {
+  const { system, user } = PROMPTS.brief(topic);
+  return await callClaude({ system, user, maxTokens: 500 });
+}
+async function aiChallenge(topic) {
+  const { system, user } = PROMPTS.challenge(topic);
+  return await callClaude({ system, user, maxTokens: 500 });
+}
+async function aiConvoReply(topic, history, personaName) {
+  const { system } = PROMPTS.convo(topic, personaName);
+  return await callClaude({ system, messages: history, maxTokens: 300 });
+}
+async function aiOrganize(topic, notes) {
+  const { system, user } = PROMPTS.organize(topic, notes);
+  const txt = await callClaude({ system, user, maxTokens: 600 });
+  try { return JSON.parse(extractJSON(txt)); } catch (e) { return null; }
+}
+async function aiExtract(text) {
+  const { system, user } = PROMPTS.extract(text);
+  const txt = await callClaude({ system, user, maxTokens: 800 });
+  try { return JSON.parse(extractJSON(txt)); } catch (e) { return null; }
+}
+async function aiRelated(topic) {
+  const titles = state.topics.map(t => t.title);
+  const { system, user } = PROMPTS.related(topic, titles);
+  const txt = await callClaude({ system, user, maxTokens: 300 });
+  try { return JSON.parse(extractJSON(txt)); } catch (e) { return null; }
+}
+function extractJSON(txt) {
+  const start = txt.indexOf('{');
+  const end = txt.lastIndexOf('}');
+  if (start === -1 || end === -1) return txt;
+  return txt.slice(start, end + 1);
+}
+
+/* ========== NAVIGATION ========== */
+function navigate(view, opts = {}) {
+  ui.view = view;
+  if (opts.topicId) ui.currentTopicId = opts.topicId;
+  if (opts.subjectId) ui.currentSubjectId = opts.subjectId;
+  if (opts.tab) ui.tab = opts.tab;
+  if (!opts.noPush) ui.history.push(view);
+  render();
+}
+function navBack() {
+  if (ui.history.length > 1) ui.history.pop();
+  ui.view = ui.history[ui.history.length - 1] || 'home';
+  render();
+}
+function switchTab(tab) {
+  ui.tab = tab;
+  const tabToView = { home: 'home', topics: 'topics', discover: 'discover', notes: 'notes' };
+  ui.view = tabToView[tab];
+  ui.history = [ui.view];
+  ui.currentTopicId = null;
+  ui.currentSubjectId = null;
+  render();
+}
+
+/* ========== RENDER: APPBAR ========== */
+function renderAppbar() {
+  const el = document.getElementById('appbar');
+  const view = ui.view;
+
+  let leftHTML = '';
+  let middleHTML = '';
+  let rightHTML = '';
+
+  if (view === 'home' || view === 'topics' || view === 'discover' || view === 'notes') {
+    leftHTML = `
+      <div class="brand">
+        <div class="brand-mark">${I.bird}</div>
+        <span class="brand-name">Magpie</span>
+        <span class="brand-shiny"></span>
+      </div>`;
+    rightHTML = `
+      <div class="appbar-actions">
+        <button class="icon-btn" onclick="openSettings()" aria-label="Settings">${icon('settings', 18)}</button>
+      </div>`;
+  } else if (view === 'subject') {
+    const subj = findSubject(ui.currentSubjectId);
+    leftHTML = `<button class="appbar-back" onclick="navBack()">${icon('chevronL', 18)}Back</button>`;
+    middleHTML = `<div class="appbar-title">${escapeHTML(subj ? subj.name : '')}</div>`;
+    rightHTML = `<div style="width:40px"></div>`;
+  } else if (view === 'topic' || view === 'convo') {
+    leftHTML = `<button class="appbar-back" onclick="navBack()">${icon('chevronL', 18)}Back</button>`;
+    middleHTML = `<div class="appbar-title">Topic</div>`;
+    rightHTML = `<div style="width:40px"></div>`;
+  }
+
+  el.innerHTML = leftHTML + middleHTML + rightHTML;
+}
+
+/* ========== RENDER: TABBAR ========== */
+function renderTabbar() {
+  const el = document.getElementById('tabbar');
+  if (ui.view === 'convo') { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  const tabs = [
+    { id: 'home', label: 'Grid', icon: 'dice' },
+    { id: 'topics', label: 'Topics', icon: 'list' },
+    { id: 'discover', label: 'Discover', icon: 'sparkles' },
+    { id: 'notes', label: 'Notes', icon: 'notebook' }
+  ];
+  el.innerHTML = tabs.map(t => `
+    <button class="tab ${ui.tab === t.id ? 'active' : ''}" onclick="switchTab('${t.id}')">
+      <span class="tab-icon">${icon(t.icon, 22)}</span>
+      <span>${t.label}</span>
+    </button>
+  `).join('');
+}
+
+/* ========== RENDER: HOME ========== */
+function renderHome() {
+  const subjectsWithCounts = state.subjects
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map(s => ({ ...s, count: topicsBySubject(s.id).length }))
+    .filter(s => s.count > 0 || state.subjects.length < 4);
+
+  const showWelcome = !state.meta.firstVisitDone;
+
+  const subjList = subjectsWithCounts.map((s, i) => `
+    <div class="subj-row fade-in stagger-${Math.min(i + 1, 5)}" onclick="openSubject('${s.id}')">
+      <span class="subj-row-name">${escapeHTML(s.name)}</span>
+      <span class="subj-row-meta">
+        <span class="subj-row-count">${s.count}</span>
+        <span class="chev">${I.chevronR}</span>
+      </span>
+    </div>
+  `).join('');
+
+  return `
+    <div class="screen-pad">
+      ${showWelcome ? `
+        <div class="welcome-hint fade-in">
+          ${icon('sparkles', 18)}
+          <p>Tap <em>Convo Roulette</em> for a random topic, or pick a subject below. New here: hit <em>Add topic</em> to make this grid your own.</p>
+        </div>
+      ` : ''}
+      <div class="spin-row fade-in">
+        <button class="btn-add" onclick="openAddTopic()">
+          ${icon('plus', 18)}
+          <span>Add topic</span>
+        </button>
+        <button class="btn-spin" onclick="spinRandom()">
+          <span class="iridescent"></span>
+          ${icon('dice', 18)}
+          <span>Convo Roulette</span>
+        </button>
+      </div>
+      <p class="eyebrow fade-in stagger-1">Your subjects</p>
+      ${subjectsWithCounts.length ? `<div class="subj-list">${subjList}</div>` : `
+        <div class="empty-state">
+          <p class="h3">Empty grid</p>
+          <p class="tagline">Tap "Add topic" to start collecting</p>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function spinRandom() {
+  if (state.topics.length === 0) { toast('Add a topic first'); return; }
+  if (ui.spinning) return;
+  ui.spinning = true;
+  const t = pickRandom(state.topics);
+  setTimeout(() => {
+    ui.currentTopicId = t.id;
+    ui.currentMode = 'brief';
+    ui.spinning = false;
+    navigate('topic');
+  }, 240);
+}
+
+function openSubject(subjectId) {
+  ui.currentSubjectId = subjectId;
+  ui.activeAngle = null;
+  navigate('subject');
+}
+
+/* ========== RENDER: SUBJECT ========== */
+function renderSubject() {
+  const subj = findSubject(ui.currentSubjectId);
+  if (!subj) return renderHome();
+  const allTopics = topicsBySubject(subj.id);
+  // Get angles in use within this subject
+  const anglesInUse = Array.from(new Set(allTopics.flatMap(t => t.angles)));
+  const filtered = ui.activeAngle ? allTopics.filter(t => t.angles.includes(ui.activeAngle)) : allTopics;
+
+  return `
+    <div class="screen-pad" style="padding-top:14px">
+      ${anglesInUse.length > 1 ? `
+        <div class="angle-row">
+          <button class="chip ${ui.activeAngle === null ? 'active' : ''}" onclick="filterAngle(null)">All</button>
+          ${anglesInUse.map(a => `
+            <button class="chip ${ui.activeAngle === a ? 'active' : ''}" onclick="filterAngle('${escapeHTML(a)}')">${escapeHTML(a)}</button>
+          `).join('')}
+        </div>
+      ` : ''}
+      <div class="topic-list">
+        ${filtered.length === 0 ? `<div class="empty-state"><p class="tagline">No topics with that angle yet</p></div>` :
+        filtered.map((t, i) => `
+          <div class="topic-card fade-in stagger-${Math.min(i + 1, 5)}" onclick="openTopic('${t.id}')">
+            <div class="topic-card-meta">
+              ${t.angles.map(a => `<span class="topic-pill">${escapeHTML(a)}</span>`).join('')}
+            </div>
+            <p class="topic-card-title">${escapeHTML(t.title)}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function filterAngle(angle) { ui.activeAngle = angle; render(); }
+function openTopic(topicId) {
+  ui.currentTopicId = topicId;
+  ui.currentMode = 'brief';
+  navigate('topic');
+}
+
+/* ========== RENDER: TOPIC DETAIL ========== */
+function renderTopic() {
+  const t = findTopic(ui.currentTopicId);
+  if (!t) return renderHome();
+  const subj = findSubject(t.subjectId);
+
+  const modeContent = renderModeContent(t);
+  const cacheKey = `related:${t.id}`;
+  const cachedRelated = state.modeCache[cacheKey] || null;
+
+  return `
+    <div class="screen-pad fade-in">
+      <div class="topic-detail-meta">
+        ${subj ? `<span class="topic-pill">${escapeHTML(subj.name)}</span>` : ''}
+        ${t.angles.map(a => `<span class="topic-pill">${escapeHTML(a)}</span>`).join('')}
+      </div>
+      <h1 class="topic-detail-title">${escapeHTML(t.title)}</h1>
+
+      <div class="mode-tabs">
+        ${['riff','brief','challenge','convo'].map(m => `
+          <button class="mode-tab ${ui.currentMode === m ? 'active' : ''}" onclick="setMode('${m}')">${m.charAt(0).toUpperCase() + m.slice(1)}</button>
+        `).join('')}
+      </div>
+
+      <div id="mode-content">${modeContent}</div>
+
+      <div id="organize-result"></div>
+
+      ${state.settings.aiSuggestions ? `
+        <div class="related-section">
+          <div class="related-header">
+            <span class="related-title">${icon('sparkles', 11)}<span>If this hits, you'd dig</span></span>
+            <button class="ai-toggle" onclick="toggleAISuggestions()" aria-label="Hide AI suggestions">
+              <span class="toggle-switch on"><span class="toggle-knob"></span></span>
+              <span>AI on</span>
+            </button>
+          </div>
+          <div id="related-list" class="related-list">
+            ${cachedRelated ? renderRelatedList(cachedRelated, t.id) : `
+              <button class="btn-secondary" onclick="loadRelated('${t.id}')">${icon('sparkles', 14)}<span>Suggest related topics</span></button>
+            `}
+          </div>
+        </div>
+      ` : `
+        <div class="related-section">
+          <div class="related-header">
+            <span class="related-title">AI suggestions are off</span>
+            <button class="ai-toggle" onclick="toggleAISuggestions()" aria-label="Show AI suggestions">
+              <span class="toggle-switch"><span class="toggle-knob"></span></span>
+              <span>AI off</span>
+            </button>
+          </div>
+        </div>
+      `}
+
+      <div class="save-row">
+        <button class="btn-primary" onclick="saveAndSpin('${t.id}')">${icon('refresh', 16)}<span>Save & spin again</span></button>
+      </div>
+    </div>
+  `;
+}
+
+function renderModeContent(t) {
+  if (ui.currentMode === 'riff') return renderRiffMode(t);
+  if (ui.currentMode === 'convo') return renderConvoEntry(t);
+  if (ui.currentMode === 'brief') return renderAIMode(t, 'brief', 'Briefing');
+  if (ui.currentMode === 'challenge') return renderAIMode(t, 'challenge', 'Challenge');
+  return '';
+}
+
+function renderAIMode(t, mode, label) {
+  const cacheKey = `${mode}:${t.id}`;
+  const cached = state.modeCache[cacheKey];
+  if (cached) {
+    return `
+      <div class="ai-block fade-in">
+        <div class="ai-label">${icon('sparkles', 12)}<span>Sonnet · ${label}</span></div>
+        <div class="ai-content">${formatAIContent(cached)}</div>
+        <div class="ai-actions">
+          <button class="ai-reroll" onclick="rerollMode('${t.id}','${mode}')">${icon('refresh', 12)}<span>Reroll</span></button>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="ai-block loading" id="ai-block-${mode}">
+      <span class="spinner"></span>
+      <span style="margin-left:10px;font-size:13px">Asking Sonnet...</span>
+    </div>
+  `;
+}
+
+function renderRiffMode(t) {
+  return `<div class="riff-card fade-in" id="riff-card">${renderRiffBodyHTML(t)}</div>`;
+}
+
+function renderRiffBody() {
+  const card = document.getElementById('riff-card');
+  if (!card) return;
+  const t = findTopic(ui.currentTopicId);
+  if (!t) return;
+  // Preserve input focus + cursor across re-render
+  const active = document.activeElement;
+  const wasInputFocused = active && active.id === 'riff-input';
+  const cursorPos = wasInputFocused ? active.selectionStart : null;
+  const inputValue = wasInputFocused ? active.value : '';
+  card.innerHTML = renderRiffBodyHTML(t);
+  if (wasInputFocused) {
+    const newInput = document.getElementById('riff-input');
+    if (newInput) {
+      newInput.value = inputValue;
+      newInput.focus();
+      if (cursorPos !== null) {
+        try { newInput.setSelectionRange(cursorPos, cursorPos); } catch (e) {}
+      }
+    }
+  }
+}
+
+function renderRiffBodyHTML(t) {
+  if (!t.thoughts) t.thoughts = [];
+  const running = timerInterval !== null;
+  const showReset = timerElapsed > 0 || running;
+  const stateClass = running ? 'running' : (timerPaused ? 'paused' : '');
+  const iconName = running ? 'pause' : 'play';
+  const count = t.thoughts.length;
+
+  const thoughtsHTML = count ? t.thoughts.map((thought, i) =>
+    i === editingIdx ? `
+      <div class="riff-thought editing">
+        <span class="riff-thought-dot">·</span>
+        <input class="riff-thought-edit" data-idx="${i}" value="${escapeHTML(thought).replace(/"/g, '&quot;')}" onblur="saveThoughtEdit(${i}, this.value)" onkeydown="thoughtEditKeydown(event, ${i})">
+      </div>
+    ` : `
+      <div class="riff-thought">
+        <span class="riff-thought-dot">·</span>
+        <span class="riff-thought-text" onclick="editThought(${i})">${escapeHTML(thought)}</span>
+        <button class="riff-thought-x" onclick="deleteThought(${i})" aria-label="Remove thought">${icon('x', 14)}</button>
+      </div>
+    `
+  ).join('') : `<div class="riff-thoughts-empty">Catch thoughts as they come, edit later</div>`;
+
+  return `
+    <div class="riff-header">
+      <div class="riff-timer-row">
+        <button class="riff-timer-toggle ${stateClass}" onclick="toggleRiffTimer()" aria-label="Toggle timer">
+          ${icon(iconName, 10)}
+          <span id="riff-time">${formatTime(timerElapsed)}</span>
+        </button>
+        ${showReset ? `<button class="riff-reset-btn" onclick="resetRiffTimer()" aria-label="Reset timer">${icon('refresh', 11)}</button>` : ''}
+      </div>
+      <span class="riff-thought-count">${count} thought${count === 1 ? '' : 's'}</span>
+    </div>
+    <div class="riff-input-row">
+      <input class="riff-input" id="riff-input" placeholder="What's coming up?" onkeydown="riffInputKeydown(event)" autocomplete="off">
+      <button class="riff-add-btn" onclick="addThought()" aria-label="Add thought">${icon('plus', 18)}</button>
+    </div>
+    <div class="riff-thoughts-list">${thoughtsHTML}</div>
+    ${count >= 3 ? `
+      <div class="riff-organize-row">
+        <button class="organize-btn" onclick="organizeFromThoughts('${t.id}')">${icon('sparkles', 12)}<span>Organize with AI</span></button>
+      </div>
+    ` : ''}
+  `;
+}
+
+function addThought() {
+  const input = document.getElementById('riff-input');
+  if (!input) return;
+  const value = input.value.trim();
+  if (!value) return;
+  const t = findTopic(ui.currentTopicId);
+  if (!t) return;
+  if (!t.thoughts) t.thoughts = [];
+  t.thoughts.push(value);
+  input.value = '';
+  saveDebounced();
+  renderRiffBody();
+  setTimeout(() => {
+    const newInput = document.getElementById('riff-input');
+    if (newInput) newInput.focus();
+  }, 10);
+}
+
+function deleteThought(idx) {
+  const t = findTopic(ui.currentTopicId);
+  if (!t || !t.thoughts) return;
+  t.thoughts.splice(idx, 1);
+  if (editingIdx === idx) editingIdx = null;
+  else if (editingIdx !== null && editingIdx > idx) editingIdx--;
+  saveDebounced();
+  renderRiffBody();
+}
+
+function editThought(idx) {
+  editingIdx = idx;
+  renderRiffBody();
+  setTimeout(() => {
+    const input = document.querySelector(`.riff-thought-edit[data-idx="${idx}"]`);
+    if (input) {
+      input.focus();
+      try { input.setSelectionRange(input.value.length, input.value.length); } catch (e) {}
+    }
+  }, 30);
+}
+
+function saveThoughtEdit(idx, value) {
+  if (editingIdx !== idx) return;
+  const t = findTopic(ui.currentTopicId);
+  if (!t || !t.thoughts) { editingIdx = null; return; }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    t.thoughts.splice(idx, 1);
+  } else {
+    t.thoughts[idx] = trimmed;
+  }
+  editingIdx = null;
+  saveDebounced();
+  renderRiffBody();
+}
+
+function thoughtEditKeydown(e, idx) {
+  if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+  if (e.key === 'Escape') { e.preventDefault(); editingIdx = null; renderRiffBody(); }
+}
+
+function riffInputKeydown(e) {
+  if (e.key === 'Enter') { e.preventDefault(); addThought(); }
+}
+
+function formatTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+function renderConvoEntry(t) {
+  const messages = state.conversations[t.id] || [];
+  if (messages.length === 0) {
+    return `
+      <div class="ai-block fade-in" style="display:flex;flex-direction:column;align-items:flex-start;gap:14px">
+        <div class="ai-label">${icon('sparkles', 12)}<span>Sonnet · ${escapeHTML(state.settings.personaName)}</span></div>
+        <p class="body muted">Hop into a casual chat with ${escapeHTML(state.settings.personaName)} about this topic. Same energy as talking at a party, just with someone who has read all your notes.</p>
+        <button class="btn-secondary" style="width:auto;padding:10px 16px" onclick="enterConvo('${t.id}')">${icon('send', 14)}<span>Start a convo</span></button>
+      </div>
+    `;
+  }
+  const preview = messages[messages.length - 1];
+  return `
+    <div class="ai-block fade-in">
+      <div class="ai-label">${icon('sparkles', 12)}<span>Sonnet · ${escapeHTML(state.settings.personaName)}</span></div>
+      <div class="ai-content">
+        <p class="muted" style="font-size:12px;margin-bottom:6px">Last message:</p>
+        <p>${escapeHTML(preview.content)}</p>
+      </div>
+      <div class="ai-actions">
+        <button class="ai-reroll" onclick="enterConvo('${ui.currentTopicId}')">${icon('send', 12)}<span>Open chat</span></button>
+      </div>
+    </div>
+  `;
+}
+
+function setMode(mode) {
+  ui.currentMode = mode;
+  // Need full re-render of the mode-content panel
+  render();
+  if (mode === 'brief' || mode === 'challenge') {
+    const t = findTopic(ui.currentTopicId);
+    if (!t) return;
+    const cacheKey = `${mode}:${t.id}`;
+    if (!state.modeCache[cacheKey]) loadAIMode(t, mode);
+  }
+}
+
+async function loadAIMode(t, mode) {
+  try {
+    const fn = mode === 'brief' ? aiBrief : aiChallenge;
+    const result = await fn(t);
+    state.modeCache[`${mode}:${t.id}`] = result;
+    saveDebounced();
+    if (ui.view === 'topic' && ui.currentTopicId === t.id && ui.currentMode === mode) {
+      const block = document.getElementById('mode-content');
+      if (block) block.innerHTML = renderModeContent(t);
+    }
+  } catch (e) {
+    const block = document.getElementById('ai-block-' + mode);
+    if (block) {
+      block.classList.remove('loading');
+      block.innerHTML = `<div class="ai-error">${escapeHTML(e.message)}</div><div class="ai-actions"><button class="ai-reroll" onclick="rerollMode('${t.id}','${mode}')">${icon('refresh', 12)}<span>Try again</span></button></div>`;
+    }
+  }
+}
+
+async function rerollMode(topicId, mode) {
+  const t = findTopic(topicId);
+  if (!t) return;
+  delete state.modeCache[`${mode}:${t.id}`];
+  const block = document.getElementById('mode-content');
+  if (block) block.innerHTML = `<div class="ai-block loading" id="ai-block-${mode}"><span class="spinner"></span><span style="margin-left:10px;font-size:13px">Re-asking Sonnet...</span></div>`;
+  await loadAIMode(t, mode);
+}
+
+function formatAIContent(text) {
+  // Convert *italic.* lead to <em>...</em>
+  let out = escapeHTML(text);
+  out = out.replace(/^\*([^*\n]+)\*/m, '<em>$1</em>');
+  // Convert numbered list lines into <ol>
+  const lines = out.split('\n').map(l => l.trim()).filter(Boolean);
+  const isNumbered = lines.every(l => /^\d+[.)]\s/.test(l));
+  if (isNumbered && lines.length >= 2) {
+    return '<ol>' + lines.map(l => `<li>${l.replace(/^\d+[.)]\s*/, '')}</li>`).join('') + '</ol>';
+  }
+  // Otherwise paragraphize on double-newline
+  return text.split(/\n\n+/).map(p => `<p>${escapeHTML(p).replace(/^\*([^*\n]+)\*/m, '<em>$1</em>').replace(/\n/g, '<br>')}</p>`).join('');
+}
+
+async function organizeFromThoughts(topicId) {
+  const t = findTopic(topicId);
+  if (!t || !t.thoughts || !t.thoughts.length) return;
+  const result = document.getElementById('organize-result');
+  if (!result) return;
+  result.innerHTML = `<div class="organize-result" style="text-align:center"><span class="spinner" style="display:inline-block;vertical-align:middle"></span> <span style="font-size:12px;color:var(--text-muted);margin-left:6px">Organizing your thoughts...</span></div>`;
+  const notesText = t.thoughts.map(th => '- ' + th).join('\n');
+  try {
+    const data = await aiOrganize(t, notesText);
+    if (!data) throw new Error('Could not parse response');
+    renderOrganized(data);
+  } catch (e) {
+    result.innerHTML = `<div class="ai-error">${escapeHTML(e.message)}</div>`;
+  }
+}
+
+function renderOrganized(data) {
+  const result = document.getElementById('organize-result');
+  const section = (label, items) => items && items.length ? `<h4>${label}</h4><ul>${items.map(i => `<li>${escapeHTML(i)}</li>`).join('')}</ul>` : '';
+  result.innerHTML = `
+    <div class="organize-result fade-in">
+      ${section('Insights', data.insights)}
+      ${section('Counter-arguments', data.counters)}
+      ${section('Follow-ups', data.followups)}
+      ${section('Topics to learn more about', data.learn_more)}
+    </div>
+  `;
+  // Auto-add learn_more items to discover queue
+  if (data.learn_more && data.learn_more.length && state.settings.aiSuggestions) {
+    data.learn_more.forEach(title => {
+      if (!state.discoverQueue.find(d => d.title === title)) {
+        state.discoverQueue.push({ id: uid('disc'), title, source: 'notes', status: 'pending' });
+      }
+    });
+    saveDebounced();
+  }
+}
+
+/* ========== RELATED TOPICS ========== */
+async function loadRelated(topicId) {
+  const t = findTopic(topicId);
+  if (!t) return;
+  const list = document.getElementById('related-list');
+  list.innerHTML = `<div class="ai-block loading" style="min-height:60px"><span class="spinner"></span><span style="margin-left:10px;font-size:13px">Magpie is looking...</span></div>`;
+  try {
+    const data = await aiRelated(t);
+    if (!data || !data.suggestions) throw new Error('Could not parse suggestions');
+    state.modeCache[`related:${t.id}`] = data.suggestions;
+    saveDebounced();
+    list.innerHTML = renderRelatedList(data.suggestions, t.id);
+  } catch (e) {
+    list.innerHTML = `<div class="ai-error">${escapeHTML(e.message)}</div>`;
+  }
+}
+
+function renderRelatedList(suggestions, topicId) {
+  return suggestions.map((s, i) => `
+    <div class="related-item fade-in stagger-${Math.min(i + 1, 5)}">
+      <span class="related-item-text">${escapeHTML(s)}</span>
+      <button class="related-add" onclick="addRelatedTopic('${topicId}', ${i})" aria-label="Add to grid">${icon('plus', 14)}</button>
+    </div>
+  `).join('');
+}
+
+function addRelatedTopic(topicId, suggestionIndex) {
+  const t = findTopic(topicId);
+  if (!t) return;
+  const suggestions = state.modeCache[`related:${t.id}`];
+  if (!suggestions) return;
+  const title = suggestions[suggestionIndex];
+  // Add to the same subject as the source topic
+  const newTopic = { id: uid('t'), subjectId: t.subjectId, title, angles: [...t.angles].slice(0, 1), thoughts: [] };
+  state.topics.push(newTopic);
+  saveDebounced();
+  toast('Added to your grid');
+  const btn = document.querySelectorAll('.related-add')[suggestionIndex];
+  if (btn) { btn.classList.add('added'); btn.innerHTML = icon('check', 14); }
+}
+
+function toggleAISuggestions() {
+  state.settings.aiSuggestions = !state.settings.aiSuggestions;
+  saveDebounced();
+  render();
+}
+
+/* ========== TIMER ========== */
+let timerInterval = null;
+let timerStart = 0;
+let timerElapsed = 0;
+let timerPaused = false;
+
+function toggleRiffTimer() {
+  if (timerInterval === null) {
+    // Start or resume
+    timerStart = Date.now() - (timerElapsed * 1000);
+    timerPaused = false;
+    timerInterval = setInterval(tickRiffTimer, 500);
+  } else {
+    // Pause: capture elapsed and stop
+    timerElapsed = (Date.now() - timerStart) / 1000;
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timerPaused = true;
+  }
+  renderRiffBody();
+}
+
+function resetRiffTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  timerElapsed = 0;
+  timerPaused = false;
+  renderRiffBody();
+}
+
+function tickRiffTimer() {
+  timerElapsed = (Date.now() - timerStart) / 1000;
+  const timeEl = document.getElementById('riff-time');
+  if (timeEl) timeEl.textContent = formatTime(timerElapsed);
+}
+
+/* ========== CONVO ========== */
+function enterConvo(topicId) {
+  ui.currentTopicId = topicId;
+  navigate('convo');
+}
+
+function renderConvo() {
+  const t = findTopic(ui.currentTopicId);
+  if (!t) return renderHome();
+  const messages = state.conversations[t.id] || [];
+
+  setTimeout(() => {
+    const msgsEl = document.getElementById('convo-messages');
+    if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+    const input = document.getElementById('convo-input');
+    if (input) input.focus();
+  }, 30);
+
+  return `
+    <div class="convo-screen">
+      <div class="convo-meta">
+        <p class="convo-meta-eyebrow">Convo with ${escapeHTML(state.settings.personaName)} about</p>
+        <p class="convo-meta-topic">${escapeHTML(t.title)}</p>
+      </div>
+      <div class="convo-messages" id="convo-messages">
+        ${messages.length === 0 ? `
+          <div class="msg msg-ai fade-in">hey, what's pulling you on this one?</div>
+        ` : messages.map(m => `
+          <div class="msg msg-${m.role === 'user' ? 'user' : 'ai'}">${escapeHTML(m.content).replace(/\n/g, '<br>')}</div>
+        `).join('')}
+      </div>
+      <div class="convo-input-row">
+        <textarea class="convo-input" id="convo-input" placeholder="Type your reply..." rows="1" oninput="autosizeInput(this)" onkeydown="convoKeydown(event)"></textarea>
+        <button class="convo-send" onclick="sendConvoMessage()" id="convo-send-btn">${icon('send', 16)}</button>
+      </div>
+    </div>
+  `;
+}
+
+function autosizeInput(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function convoKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendConvoMessage();
+  }
+}
+
+async function sendConvoMessage() {
+  const input = document.getElementById('convo-input');
+  const text = (input?.value || '').trim();
+  if (!text) return;
+  const t = findTopic(ui.currentTopicId);
+  if (!t) return;
+
+  // Init conversation if needed
+  if (!state.conversations[t.id]) state.conversations[t.id] = [];
+
+  // If first message, seed with the AI's opener that's shown in the UI
+  if (state.conversations[t.id].length === 0) {
+    state.conversations[t.id].push({ role: 'assistant', content: "hey, what's pulling you on this one?" });
+  }
+
+  state.conversations[t.id].push({ role: 'user', content: text });
+  input.value = '';
+  input.style.height = 'auto';
+  saveDebounced();
+
+  const msgsEl = document.getElementById('convo-messages');
+  // Append user message
+  const userMsg = document.createElement('div');
+  userMsg.className = 'msg msg-user fade-in';
+  userMsg.innerHTML = escapeHTML(text).replace(/\n/g, '<br>');
+  msgsEl.appendChild(userMsg);
+
+  // Typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'msg msg-ai msg-typing fade-in';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  msgsEl.appendChild(typing);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  document.getElementById('convo-send-btn').disabled = true;
+
+  try {
+    const reply = await aiConvoReply(t, state.conversations[t.id], state.settings.personaName);
+    typing.remove();
+    state.conversations[t.id].push({ role: 'assistant', content: reply });
+    const replyEl = document.createElement('div');
+    replyEl.className = 'msg msg-ai fade-in';
+    replyEl.innerHTML = escapeHTML(reply).replace(/\n/g, '<br>');
+    msgsEl.appendChild(replyEl);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    saveDebounced();
+  } catch (e) {
+    typing.remove();
+    const errEl = document.createElement('div');
+    errEl.className = 'msg msg-ai fade-in';
+    errEl.style.color = 'var(--danger)';
+    errEl.textContent = 'Network hiccup, try again';
+    msgsEl.appendChild(errEl);
+  } finally {
+    document.getElementById('convo-send-btn').disabled = false;
+  }
+}
+
+/* ========== RENDER: TOPICS LIST ========== */
+function renderTopicsList() {
+  const all = state.topics.slice().sort((a, b) => a.title.localeCompare(b.title));
+  if (all.length === 0) {
+    return `
+      <div class="screen-pad">
+        <div class="list-empty">
+          <p class="h3">No topics yet</p>
+          <p class="tagline">Start collecting</p>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="screen-pad">
+      <p class="eyebrow">All topics · ${all.length}</p>
+      <div class="topic-list">
+        ${all.map((t, i) => `
+          <div class="topic-card fade-in stagger-${Math.min(i + 1, 5)}" onclick="openTopic('${t.id}')">
+            <div class="topic-card-meta">
+              <span class="topic-pill">${escapeHTML(findSubject(t.subjectId)?.name || '')}</span>
+              ${t.angles.slice(0, 2).map(a => `<span class="topic-pill">${escapeHTML(a)}</span>`).join('')}
+            </div>
+            <p class="topic-card-title">${escapeHTML(t.title)}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ========== RENDER: DISCOVER ========== */
+function renderDiscover() {
+  if (!state.settings.aiSuggestions) {
+    return `
+      <div class="screen-pad">
+        <div class="list-empty">
+          <p class="h3">AI suggestions are off</p>
+          <p class="tagline">Turn them on in a topic to use Discover</p>
+        </div>
+      </div>
+    `;
+  }
+  const pending = state.discoverQueue.filter(d => d.status === 'pending');
+  return `
+    <div class="screen-pad">
+      <p class="eyebrow">Discover · ${pending.length} waiting</p>
+      ${pending.length === 0 ? `
+        <div class="list-empty">
+          <p class="h3">Nothing waiting</p>
+          <p class="tagline">Tap below to ask Magpie for fresh ideas</p>
+        </div>
+      ` : pending.map((d, i) => `
+        <div class="discover-card fade-in stagger-${Math.min(i + 1, 5)}">
+          <div class="discover-text">
+            <p class="discover-title">${escapeHTML(d.title)}</p>
+            <p class="discover-from">via ${escapeHTML(d.source)}</p>
+          </div>
+          <div class="discover-actions">
+            <button class="discover-skip" onclick="skipDiscover('${d.id}')" aria-label="Skip">${icon('x', 14)}</button>
+            <button class="discover-add" onclick="acceptDiscover('${d.id}')" aria-label="Add">${icon('plus', 14)}</button>
+          </div>
+        </div>
+      `).join('')}
+      <div class="discover-generate">
+        <button class="btn-secondary" style="width:auto;padding:10px 18px" onclick="generateDiscover()">${icon('sparkles', 14)}<span>Ask Magpie for ideas</span></button>
+      </div>
+    </div>
+  `;
+}
+
+function skipDiscover(id) {
+  state.discoverQueue = state.discoverQueue.filter(d => d.id !== id);
+  saveDebounced();
+  render();
+}
+
+function acceptDiscover(id) {
+  const item = state.discoverQueue.find(d => d.id === id);
+  if (!item) return;
+  // Add to "Discoveries" subject or create one
+  let bucket = state.subjects.find(s => s.name === 'Discoveries');
+  if (!bucket) {
+    bucket = { id: uid('sub'), name: 'Discoveries', order: state.subjects.length };
+    state.subjects.push(bucket);
+  }
+  state.topics.push({ id: uid('t'), subjectId: bucket.id, title: item.title, angles: [], thoughts: [] });
+  state.discoverQueue = state.discoverQueue.filter(d => d.id !== id);
+  saveDebounced();
+  toast('Added to your grid');
+  render();
+}
+
+async function generateDiscover() {
+  if (state.topics.length === 0) { toast('Add some topics first'); return; }
+  // Pick a random topic as a seed
+  const seed = pickRandom(state.topics);
+  toast('Magpie is looking...');
+  try {
+    const data = await aiRelated(seed);
+    if (data && data.suggestions) {
+      data.suggestions.forEach(s => {
+        if (!state.discoverQueue.find(d => d.title === s)) {
+          state.discoverQueue.push({ id: uid('disc'), title: s, source: `${seed.title.slice(0, 28)}...`, status: 'pending' });
+        }
+      });
+      saveDebounced();
+      render();
+    } else {
+      toast('Could not generate');
+    }
+  } catch (e) {
+    toast('Network hiccup');
+  }
+}
+
+/* ========== RENDER: NOTES ========== */
+function renderNotes() {
+  const withThoughts = state.topics.filter(t => (t.thoughts || []).length > 0).slice().sort((a, b) => a.title.localeCompare(b.title));
+  if (withThoughts.length === 0) {
+    return `
+      <div class="screen-pad">
+        <div class="list-empty">
+          <p class="h3">No notes yet</p>
+          <p class="tagline">Riff on a topic, capture thoughts as they come</p>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="screen-pad">
+      <p class="eyebrow">Your journal · ${withThoughts.length}</p>
+      ${withThoughts.map((t, i) => `
+        <div class="note-list-item fade-in stagger-${Math.min(i + 1, 5)}" onclick="openTopic('${t.id}')" style="cursor:pointer">
+          <p class="note-list-topic">${escapeHTML(t.title)}</p>
+          <ul class="note-bullets">
+            ${t.thoughts.slice(0, 6).map(th => `<li>${escapeHTML(th)}</li>`).join('')}
+            ${t.thoughts.length > 6 ? `<li style="color:var(--text-dim);font-style:italic">+ ${t.thoughts.length - 6} more</li>` : ''}
+          </ul>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* ========== MODAL: ADD TOPIC ========== */
+let addState = { mode: 'ai', extracted: null, selected: {}, busy: false };
+
+function openAddTopic() {
+  addState = { mode: 'ai', extracted: null, selected: {}, busy: false };
+  showModal(renderAddTopicModal());
+}
+
+function renderAddTopicModal() {
+  return `
+    <div class="modal-header">
+      <span class="modal-title">Add topic</span>
+      <button class="icon-btn" onclick="closeModal()" aria-label="Close">${icon('x', 18)}</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      ${renderAddTopicBody()}
+    </div>
+    <div class="modal-footer" id="modal-footer">
+      ${renderAddTopicFooter()}
+    </div>
+  `;
+}
+
+function renderAddTopicBody() {
+  return `
+    <div class="add-mode-tabs">
+      <button class="add-mode-tab ${addState.mode === 'ai' ? 'active' : ''}" onclick="setAddMode('ai')">${icon('sparkles', 14)}<span style="margin-left:6px">AI assist</span></button>
+      <button class="add-mode-tab ${addState.mode === 'manual' ? 'active' : ''}" onclick="setAddMode('manual')">${icon('plus', 14)}<span style="margin-left:6px">Manual</span></button>
+    </div>
+    ${addState.mode === 'ai' ? renderAddAIMode() : renderAddManualMode()}
+  `;
+}
+
+function renderAddAIMode() {
+  if (addState.busy) {
+    return `<div class="ai-block loading" style="min-height:140px"><span class="spinner"></span><span style="margin-left:10px;font-size:13px">Magpie is reading your interests...</span></div>`;
+  }
+  if (addState.extracted) {
+    return `
+      ${addState.extracted.subjects.map((subj, si) => `
+        <div class="ai-extract-result">
+          <div class="ai-extract-subj-name">${escapeHTML(subj.name)}</div>
+          <div class="ai-extract-list">
+            ${subj.topics.map((topic, ti) => {
+              const key = `${si}-${ti}`;
+              const checked = addState.selected[key] !== false;
+              return `
+                <div class="ai-extract-topic">
+                  <span class="ai-extract-check ${checked ? 'checked' : ''}" onclick="toggleExtractedTopic('${key}')" data-key="${key}">${icon('check', 12)}</span>
+                  <span>${escapeHTML(topic)}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `).join('')}
+    `;
+  }
+  return `
+    <div class="ai-assist-help">${icon('sparkles', 16)}<span>Type a sentence about what you're into. Magpie will turn it into subjects and topics you can riff on.</span></div>
+    <div class="field">
+      <label class="field-label">Your interests</label>
+      <textarea class="field-textarea" id="ai-interests-input" placeholder="e.g. 'I love metal music, sci-fi books, ancient Rome, and big cats'"></textarea>
+      <p class="field-help">The more specific, the better Magpie's picks.</p>
+    </div>
+  `;
+}
+
+function renderAddManualMode() {
+  return `
+    <div class="field">
+      <label class="field-label">Topic</label>
+      <input type="text" class="field-input" id="manual-title" placeholder="e.g. Why every empire thinks it is the last one">
+      <p class="field-help">A specific conversation prompt, not a category.</p>
+    </div>
+    <div class="field">
+      <label class="field-label">Subject</label>
+      <select class="field-select" id="manual-subject">
+        ${state.subjects.map(s => `<option value="${s.id}">${escapeHTML(s.name)}</option>`).join('')}
+        <option value="__new__">+ New subject</option>
+      </select>
+    </div>
+    <div class="field" id="manual-new-subj-field" style="display:none">
+      <label class="field-label">New subject name</label>
+      <input type="text" class="field-input" id="manual-new-subj">
+    </div>
+    <div class="field">
+      <label class="field-label">Angles (optional)</label>
+      <div style="display:flex;flex-wrap:wrap;gap:4px" id="manual-angles">
+        ${ANGLES.map(a => `<button type="button" class="chip" onclick="toggleManualAngle(this, '${a}')">${a}</button>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderAddTopicFooter() {
+  if (addState.mode === 'ai') {
+    if (addState.extracted) {
+      const totalSelected = Object.values(addState.selected).filter(v => v !== false).length || addState.extracted.subjects.reduce((s, sub) => s + sub.topics.length, 0) - Object.values(addState.selected).filter(v => v === false).length;
+      return `
+        <button class="btn-secondary" onclick="resetExtracted()">Start over</button>
+        <button class="btn-primary" onclick="acceptExtracted()">Add ${totalSelected} topics</button>
+      `;
+    }
+    return `
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="runExtract()">${icon('sparkles', 14)}<span>Extract topics</span></button>
+    `;
+  }
+  return `
+    <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn-primary" onclick="saveManualTopic()">Add topic</button>
+  `;
+}
+
+function setAddMode(mode) {
+  addState.mode = mode;
+  addState.extracted = null;
+  refreshAddModal();
+  if (mode === 'manual') {
+    setTimeout(() => {
+      const sel = document.getElementById('manual-subject');
+      if (sel) sel.addEventListener('change', () => {
+        document.getElementById('manual-new-subj-field').style.display = sel.value === '__new__' ? '' : 'none';
+      });
+    }, 30);
+  }
+}
+
+function toggleManualAngle(el, angle) {
+  el.classList.toggle('active');
+}
+
+async function runExtract() {
+  const input = document.getElementById('ai-interests-input');
+  const text = (input?.value || '').trim();
+  if (!text) { toast('Tell Magpie what you\'re into'); return; }
+  addState.busy = true;
+  refreshAddModal();
+  try {
+    const data = await aiExtract(text);
+    if (!data || !data.subjects) throw new Error('Could not parse');
+    addState.extracted = data;
+    addState.selected = {};
+  } catch (e) {
+    toast('Could not extract, try again');
+  }
+  addState.busy = false;
+  refreshAddModal();
+}
+
+function toggleExtractedTopic(key) {
+  const current = addState.selected[key];
+  addState.selected[key] = current === false ? true : false;
+  const el = document.querySelector(`.ai-extract-check[data-key="${key}"]`);
+  if (el) el.classList.toggle('checked', addState.selected[key] !== false);
+  refreshAddModal(true);
+}
+
+function refreshAddModal(footerOnly = false) {
+  if (!footerOnly) {
+    const body = document.getElementById('modal-body');
+    if (body) body.innerHTML = renderAddTopicBody();
+  }
+  const footer = document.getElementById('modal-footer');
+  if (footer) footer.innerHTML = renderAddTopicFooter();
+}
+
+function resetExtracted() {
+  addState.extracted = null;
+  addState.selected = {};
+  refreshAddModal();
+}
+
+function acceptExtracted() {
+  if (!addState.extracted) return;
+  let added = 0;
+  addState.extracted.subjects.forEach((subj, si) => {
+    // Find or create subject
+    let sub = state.subjects.find(s => s.name.toLowerCase() === subj.name.toLowerCase());
+    if (!sub) {
+      sub = { id: uid('sub'), name: subj.name, order: state.subjects.length };
+      state.subjects.push(sub);
+    }
+    subj.topics.forEach((topic, ti) => {
+      const key = `${si}-${ti}`;
+      if (addState.selected[key] === false) return;
+      // Avoid duplicates
+      if (state.topics.find(t => t.title === topic && t.subjectId === sub.id)) return;
+      state.topics.push({ id: uid('t'), subjectId: sub.id, title: topic, angles: [], thoughts: [] });
+      added++;
+    });
+  });
+  saveDebounced();
+  closeModal();
+  toast(`Added ${added} topic${added === 1 ? '' : 's'}`);
+  render();
+}
+
+function saveManualTopic() {
+  const titleEl = document.getElementById('manual-title');
+  const subjSel = document.getElementById('manual-subject');
+  const title = (titleEl?.value || '').trim();
+  if (!title) { toast('Add a title'); return; }
+  let subjectId = subjSel.value;
+  if (subjectId === '__new__') {
+    const newSubjEl = document.getElementById('manual-new-subj');
+    const newName = (newSubjEl?.value || '').trim();
+    if (!newName) { toast('Name your new subject'); return; }
+    const newSubj = { id: uid('sub'), name: newName, order: state.subjects.length };
+    state.subjects.push(newSubj);
+    subjectId = newSubj.id;
+  }
+  const activeAngles = Array.from(document.querySelectorAll('#manual-angles .chip.active')).map(el => el.textContent.trim());
+  state.topics.push({ id: uid('t'), subjectId, title, angles: activeAngles, thoughts: [] });
+  saveDebounced();
+  closeModal();
+  toast('Topic added');
+  render();
+}
+
+/* ========== MODAL: SETTINGS ========== */
+function openSettings() {
+  showModal(`
+    <div class="modal-header">
+      <span class="modal-title">Settings</span>
+      <button class="icon-btn" onclick="closeModal()" aria-label="Close">${icon('x', 18)}</button>
+    </div>
+    <div class="modal-body">
+      <p class="setting-group-label">Persona</p>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Convo persona name</div>
+          <div class="setting-desc">What ${escapeHTML(state.settings.personaName)} should be called.</div>
+        </div>
+        <input type="text" class="setting-input" value="${escapeHTML(state.settings.personaName)}" oninput="updatePersonaName(this.value)">
+      </div>
+      <p class="setting-group-label">AI</p>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">AI suggestions</div>
+          <div class="setting-desc">Proactive nudges in topics and graph. Off means only your inputs show.</div>
+        </div>
+        <button class="ai-toggle" onclick="toggleAISuggestions()" aria-label="Toggle AI suggestions">
+          <span class="toggle-switch ${state.settings.aiSuggestions ? 'on' : ''}"><span class="toggle-knob"></span></span>
+        </button>
+      </div>
+      <p class="setting-group-label">Data</p>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Reset to seed</div>
+          <div class="setting-desc">Clears all your edits and starts fresh.</div>
+        </div>
+        <button class="btn-secondary" style="width:auto;padding:8px 14px;font-size:12px" onclick="resetAll()">Reset</button>
+      </div>
+      <p class="setting-group-label">About</p>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Magpie</div>
+          <div class="setting-desc">v1 · Collect curiosities. Talk them through.</div>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+function updatePersonaName(name) {
+  state.settings.personaName = name.trim() || 'Riff';
+  saveDebounced();
+}
+
+function resetAll() {
+  if (!confirm('Reset everything to the starter pack?')) return;
+  state = JSON.parse(JSON.stringify(SEED));
+  saveState();
+  closeModal();
+  ui.history = ['home']; ui.view = 'home'; ui.tab = 'home';
+  render();
+  toast('Reset to seed');
+}
+
+/* ========== MODAL HELPERS ========== */
+function showModal(html) {
+  const backdrop = document.getElementById('modal-backdrop');
+  const modal = document.getElementById('modal');
+  modal.innerHTML = html;
+  backdrop.classList.add('open');
+  setTimeout(() => modal.classList.add('open'), 10);
+  document.body.classList.add('no-scroll');
+}
+function closeModal() {
+  const backdrop = document.getElementById('modal-backdrop');
+  const modal = document.getElementById('modal');
+  modal.classList.remove('open');
+  setTimeout(() => {
+    backdrop.classList.remove('open');
+    modal.innerHTML = '';
+    document.body.classList.remove('no-scroll');
+  }, 260);
+}
+
+/* ========== SAVE & SPIN ========== */
+function saveAndSpin(topicId) {
+  // Mark first visit done
+  if (!state.meta.firstVisitDone) { state.meta.firstVisitDone = true; saveDebounced(); }
+  // Notes are already saved on input
+  spinRandom();
+}
+
+/* ========== MAIN RENDER ========== */
+function render() {
+  renderAppbar();
+  const screen = document.getElementById('screen');
+  let content = '';
+  switch (ui.view) {
+    case 'home': content = renderHome(); break;
+    case 'subject': content = renderSubject(); break;
+    case 'topic': content = renderTopic(); break;
+    case 'topics': content = renderTopicsList(); break;
+    case 'discover': content = renderDiscover(); break;
+    case 'notes': content = renderNotes(); break;
+    case 'convo': content = renderConvo(); break;
+    default: content = renderHome();
+  }
+  screen.innerHTML = content;
+  renderTabbar();
+
+  // Lazy-load AI content for current mode if needed
+  if (ui.view === 'topic') {
+    const t = findTopic(ui.currentTopicId);
+    if (t && (ui.currentMode === 'brief' || ui.currentMode === 'challenge')) {
+      const cacheKey = `${ui.currentMode}:${t.id}`;
+      if (!state.modeCache[cacheKey]) {
+        loadAIMode(t, ui.currentMode);
+      }
+    }
+  }
+}
+
+/* ========== INIT ========== */
+(async function init() {
+  await loadState();
+  render();
+})();
+</script>
+</body>
+</html>

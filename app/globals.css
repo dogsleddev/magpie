@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import '../styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+  }
+  body {
+    min-height: 100dvh;
+  }
+  ::selection {
+    background: var(--purple-soft);
+    color: var(--text);
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .iridescent-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+  .iridescent-sweep::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(29, 158, 117, 0.18) 45%, rgba(55, 138, 221, 0.18) 55%, rgba(127, 119, 221, 0.18) 65%, transparent 80%);
+    transform: translateX(-100%);
+    transition: transform 600ms ease-out;
+    pointer-events: none;
+  }
+  .iridescent-sweep:hover::after {
+    transform: translateX(100%);
+  }
+}

@@ -1,0 +1,51 @@
+/**
+ * Magpie design tokens.
+ * The plumage palette and core sizing tokens.
+ * Imported into app/globals.css and consumed via Tailwind theme.extend or directly.
+ */
+
+:root {
+  /* Backgrounds */
+  --bg: #0A0A09;
+  --bg-card: #161513;
+  --bg-card-2: #1F1D1A;
+  --bg-input: #100F0D;
+
+  /* Borders */
+  --border: #2A2925;
+  --border-strong: #3A3833;
+
+  /* Text */
+  --text: #F5F4EF;
+  --text-muted: #A5A39A;
+  --text-dim: #76746C;
+
+  /* Accents (the iridescent plumage) */
+  --teal: #1D9E75;
+  --teal-soft: #0F6E56;
+  --blue: #378ADD;
+  --blue-soft: #185FA5;
+  --purple: #7F77DD;
+  --purple-soft: #534AB7;
+
+  /* Status */
+  --danger: #E24B4A;
+  --warn: #EF9F27;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  /* Fonts */
+  --font-display: 'Fraunces', 'Georgia', serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+
+  /* Transitions */
+  --transition: 160ms cubic-bezier(.4, 0, .2, 1);
+
+  /* Shadows */
+  --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --shadow-glow-teal: 0 0 8px rgba(29, 158, 117, 0.4);
+}
