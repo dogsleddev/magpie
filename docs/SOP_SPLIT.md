@@ -103,8 +103,9 @@ You do the dashboard clicks; Claude can draft configs and drive parts of Vercel 
    git checkout master
    ```
 3. Vercel → Settings → Domains → add `hackathon.magpie.wiki` → assign it to the `hackathon` git branch. Add the CNAME at your registrar per Vercel's instructions.
-4. [ ] hackathon.magpie.wiki serves the app (identical to master for now).
-5. `master` stays clean. All Krava/Linq work happens on `hackathon` next session.
+4. **Smoke-test base functionality on hackathon.magpie.wiki** (the only check needed; the branch is identical code to master tonight): sign in, add a thought to a topic, and send one Convo message and get a reply. If those two work, the hackathon front door is good.
+   - Note: both domains hit the same Supabase project, so this writes to the same DB as magpie.wiki (expected). Data is isolated per user, not per domain.
+5. `master` stays clean. End of night, main and hackathon are identical code, different domain. All Krava/Linq work happens on `hackathon` next session.
 
 ## Optional polish (only if time remains)
 Kill the dead-ends a judge would hit: the disabled "Add topic" button and the dead Facets/Discover/Journal bottom tabs. Cheapest win is to hide them; or build Phase 6 facets (quick, AI-free). Redeploy.
