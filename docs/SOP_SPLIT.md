@@ -2,7 +2,7 @@
 
 **Purpose:** tonight's runbook. Take the build from "Phase 5 committed, local repo" to "tested, deployed base on magpie.wiki, with a `hackathon` branch live at hackathon.magpie.wiki." **Stop at the split.** Krava and Linq are the next session.
 
-> **STATUS (2026-05-30, session 4) - read PROGRESS.md first.** Steps 1 to 4 are essentially DONE: the base is deployed and live at https://magpie.wiki (Vercel, `dogsled` team, git-linked to `dogsleddev/magpie`). Sign-in works via the password option; magic link is pending custom SMTP plus adding the **www** callback URL `https://www.magpie.wiki/auth/callback` to Supabase (the app serves on www.magpie.wiki). **Step 5 (the split) is NOT done.** Start at the security items + SMTP + Step 5 in PROGRESS.md "START HERE". The "Ground truth" and time estimates below are from the original plan and are now partly stale.
+> **SUPERSEDED (2026-05-30, session 5).** The split is **abandoned.** `master` is the single build line and deploys to magpie.wiki; there is no `hackathon` branch and no `hackathon.magpie.wiki`. Krava and Linq land on `master`. Steps 1 to 4 (deploy the base) are done; **Step 5 (the split) will not be done.** This doc is kept for history only. For current state read `PROGRESS.md`; for the Krava runbook read `docs/SOP_KRAVA.md`.
 
 **Time:** ~2.5 to 3.5 hours. Deploy + magic-link auth is the unpredictable part. If it eats the whole night, that is still the win: a tested, deployed, multi-user base is worth more than half-built features.
 

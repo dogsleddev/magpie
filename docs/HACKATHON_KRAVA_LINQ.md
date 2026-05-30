@@ -242,7 +242,7 @@ Three minutes of clean flow beats five minutes of feature tour.
 
 Per the hackathon submission form on the Luma event:
 
-- **Deployed app URL:** magpie.wiki (or `hack.magpie.wiki` if we want to keep prod clean)
+- **Deployed app URL:** magpie.wiki
 - **Team name:** Chris's choice
 - **Participant names:** Chris and any teammates
 - **Short project description (200 to 400 words):** lead with the privacy thesis (wiki of real curiosity is high-stakes data), then the Krava integration architecture, then the Linq bonus angle
@@ -286,11 +286,11 @@ These sharpen the plan above, decided the night before the event. **Read this se
 ### Where the build is
 Phases 1 to 5 are done, tested, and deployed. The base app (grid, capture, Brief/Challenge/Questions/Convo, persisted conversations) is live on **magpie.wiki**. The Level 1 identity seam is closed on `master`: `callClaude`/`streamClaude` accept a `userId` and every AI route threads the authenticated user's id. So Krava is a one-file change with zero route edits.
 
-### The split (done before the event)
-- `master` = the clean product → **magpie.wiki**. No Krava/Linq code ever lands here.
-- `hackathon` branch = master + Krava + Linq + the iMessage inbox + `0002_hackathon.sql` → **hackathon.magpie.wiki** (Vercel domain assigned to the branch).
-- The public submission repo is this repo with the `hackathon` branch made public.
-- Optional during the event: redirect magpie.wiki → hackathon.magpie.wiki so visitors land on the demo. Flip back after.
+### The split (ABANDONED 2026-05-30, session 5)
+- **No split.** `master` is the single build line and deploys to **magpie.wiki**. There is no `hackathon` branch and no `hackathon.magpie.wiki`.
+- Krava, Linq, the iMessage inbox, and `0002_hackathon.sql` all land on `master` and ship to magpie.wiki.
+- The submission repo is this repo (`dogsleddev/magpie`, already public) on `master`.
+- The Linq webhook is therefore `https://magpie.wiki/api/linq/webhook` (no subdomain).
 
 ### Krava (primary track: Best Krava Project, BYO path)
 - Wrap `lib/ai/client.ts` only. `callClaude` and `streamClaude` already receive `args.userId`. Fill in the Krava branch: `getOrCreate(args.userId)` then a Krava-mediated call; keep the direct-Anthropic fallback gated on `!process.env.KRAVA_APP_KEY` so the demo survives an SDK hiccup.
@@ -301,7 +301,7 @@ Phases 1 to 5 are done, tested, and deployed. The base app (grid, capture, Brief
 - Auth: `Authorization: Bearer <LINQ_API_KEY>`. Token + phone number from the Linq rep at the event.
 - Inbound webhook at `app/api/linq/webhook/route.ts`. Headers: `X-Webhook-Timestamp`, `X-Webhook-Signature`, `X-Webhook-Event`. Verify HMAC-SHA256 over `"{timestamp}.{rawBody}"` with the signing secret. Read `req.text()` for the raw body BEFORE parsing, constant-time compare, reject stale timestamps. Handle `message.received`. Return 2xx within 10s, dedupe on `event_id` (at-least-once delivery, up to 10 retries).
 - Outbound via `lib/linq/send.ts`: POST `https://api.linqapp.com/api/partner/v3/chats` (new chat) or `/chats/{chatId}/messages` (reply). Body `{ from, to: ["+1..."], message: { parts: [{ type: "text", value }] } }`. **No links in outbound messages** (URLs are rejected). Maggie speaks prose, so fine.
-- The webhook needs a public URL: `https://hackathon.magpie.wiki/api/linq/webhook` (already public from the deploy, no tunnel needed).
+- The webhook needs a public URL: `https://magpie.wiki/api/linq/webhook` (already public from the deploy, no tunnel needed).
 - Link your own phone to your user: one update to `user_settings.phone_number` once you have the Linq number.
 
 ### Tiered demo goal (lock Tier 0 first)

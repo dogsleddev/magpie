@@ -1,24 +1,23 @@
 # Magpie · Progress
 
-**Last updated:** 2026-05-30 (session 4: deploy + QA hardening)
-**Status:** Phases 1 to 5 complete and committed. Base app is **DEPLOYED and LIVE at https://magpie.wiki**. Magic-link sign-in is not finished (blocked on email delivery); a password sign-in option is live as the working way in. The hackathon split (SOP Step 5) is NOT done yet.
-**Branch:** `master` (Vercel auto-deploys the latest `master`; see `git log`)
-**Hackathon clock:** Krava x Linq, Saturday May 30 2026, Frontier Tower SF. Base product is live; the split + Krava/Linq work is the next session.
+**Last updated:** 2026-05-30 (session 5: hackathon-day feature build + facets)
+**Status:** Base app is **LIVE at https://magpie.wiki** and has grown well past the MVP base. This session shipped manual/AI **Add Topic**, **search**, **Recent Ideas** with inline editing, **Facets navigation**, the persona rename to **Magpie**, and brand polish. The **split is abandoned**: `master` is the single build line and the hackathon work lands here. **Krava is next** (see `docs/SOP_KRAVA.md`), then Linq.
+**Branch:** `master` (Vercel auto-deploys the latest `master` to magpie.wiki).
+**Hackathon:** Krava x Linq, Saturday May 30 2026, Frontier Tower SF.
 
-This is the living "where are we" doc. For "what Magpie is," read `CLAUDE.md`. For the deploy runbook, `docs/SOP_SPLIT.md`. For the hackathon build, `docs/HACKATHON_KRAVA_LINQ.md`.
+This is the living "where are we" doc. For "what Magpie is," read `CLAUDE.md`. For the Krava integration runbook, `docs/SOP_KRAVA.md`. For the hackathon plan, `docs/HACKATHON_KRAVA_LINQ.md`.
 
 ---
 
 ## START HERE next session (ordered)
 
-1. **SECURITY, do this first (5 min).** The repo is PUBLIC and the dev password login is live on prod, so anyone could get into the `dogsled` account. Pick at least one, ideally both:
-   - Make the GitHub repo **private** (kills public access including git history), and/or
-   - **Rotate the `dogsled@dogsled.dev` password** in Supabase (Authentication > Users), then sign in with the new password. The old weak password is in this repo's git history, so rotation is the real fix.
-2. **Finish magic link (for real attendees).** Wire **custom SMTP** (Resend free tier) in Supabase > Authentication > SMTP Settings (the built-in sender is rate-limited and not for production), AND add the **www** redirect URL `https://www.magpie.wiki/auth/callback` to Supabase > Authentication > URL Configuration. Then send one fresh magic link and confirm it lands on the grid. (See "The auth saga" below for why www matters.)
-3. **Nail the split (SOP Step 5).** Branch `hackathon` off the green `master`, push it, assign `hackathon.magpie.wiki` to the `hackathon` branch in Vercel, smoke-test. `master` stays clean.
-4. **Then** the Krava + Linq build on the `hackathon` branch (`docs/HACKATHON_KRAVA_LINQ.md`).
+1. **Krava** (`docs/SOP_KRAVA.md`). Wrap `lib/ai/client.ts` so every AI call routes through Krava, fallback-gated on `KRAVA_APP_KEY` so the demo survives an SDK hiccup. `callClaude`/`streamClaude` already carry `userId`, so this is a one-file change with zero route edits. Lands on `master`, deploys to magpie.wiki.
+2. **Linq** (bonus track). Inbound webhook at `app/api/linq/webhook/route.ts` (HMAC verify) + `lib/linq/send.ts` outbound, plus the iMessage inbox. Webhook URL is `https://magpie.wiki/api/linq/webhook` (no subdomain). See `docs/HACKATHON_KRAVA_LINQ.md`.
+3. **Magic link for real attendees (optional).** Still pending custom SMTP (Resend) + the `www` callback URL in Supabase. Password sign-in is the working way in and Chris is set to present on it, so this is only needed if outside attendees must sign up. See "The auth saga" below.
 
-To just get in and use the app right now: go to **https://magpie.wiki**, expand **"Sign in with password"**, use `dogsled@dogsled.dev` + the password (rotate it first per item 1). Localhost also works: `npm run dev`, open `http://localhost:3000`, same password panel.
+**Security (decided):** Chris has chosen NOT to rotate secrets or flip the repo private. He knows the room and accepts the exposure for the event. Do not re-raise it.
+
+To get in right now: **https://magpie.wiki**, expand **"Sign in with password"**, use `dogsled@dogsled.dev` + the password. Localhost: `npm run dev` (clear `.next` first), `http://localhost:3000`, same panel.
 
 ---
 
@@ -27,51 +26,37 @@ To just get in and use the app right now: go to **https://magpie.wiki**, expand 
 | Item | Value |
 |---|---|
 | Production URL | https://magpie.wiki (HTTPS, valid cert) |
-| Apex behavior | `magpie.wiki` **307-redirects to `www.magpie.wiki`**, so the app effectively runs on www (matters for auth redirect allow-listing) |
-| Vercel team | `dogsled` (`team_i1Es1eTRb83TisgbHEU6gcA5`), Chris's account, NOT Jessica's |
-| Vercel project | `magpie` (`prj_Ko7a9i0drxCPWMccMT1yFrlj6ahC`), git-linked to `dogsleddev/magpie`, framework Next.js, auto-deploys on push to `master` |
-| GitHub repo | `github.com/dogsleddev/magpie` (PUBLIC; commits authored as Chris Dougherty via repo-local git config) |
-| Vercel env vars (Production) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `ANTHROPIC_API_KEY` all set. (NEXT_PUBLIC vars bake at build time, so changing them needs a redeploy.) |
-| Sign-in on prod | Magic link (NOT working yet) + password option (working). Dev password panel is NOT NODE_ENV-gated anymore: it renders on prod as the "Sign in with password" option (intentional, added this session; remove or re-gate post-hackathon). |
+| Apex behavior | `magpie.wiki` **307-redirects to `www.magpie.wiki`** (matters for auth redirect allow-listing) |
+| Build model | **Single line.** `master` → magpie.wiki, auto-deploy on push. No `hackathon` branch, no `hackathon.magpie.wiki`. Krava + Linq land on `master`. |
+| Vercel team / project | `dogsled` (`team_i1Es1eTRb83TisgbHEU6gcA5`) / `magpie` (`prj_Ko7a9i0drxCPWMccMT1yFrlj6ahC`), git-linked to `dogsleddev/magpie`, Next.js, auto-deploy on push to `master` |
+| GitHub repo | `github.com/dogsleddev/magpie` (PUBLIC) |
+| Vercel env (Production) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `ANTHROPIC_API_KEY` (NEXT_PUBLIC vars bake at build time). Krava/Linq will add `KRAVA_APP_KEY`, `LINQ_API_TOKEN`, `LINQ_PHONE_NUMBER`. |
+| Routes | `/`, `/subject/[id]`, `/topic/[id]`, `/facets`, `/facets/[id]`, `/recent`, `/search`, `/login`, `/auth/callback`, `/api/ai/*` |
+| Persona | Default name is **Magpie** (migration default + the live `user_settings` row). Rename UI is still Phase 8; the default is correct everywhere today. |
+| Sign-in | Magic link (NOT finished) + password option (working). The password panel renders on prod intentionally; re-gate or remove post-hackathon. |
 
 ---
 
-## Connectors (this Claude session)
+## Features shipped this session (session 5)
 
-| Connector | State |
-|---|---|
-| `vercel-chris` (Vercel MCP, `https://mcp.vercel.com`) | CONNECTED + verified, bound to the `dogsled` team. Used to drive/verify deploys. Defined in repo-local `.mcp.json` (gitignored). |
-| `gh-chris` (GitHub MCP, `https://api.githubcopilot.com/mcp/`) | Did NOT initialize in this app build. Worked around by using plain `git` to push to the web-created repo. Deferred. |
-| First-party "GitHub Integration" connector | Connected (powers Projects / remote sessions), separate from `gh-chris`. |
+All on `master`, all live on magpie.wiki.
 
-`.mcp.json` (defines `gh-chris`, `vercel-chris`) is gitignored and stays local.
-
----
-
-## Environment and secrets state
-
-| Item | Value / status |
-|---|---|
-| Supabase project | `magpie`, ref `tbmdwivhekzfkeidbwia`, region us-east-2 |
-| `.env.local` (local dev) | SET: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `ANTHROPIC_API_KEY`, `SUPABASE_PROJECT_ID`. Gitignored. |
-| `ANTHROPIC_API_KEY` | SET and FUNDED. All AI modes verified live. Routes degrade gracefully (HTTP 402) if the balance hits zero. |
-| Dev user | `dogsled@dogsled.dev` (email-confirmed, password set). **Password intentionally not written here anymore (see Security). ROTATE it.** Sign in via the "Sign in with password" option on /login. |
-| Supabase Auth URL config | Site URL `https://magpie.wiki`. Redirect URLs: apex `https://magpie.wiki/auth/callback`, `https://hackathon.magpie.wiki/auth/callback`, `http://localhost:3000/auth/callback`. **MISSING the www one** `https://www.magpie.wiki/auth/callback` (add it; the app runs on www). |
-| Custom SMTP | NOT configured. Built-in Supabase email is rate-limited; magic link unusable for real signups until SMTP (Resend) is wired. |
-| DB password (pooler, admin scripts only) | Was passed through chat in an earlier session and is referenced in git history. Rotate it (Supabase > Settings > Database). |
-
-**Secret hygiene:** the repo is PUBLIC. The dev password and infra identifiers were committed in earlier doc versions and remain in git history. Rotating the dev password and the DB password, and/or making the repo private, is the real remediation.
+- **Add Topic (talk to Magpie).** `+Add topic` (home + every subject page) opens a dialog; the idea goes through Claude (Haiku) which assigns a subject + facets, then the topic is created and you land on it. **"High Agency" is force-filed** to Psychology & Behavior + `skills`/`challenges` for a deterministic demo. New: `lib/actions/topics.ts` (`addTopicViaMagpie`), `categorizeTopicPrompt` in `lib/ai/prompts.ts`, `components/home/add-topic-dialog.tsx`.
+- **Search.** `/search` keyword match over topic titles + facet names, rendered with the shared `TopicList`. `searchTopics` in `lib/queries/topics.ts`, `components/home/topic-search.tsx`.
+- **Recent Ideas.** Section at the bottom of the grid → `/recent`, newest-first, with **inline subject reassignment + facet add/remove** (the topic-editing that was missing). `getRecentTopics` + `updateTopicSubject` queries, `moveTopicToSubject`/`updateTopicFacetsByName` actions, `components/recent/recent-ideas-list.tsx`.
+- **Facets navigation (Phase 6, basic).** Facets bottom tab is live (no longer greyed): `/facets` lists facets by topic count, `/facets/[id]` shows all topics carrying that facet across subjects. Data layer (`getFacetsWithCounts`, `getTopicsByFacet`) already existed; added `getFacet`.
+- **Persona rename Maggie → Magpie.** Single-sourced from `user_settings.persona_name`; threaded through `TextMode`; error copy updated; migration default changed.
+- **Brand + copy.** Wordmark mark enlarged (correct aspect, was squashed) with the teal shiny dot after the word. "Convo Roulette" relabeled **"Remember this topic?"**.
+- **Polish.** `/facets` revalidation on add/move/facet-edit; facet-name lowercase dedupe; Add Topic modal gets Escape-to-close + `role="dialog"`.
 
 ---
 
-## The auth saga (why magic link is not done, and how to finish it)
+## The auth saga (magic link still pending)
 
-Magic link sign-in was the night's hard problem. Resolved understanding:
-1. **Env vars were missing from the first prod build** (NEXT_PUBLIC vars bake at build time; they were added after the first deploy). Symptom: the magic-link form hung on "Sending...". FIXED by adding them in Vercel + redeploying. (Also added a try/catch so the form surfaces errors instead of hanging.)
-2. **The real gremlin: `magpie.wiki` redirects to `www.magpie.wiki`.** So the app sends `emailRedirectTo = https://www.magpie.wiki/auth/callback`, but only the **apex** callback was in Supabase's allow-list. Supabase fell back to the Site URL (homepage), so the callback never ran and no session was created. Confirmed via Vercel runtime logs (no `/auth/callback` hit; only `GET / -> 307 -> /login`). FIX: add the www callback URL to Supabase redirect URLs.
-3. **Email rate limit.** The built-in Supabase email sender throttled after several test sends. FIX: custom SMTP (Resend).
-
-Workaround shipped so Chris can get in now: a **password sign-in option on prod** (`signInWithPassword`, which does not depend on redirect URLs). `dogsled@dogsled.dev` authenticates via password (verified). Next session: do SMTP + the www redirect URL, then verify magic link end to end, then decide whether to keep or remove the password option.
+Magic link is not finished. Root causes (from session 4):
+1. **www-vs-apex redirect gap.** The app runs on `www.magpie.wiki`, so `emailRedirectTo` is the www callback, but only the apex callback is in Supabase's allow-list. Fix: add `https://www.magpie.wiki/auth/callback` to Supabase > Authentication > URL Configuration.
+2. **Email rate limit.** The built-in Supabase sender throttles. Fix: custom SMTP (Resend free tier) in Supabase > Authentication > SMTP Settings.
+Then send one fresh link and confirm it lands on the grid. Until then, password sign-in (`signInWithPassword`, no redirect dependency) is the working way in. When wiring SMTP, confirm the email template emits `?code=` (PKCE), which `app/auth/callback/route.ts` handles.
 
 ---
 
@@ -84,55 +69,41 @@ Workaround shipped so Chris can get in now: a **password sign-in option on prod*
 | 3 | Home + Subject Navigation | DONE |
 | 4 | {persona} capture (bullets, mic, organize) | DONE |
 | 5 | AI modes (Brief, Challenge, Questions, Convo) | DONE |
-| 9 | Deploy to magpie.wiki | MOSTLY DONE (live + password login; magic link pending SMTP + www URL) |
-| 6 | Facets navigation | NEXT (after hackathon) |
-| 7 | Discover + Add Topic | not started |
-| 8 | Settings + Polish | not started (note: persona-rename UI lives here; until then "Maggie" default is always correct) |
+| 6 | Facets navigation | BASIC DONE (list + facet detail; no facet-filtered cross views beyond this) |
+| 7 | Discover + Add Topic | ADD TOPIC DONE (manual + AI-assist); Discover not started |
+| 8 | Settings + Polish | PARTIAL (persona is Magpie by default; rename UI / settings screen not built) |
+| 9 | Deploy to magpie.wiki | DONE (live; magic link still pending SMTP + www URL) |
 
 ---
 
-## QA / QC hardening pass (this session)
+## Known issues / tech debt (flagged, not blocking the demo)
 
-Ran a thorough multi-pass review (correctness, security, conventions, AI/data layer, plus a UI/responsive pass). Verdict: solid foundation. No catastrophic bugs. RLS is complete and correct on all 9 tables (owner-scoped to `auth.uid()`); no secrets in the client bundle; no service-role key anywhere; model selection + token budgets match `docs/PROMPTS.md`; `ai_cache` has no cross-user leak (topic_id is per-user under RLS); the `angles -> facets` rename is fully carried through (zero stray "angles" in code/schema); no `any`/`console.log`/em dashes in app code.
+- **[HIGH, post-hackathon] Convo persistence.** On an Anthropic error mid-stream, the fallback text gets saved as a real assistant turn and replayed; the user turn is persisted before the reply, so a failure/closed-tab can leave a dangling user turn. Only triggers on model error. `app/api/ai/convo/route.ts`, `components/topic/convo-mode.tsx`, `lib/queries/conversations.ts`.
+- **[MED] `appendMessage` is non-atomic** (`lib/queries/conversations.ts`): concurrent appends can drop a message. Matters once Linq drives the same conversation. Fix: a Postgres `jsonb` append RPC.
+- **[MED] Seed is not transactional** (`lib/actions/seed-starter-topics.ts`). The pending-disable mitigates the common case.
+- **[MED] Persona capture edges** (`components/topic/persona-mode.tsx`): starting the mic overwrites typed input; mic silence auto-stop can commit a stray bullet.
+- **[MED] No `error.tsx`** on `(main)` routes: a transient query throw shows the raw Next error screen.
+- **[LOW] Add Topic AI categorization is non-deterministic** for inputs other than "High Agency" (subject/facets are model-chosen). Recent Ideas is the safety net to refile. `lib/actions/topics.ts`.
+- **[LOW] `searchTopics` does not escape LIKE wildcards** (`%`, `_`) in the query. Harmless for normal words.
+- **[LOW] Misnamed component:** `components/auth/dev-sign-in.tsx` / `DevSignIn` is the production password login. Rename to `password-sign-in.tsx`.
+- **[LOW] `extractJSON` brace-slice** is fragile and Organize/categorize output is not shape-validated. Failure mode is a clean "try again", not bad data.
+- **[LOW] Middleware fails open** and does not guard `/api/*`. Add a guard before the Linq webhook ships, and verify the webhook does its own auth (HMAC).
+- **[LOW] `as unknown as ConversationMessage[]`** cast repeated in 3 places.
 
-**Fixed and deployed (`92476ae`), all low-risk:**
-- `lib/ai/text-mode.ts`: reroll is now **non-destructive** (no clear-before-call; `setCached` upserts on success), so a failed reroll keeps the old content instead of wiping it. Added a guard against caching an empty model response. The normal (non-reroll) load path is provably unchanged.
-- `components/topic/convo-mode.tsx` + `app/api/ai/convo/route.ts`: error-fallback and aria copy now use the persona name (lowercased to keep the casual voice) instead of a hardcoded "Maggie".
-- `docs/SOP_SPLIT.md`: removed 6 em dashes (house style).
+(Resolved this session: the hardcoded "Maggie" in `text-mode.tsx` and `errors.ts` is gone; persona is threaded/renamed.)
 
-**Known issues / tech debt (flagged, NOT fixed; none blocking the demo):**
-- **[HIGH, post-hackathon] Convo persistence.** On an Anthropic error mid-stream, the server's fallback text ("... hit a snag") gets saved as a real assistant turn and replayed to the model on the next turn; and the user turn is persisted before the reply, so a failure/closed-tab can leave a dangling user turn. Only triggers when the model errors (credits funded, so rare). Fix: persist both turns server-side only on success, and signal errors distinctly so the client does not save them. `app/api/ai/convo/route.ts`, `components/topic/convo-mode.tsx`, `lib/queries/conversations.ts`.
-- **[MED] `appendMessage` is a non-atomic read-modify-write** (`lib/queries/conversations.ts`): concurrent appends (multiple tabs, or the planned iMessage front door) can drop a message. Fix: a Postgres `jsonb` append RPC. Matters more once Krava/Linq drive the same conversation.
-- **[MED] Seed is not transactional** (`lib/actions/seed-starter-topics.ts`): a concurrent double-trigger could double-seed, and a partial failure (facet unique violation) leaves a half-seeded account. The button disables on pending, which mitigates the common case. Fix: transaction/advisory lock or a `seeded` flag.
-- **[MED] Persona capture edges** (`components/topic/persona-mode.tsx`): starting the mic overwrites already-typed input; editing a thought during the brief temp-insert window can lose the edit. Product + timing decisions.
-- **[MED, verify when wiring SMTP] Auth callback handles only PKCE `?code=`** (`app/auth/callback/route.ts`). Fine for the current magic-link flow, but confirm the Supabase email template emits `?code=` (not `token_hash`) once SMTP is set.
-- **[LOW] Remaining hardcoded "Maggie"** in `components/topic/text-mode.tsx` ("asking maggie...") and `lib/ai/errors.ts` (credit/error copy). These need a `personaName` prop threaded through; only matters once persona-rename ships (Phase 8). Default is always correct today.
-- **[LOW] `extractJSON` brace-slice** is fragile and Organize output is not shape-validated (`lib/ai/prompts.ts`, `app/api/ai/organize/route.ts`). Failure mode is a clean "try again", not bad data. Consider coercing missing arrays to `[]`.
-- **[LOW] Misnamed component:** `components/auth/dev-sign-in.tsx` / `DevSignIn` is now the production password login. Rename to `password-sign-in.tsx` / `PasswordSignIn` (touches the import in `app/(auth)/login/page.tsx`).
-- **[LOW] `as unknown as ConversationMessage[]`** cast repeated in 3 places (topic page, convo route, conversations query). Centralize behind one typed helper.
-- **[LOW] Middleware fails open** and does not guard `/api/*` (`middleware.ts`). Today RLS + per-route `requireUser()` cover it. Add a guard if a future non-AI API route (e.g. a Linq webhook) is added, and verify it does its own auth.
-- **[LOW] `components/topic/convo-mode.tsx`:** missing final `decoder.decode()` flush after the stream loop; `replaceLast` assumes a non-empty list. Both safe in current usage.
-
-**Second-pass UI / a11y findings (flagged):**
-- **Demo polish (DONE this session):** unavailable features now read as clean "coming soon" placeholders. The "Add topic" button is a muted **outline** (was a faded teal primary), and the Facets / Discover / Journal tabs were already greyed (`opacity-40`). Verified clean at 375px. Chris says "coming soon" verbally in the demo, so no tooltip clutter. `app/(main)/page.tsx`, `components/nav/bottom-tab-bar.tsx`.
-- **[MED] No `error.tsx` boundary** on the `(main)` routes: a transient Supabase error (the query layer throws) shows the raw Next error screen instead of a styled state. Add a route-level `error.tsx`.
-- **[MED] Mic silence auto-stop** can commit an unintended bullet and leave residual text in the input (Web Speech `onend` fires on silence). `components/mic/use-speech-to-text.ts`, `components/topic/persona-mode.tsx`.
-- **[LOW] a11y nits:** mode tabs lack tablist/tab ARIA roles; the wordmark image `alt="Magpie"` doubles with the adjacent text for screen readers (use `alt=""` when text shows); some touch targets (facet chips, small timer/delete buttons) are under the 44px guideline.
-
-A second background review pass confirmed the QA fixes above introduced NO regressions (the reroll and persona-copy changes were re-read and verified correct).
-
-(Phase 6/7/12 scaffolding in `lib/ai/prompts.ts`, `lib/seed/bakes/*`, and unused `lib/queries/*` functions is intentional forward-work per CLAUDE.md, not dead code. Leave it.)
+(Phase 5.5 / 9.5+ scaffolding in `lib/ai/prompts.ts`, `lib/seed/bakes/*`, and unused `lib/queries/*` is intentional forward-work per CLAUDE.md, not dead code.)
 
 ---
 
-## Commits this session (4)
+## Commits this session (5)
 
 ```
-92476ae  refactor(qa): hardening pass (reroll, persona copy, doc cleanup)
-ba82e86  feat(auth): offer password sign-in in production alongside magic link
-afb6c99  fix(auth): surface magic-link errors instead of hanging
-72021e6  chore: gitignore .mcp.json (local connector config)
-67bf741  feat: thread userId through the AI layer (krava-ready)   [session 3 carryover]
+0712468  refactor: facets revalidation, facet-name dedupe, modal a11y polish
+5c5615b  feat(facets): activate Facets nav (list + facet detail)
+b3d744d  feat: talk-to-Magpie add, search, recent ideas, persona rename, brand dot
+9a8f4a8  docs: update PROGRESS for deploy + QA state, add SOP_SPLIT status note   [session 4]
+78bdf05  polish: mute disabled Add topic button                                   [session 4]
 ```
 
 ---
@@ -140,14 +111,14 @@ afb6c99  fix(auth): surface magic-link errors instead of hanging
 ## Session log
 
 ### 2026-05-29 (sessions 1 to 3): Phases 1 to 5
-Built and verified the full base app (auth, schema + typed query spine, home/subject nav, persona capture with mic + organize, four AI modes with caching + streaming). type-check and prod build green each session. See git history (`db1f977` to `67bf741`).
+Built and verified the full base app (auth, typed query spine, home/subject nav, persona capture with mic + organize, four AI modes with caching + streaming).
 
 ### 2026-05-30 (session 4): deploy + QA hardening
-- Closed the Level 1 identity seam (`67bf741`, carried from session 3 work): `userId` threads through the AI layer (Krava-ready, no Krava import).
-- Ran the full local test pass at 375px via the preview tools: capture CRUD persists, all four AI modes (Brief/Challenge/Questions cached + reroll, Convo streamed + persisted), no key leak (verified `/api/ai/*` only, no `api.anthropic.com` from the browser, no key in client chunks), RLS verified static + logged-out redirect + dev password sign-in + session survives refresh. Static RLS check: all 9 tables owner-scoped.
-- Connected `vercel-chris` (Vercel MCP) to the dogsled team; `gh-chris` did not initialize, used plain git instead. Fixed the local git author (was Jessica's identity) to Chris for this repo.
-- Deployed: created `dogsleddev/magpie` (public), pushed `master`, imported into Vercel on the dogsled team with env vars, attached `magpie.wiki` (apex redirects to www). HTTPS live, app serving.
-- Debugged magic link to root cause (see "The auth saga"): missing build-time env vars (fixed), the www-vs-apex redirect allow-list gap (fix pending), and the email rate limit (needs SMTP). Shipped a password sign-in option on prod as the working way in.
-- QA hardening pass + safe fixes (`92476ae`); flagged the rest as known issues above.
-- Demo polish: muted the disabled "Add topic" button (outline) so unavailable features read as clean coming-soon placeholders (the dead nav tabs were already greyed). Verified the look at 375px in the browser.
-- type-check clean throughout. Vercel build green on each push.
+Deployed `master` to magpie.wiki (Vercel, dogsled team, public repo). Debugged magic link to root cause (www redirect gap + email rate limit), shipped password sign-in as the working way in. QA hardening pass + safe fixes.
+
+### 2026-05-30 (session 5): hackathon-day feature build
+- **Pivot:** dropped the split. `master` is the single build line; everything (incl. Krava/Linq) ships to magpie.wiki. Security rotation declined by Chris (knows the room).
+- Shipped Add Topic (manual + AI-assist via Magpie, High Agency forced), search, Recent Ideas with inline subject/facet editing, Facets navigation (Phase 6 basic), persona rename to Magpie, wordmark dot + larger mark, "Remember this topic?".
+- Code review pass: revalidate `/facets`, facet-name dedupe, modal a11y.
+- type-check + clean prod build green on each push; deploys verified live by polling the production domain.
+- Docs cleaned (this update), `docs/SOP_SPLIT.md` marked superseded, `docs/HACKATHON_KRAVA_LINQ.md` split decision reversed. `docs/SOP_KRAVA.md` added for the next session.
