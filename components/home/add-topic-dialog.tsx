@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,19 @@ export default function AddTopicDialog({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape' && !pending) {
+        setOpen(false);
+        setError(null);
+        setIdea('');
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, pending]);
 
   function close() {
     if (pending) return;
@@ -64,6 +77,9 @@ export default function AddTopicDialog({
           onClick={close}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add topic"
             className="w-full max-w-md rounded-2xl border border-border bg-bg-card p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >

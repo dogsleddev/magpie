@@ -63,7 +63,7 @@ async function resolveSubjectId(name: string): Promise<string> {
 async function resolveFacetIds(names: string[]): Promise<string[]> {
   const ids: string[] = [];
   for (const name of names) {
-    const clean = name.trim();
+    const clean = name.trim().toLowerCase();
     if (!clean) continue;
     const facet = await findOrCreateFacet(clean);
     ids.push(facet.id);
@@ -104,6 +104,7 @@ export async function addTopicViaMagpie(
 
   revalidatePath('/');
   revalidatePath('/recent');
+  revalidatePath('/facets');
   revalidatePath(`/subject/${subjectId}`);
   return { topicId: topic.id, title: topic.title, subjectId, subjectName, facets: plan.facets };
 }
@@ -112,6 +113,7 @@ export async function moveTopicToSubject(topicId: string, subjectId: string): Pr
   await updateTopicSubject(topicId, subjectId);
   revalidatePath('/recent');
   revalidatePath('/');
+  revalidatePath('/facets');
   revalidatePath(`/subject/${subjectId}`);
 }
 
@@ -119,4 +121,5 @@ export async function updateTopicFacetsByName(topicId: string, names: string[]):
   const ids = await resolveFacetIds(names);
   await setTopicFacets(topicId, ids);
   revalidatePath('/recent');
+  revalidatePath('/facets');
 }
