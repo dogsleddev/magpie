@@ -1,27 +1,77 @@
 # Magpie · Progress
 
-**Last updated:** 2026-05-29 (session 3)
-**Status:** Phases 1 to 5 complete and committed. Immediate focus: deploy + the hackathon split (see `docs/SOP_SPLIT.md`), NOT Phase 6. Phase 6 is deferred until after the hackathon.
-**Branch:** `master`
-**Hackathon clock:** Krava x Linq, Saturday May 30 2026, Frontier Tower SF. Base product (Phases 1 to 9) should be live before then.
+**Last updated:** 2026-05-30 (session 4: deploy + QA hardening)
+**Status:** Phases 1 to 5 complete and committed. Base app is **DEPLOYED and LIVE at https://magpie.wiki**. Magic-link sign-in is not finished (blocked on email delivery); a password sign-in option is live as the working way in. The hackathon split (SOP Step 5) is NOT done yet.
+**Branch:** `master` (deployed commit `92476ae`)
+**Hackathon clock:** Krava x Linq, Saturday May 30 2026, Frontier Tower SF. Base product is live; the split + Krava/Linq work is the next session.
 
-This is the living "where are we" doc, updated every session. For "what Magpie is," read `HANDOFF.md` and `CLAUDE.md`. For the full build plan, read `docs/BUILD_PLAN.md`.
+This is the living "where are we" doc. For "what Magpie is," read `CLAUDE.md`. For the deploy runbook, `docs/SOP_SPLIT.md`. For the hackathon build, `docs/HACKATHON_KRAVA_LINQ.md`.
 
 ---
 
-## Resume in 30 seconds
+## START HERE next session (ordered)
 
-```powershell
-cd C:\Users\dough\OneDrive\02_Projects\Magpie\code
-npm run dev
-```
+1. **SECURITY, do this first (5 min).** The repo is PUBLIC and the dev password login is live on prod, so anyone could get into the `dogsled` account. Pick at least one, ideally both:
+   - Make the GitHub repo **private** (kills public access including git history), and/or
+   - **Rotate the `dogsled@dogsled.dev` password** in Supabase (Authentication > Users), then sign in with the new password. The old weak password is in this repo's git history, so rotation is the real fix.
+2. **Finish magic link (for real attendees).** Wire **custom SMTP** (Resend free tier) in Supabase > Authentication > SMTP Settings (the built-in sender is rate-limited and not for production), AND add the **www** redirect URL `https://www.magpie.wiki/auth/callback` to Supabase > Authentication > URL Configuration. Then send one fresh magic link and confirm it lands on the grid. (See "The auth saga" below for why www matters.)
+3. **Nail the split (SOP Step 5).** Branch `hackathon` off the green `master`, push it, assign `hackathon.magpie.wiki` to the `hackathon` branch in Vercel, smoke-test. `master` stays clean.
+4. **Then** the Krava + Linq build on the `hackathon` branch (`docs/HACKATHON_KRAVA_LINQ.md`).
 
-Open `http://localhost:3000`. On the login screen, expand **Dev sign-in (password)** and use:
+To just get in and use the app right now: go to **https://magpie.wiki**, expand **"Sign in with password"**, use `dogsled@dogsled.dev` + the password (rotate it first per item 1). Localhost also works: `npm run dev`, open `http://localhost:3000`, same password panel.
 
-- Email: `dogsled@dogsled.dev`
-- Password: `dogsled`
+---
 
-The account is already seeded (13 subjects, ~113 topics, 18 facets). You land on the grid.
+## What is live (deployment)
+
+| Item | Value |
+|---|---|
+| Production URL | https://magpie.wiki (HTTPS, valid cert) |
+| Apex behavior | `magpie.wiki` **307-redirects to `www.magpie.wiki`**, so the app effectively runs on www (matters for auth redirect allow-listing) |
+| Vercel team | `dogsled` (`team_i1Es1eTRb83TisgbHEU6gcA5`), Chris's account, NOT Jessica's |
+| Vercel project | `magpie` (`prj_Ko7a9i0drxCPWMccMT1yFrlj6ahC`), git-linked to `dogsleddev/magpie`, framework Next.js, auto-deploys on push to `master` |
+| GitHub repo | `github.com/dogsleddev/magpie` (PUBLIC; commits authored as Chris Dougherty via repo-local git config) |
+| Vercel env vars (Production) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `ANTHROPIC_API_KEY` all set. (NEXT_PUBLIC vars bake at build time, so changing them needs a redeploy.) |
+| Sign-in on prod | Magic link (NOT working yet) + password option (working). Dev password panel is NOT NODE_ENV-gated anymore: it renders on prod as the "Sign in with password" option (intentional, added this session; remove or re-gate post-hackathon). |
+
+---
+
+## Connectors (this Claude session)
+
+| Connector | State |
+|---|---|
+| `vercel-chris` (Vercel MCP, `https://mcp.vercel.com`) | CONNECTED + verified, bound to the `dogsled` team. Used to drive/verify deploys. Defined in repo-local `.mcp.json` (gitignored). |
+| `gh-chris` (GitHub MCP, `https://api.githubcopilot.com/mcp/`) | Did NOT initialize in this app build. Worked around by using plain `git` to push to the web-created repo. Deferred. |
+| First-party "GitHub Integration" connector | Connected (powers Projects / remote sessions), separate from `gh-chris`. |
+
+`.mcp.json` (defines `gh-chris`, `vercel-chris`) is gitignored and stays local.
+
+---
+
+## Environment and secrets state
+
+| Item | Value / status |
+|---|---|
+| Supabase project | `magpie`, ref `tbmdwivhekzfkeidbwia`, region us-east-2 |
+| `.env.local` (local dev) | SET: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `ANTHROPIC_API_KEY`, `SUPABASE_PROJECT_ID`. Gitignored. |
+| `ANTHROPIC_API_KEY` | SET and FUNDED. All AI modes verified live. Routes degrade gracefully (HTTP 402) if the balance hits zero. |
+| Dev user | `dogsled@dogsled.dev` (email-confirmed, password set). **Password intentionally not written here anymore (see Security). ROTATE it.** Sign in via the "Sign in with password" option on /login. |
+| Supabase Auth URL config | Site URL `https://magpie.wiki`. Redirect URLs: apex `https://magpie.wiki/auth/callback`, `https://hackathon.magpie.wiki/auth/callback`, `http://localhost:3000/auth/callback`. **MISSING the www one** `https://www.magpie.wiki/auth/callback` (add it; the app runs on www). |
+| Custom SMTP | NOT configured. Built-in Supabase email is rate-limited; magic link unusable for real signups until SMTP (Resend) is wired. |
+| DB password (pooler, admin scripts only) | Was passed through chat in an earlier session and is referenced in git history. Rotate it (Supabase > Settings > Database). |
+
+**Secret hygiene:** the repo is PUBLIC. The dev password and infra identifiers were committed in earlier doc versions and remain in git history. Rotating the dev password and the DB password, and/or making the repo private, is the real remediation.
+
+---
+
+## The auth saga (why magic link is not done, and how to finish it)
+
+Magic link sign-in was the night's hard problem. Resolved understanding:
+1. **Env vars were missing from the first prod build** (NEXT_PUBLIC vars bake at build time; they were added after the first deploy). Symptom: the magic-link form hung on "Sending...". FIXED by adding them in Vercel + redeploying. (Also added a try/catch so the form surfaces errors instead of hanging.)
+2. **The real gremlin: `magpie.wiki` redirects to `www.magpie.wiki`.** So the app sends `emailRedirectTo = https://www.magpie.wiki/auth/callback`, but only the **apex** callback was in Supabase's allow-list. Supabase fell back to the Site URL (homepage), so the callback never ran and no session was created. Confirmed via Vercel runtime logs (no `/auth/callback` hit; only `GET / -> 307 -> /login`). FIX: add the www callback URL to Supabase redirect URLs.
+3. **Email rate limit.** The built-in Supabase email sender throttled after several test sends. FIX: custom SMTP (Resend).
+
+Workaround shipped so Chris can get in now: a **password sign-in option on prod** (`signInWithPassword`, which does not depend on redirect URLs). `dogsled@dogsled.dev` authenticates via password (verified). Next session: do SMTP + the www redirect URL, then verify magic link end to end, then decide whether to keep or remove the password option.
 
 ---
 
@@ -34,128 +84,69 @@ The account is already seeded (13 subjects, ~113 topics, 18 facets). You land on
 | 3 | Home + Subject Navigation | DONE |
 | 4 | {persona} capture (bullets, mic, organize) | DONE |
 | 5 | AI modes (Brief, Challenge, Questions, Convo) | DONE |
-| 6 | Facets navigation | NEXT |
+| 9 | Deploy to magpie.wiki | MOSTLY DONE (live + password login; magic link pending SMTP + www URL) |
+| 6 | Facets navigation | NEXT (after hackathon) |
 | 7 | Discover + Add Topic | not started |
-| 8 | Settings + Polish | not started |
-| 9 | Deploy to magpie.wiki | not started |
-
-Post-MVP and hackathon work tracked in `docs/BUILD_PLAN.md` and `docs/HACKATHON_KRAVA_LINQ.md`.
+| 8 | Settings + Polish | not started (note: persona-rename UI lives here; until then "Maggie" default is always correct) |
 
 ---
 
-## Environment and secrets state
+## QA / QC hardening pass (this session)
 
-| Item | Value / status |
-|---|---|
-| Supabase project | `magpie`, ref `tbmdwivhekzfkeidbwia`, region East US (Ohio) / us-east-2 |
-| `.env.local` Supabase URL + anon + project id | SET |
-| `ANTHROPIC_API_KEY` | SET and FUNDED. Real `sk-ant` key in `.env.local`; account has credits. All five AI calls (Brief, Challenge, Questions, Convo, Organize) verified live against Sonnet 4.5 + Haiku 4.5. If live calls ever return HTTP 400 "credit balance too low," top up at console.anthropic.com (Plans and Billing). |
-| DB pooler (admin scripts only) | `aws-1-us-east-2.pooler.supabase.com:5432`, user `postgres.tbmdwivhekzfkeidbwia` |
-| Dev user | `dogsled@dogsled.dev` / `dogsled` (email-confirmed, works via password) |
-| Supabase Auth URL config (Site URL + `/auth/callback`) | NOT confirmed. Magic-link sign-in needs it; dev password sign-in does not. Do this before testing magic link in the browser. |
-| Supabase CLI | logged in and linked to the project |
+Ran a thorough multi-pass review (correctness, security, conventions, AI/data layer, plus a UI/responsive pass). Verdict: solid foundation. No catastrophic bugs. RLS is complete and correct on all 9 tables (owner-scoped to `auth.uid()`); no secrets in the client bundle; no service-role key anywhere; model selection + token budgets match `docs/PROMPTS.md`; `ai_cache` has no cross-user leak (topic_id is per-user under RLS); the `angles -> facets` rename is fully carried through (zero stray "angles" in code/schema); no `any`/`console.log`/em dashes in app code.
 
-Secret hygiene: the DB password and Supabase keys passed through chat this session. Rotate the DB password after the sprint (Supabase Dashboard > Settings > Database > Reset password). The `sb_publishable_` key is public by design (RLS protects data), no action needed.
+**Fixed and deployed (`92476ae`), all low-risk:**
+- `lib/ai/text-mode.ts`: reroll is now **non-destructive** (no clear-before-call; `setCached` upserts on success), so a failed reroll keeps the old content instead of wiping it. Added a guard against caching an empty model response. The normal (non-reroll) load path is provably unchanged.
+- `components/topic/convo-mode.tsx` + `app/api/ai/convo/route.ts`: error-fallback and aria copy now use the persona name (lowercased to keep the casual voice) instead of a hardcoded "Maggie".
+- `docs/SOP_SPLIT.md`: removed 6 em dashes (house style).
 
----
+**Known issues / tech debt (flagged, NOT fixed; none blocking the demo):**
+- **[HIGH, post-hackathon] Convo persistence.** On an Anthropic error mid-stream, the server's fallback text ("... hit a snag") gets saved as a real assistant turn and replayed to the model on the next turn; and the user turn is persisted before the reply, so a failure/closed-tab can leave a dangling user turn. Only triggers when the model errors (credits funded, so rare). Fix: persist both turns server-side only on success, and signal errors distinctly so the client does not save them. `app/api/ai/convo/route.ts`, `components/topic/convo-mode.tsx`, `lib/queries/conversations.ts`.
+- **[MED] `appendMessage` is a non-atomic read-modify-write** (`lib/queries/conversations.ts`): concurrent appends (multiple tabs, or the planned iMessage front door) can drop a message. Fix: a Postgres `jsonb` append RPC. Matters more once Krava/Linq drive the same conversation.
+- **[MED] Seed is not transactional** (`lib/actions/seed-starter-topics.ts`): a concurrent double-trigger could double-seed, and a partial failure (facet unique violation) leaves a half-seeded account. The button disables on pending, which mitigates the common case. Fix: transaction/advisory lock or a `seeded` flag.
+- **[MED] Persona capture edges** (`components/topic/persona-mode.tsx`): starting the mic overwrites already-typed input; editing a thought during the brief temp-insert window can lose the edit. Product + timing decisions.
+- **[MED, verify when wiring SMTP] Auth callback handles only PKCE `?code=`** (`app/auth/callback/route.ts`). Fine for the current magic-link flow, but confirm the Supabase email template emits `?code=` (not `token_hash`) once SMTP is set.
+- **[LOW] Remaining hardcoded "Maggie"** in `components/topic/text-mode.tsx` ("asking maggie...") and `lib/ai/errors.ts` (credit/error copy). These need a `personaName` prop threaded through; only matters once persona-rename ships (Phase 8). Default is always correct today.
+- **[LOW] `extractJSON` brace-slice** is fragile and Organize output is not shape-validated (`lib/ai/prompts.ts`, `app/api/ai/organize/route.ts`). Failure mode is a clean "try again", not bad data. Consider coercing missing arrays to `[]`.
+- **[LOW] Misnamed component:** `components/auth/dev-sign-in.tsx` / `DevSignIn` is now the production password login. Rename to `password-sign-in.tsx` / `PasswordSignIn` (touches the import in `app/(auth)/login/page.tsx`).
+- **[LOW] `as unknown as ConversationMessage[]`** cast repeated in 3 places (topic page, convo route, conversations query). Centralize behind one typed helper.
+- **[LOW] Middleware fails open** and does not guard `/api/*` (`middleware.ts`). Today RLS + per-route `requireUser()` cover it. Add a guard if a future non-AI API route (e.g. a Linq webhook) is added, and verify it does its own auth.
+- **[LOW] `components/topic/convo-mode.tsx`:** missing final `decoder.decode()` flush after the stream loop; `replaceLast` assumes a non-empty list. Both safe in current usage.
 
-## What is built (Phases 1 to 5)
+**Second-pass UI / a11y findings (flagged):**
+- **Demo polish (judge-facing), worth 10 min before the demo:** the "Add topic" primary button is disabled with no explanation, and the Facets / Discover / Journal bottom tabs are dead. They read as broken to a judge. Cheapest fix (per SOP "Optional polish"): hide them or add "coming soon" tooltips. `app/(main)/page.tsx`, `components/nav/bottom-tab-bar.tsx`.
+- **[MED] No `error.tsx` boundary** on the `(main)` routes: a transient Supabase error (the query layer throws) shows the raw Next error screen instead of a styled state. Add a route-level `error.tsx`.
+- **[MED] Mic silence auto-stop** can commit an unintended bullet and leave residual text in the input (Web Speech `onend` fires on silence). `components/mic/use-speech-to-text.ts`, `components/topic/persona-mode.tsx`.
+- **[LOW] a11y nits:** mode tabs lack tablist/tab ARIA roles; the wordmark image `alt="Magpie"` doubles with the adjacent text for screen readers (use `alt=""` when text shows); some touch targets (facet chips, small timer/delete buttons) are under the 44px guideline.
 
-**Phase 1 (commit `db1f977`):** app shell on the existing scaffold (not a fresh create-next-app). Root layout, magic-link login + dev password sign-in, `/auth/callback`, `(main)` shell (app bar + bottom tab bar), plumage-token `Button`/`Input`/`Wordmark`, root `middleware.ts`.
+A second background review pass confirmed the QA fixes above introduced NO regressions (the reroll and persona-copy changes were re-read and verified correct).
 
-**Phase 2 (commit `592bae8`):** schema applied to Supabase (9 tables, RLS, triggers), generated `lib/supabase/types.ts`, full typed query spine in `lib/queries/*` (subjects, topics, facets, thoughts, conversations, discover, ai-cache, settings), idempotent seed action in `lib/actions/seed-starter-topics.ts`. Admin tooling in `scripts/db/`.
-
-**Phase 3 (commit `e358cc2`):** home grid (`getSubjectsWithCounts`, dismissible welcome hint, Add topic [disabled until Phase 7] + Convo Roulette), starter-pack onboarding, subject page (facet chips with counts + client-side filter + topic list), topic detail (meta pills + 5 mode tabs, persona tab default with label from `user_settings.persona_name`). All verified end-to-end in the browser.
-
-**Phase 4 (commit this session):** {persona} capture. New files: `components/mic/use-speech-to-text.ts` (Web Speech API, feature-detected) + `components/mic/mic-button.tsx` + ambient `components/mic/speech-recognition.d.ts`; `lib/actions/thoughts.ts` (add/edit/remove server actions over the query spine); `components/topic/persona-mode.tsx` (riff timer, input + mic + add, optimistic bullet list, click-to-edit, hover-delete, auto-save on Enter and mic-stop, Organize button at 3+, organize result card); `app/api/ai/organize/route.ts` (Sonnet via `organizePrompt`, JSON parse, seeds `discover_items` learn_more when `ai_suggestions` on, billing-aware errors). Wired into `mode-tabs.tsx` + the topic page (old placeholder removed). Refactored `lib/ai/client.ts` to lazy client init (it was throwing at module load, which broke `next build`). Verified in the browser: add/edit/delete persist across reload, Organize gates at 3+ and degrades cleanly with no credits, mic renders enabled in Chromium, no console errors.
-
-**Phase 5 (commit this session):** AI modes. New files: `lib/ai/errors.ts` (`aiErrorResponse`, shared billing-aware 401/402/502 mapping); `lib/ai/text-mode.ts` (`handleTextMode`: read-through `ai_cache`, reroll clears + recalls); `app/api/ai/{brief,challenge,questions}/route.ts` (thin wrappers, Brief + Questions on Haiku, Challenge on Sonnet); `app/api/ai/convo/route.ts` (Sonnet streaming via `streamClaude`, reads history + persists the user turn, streams the reply); `lib/actions/conversations.ts` (`saveAssistantMessage`); `components/topic/text-mode.tsx` (fetch-on-mount, loading, `AIContent` formatter for numbered lists + the `*Tag.*` lead, Reroll) and `components/topic/convo-mode.tsx` (chat with opener, typing dots, streamed reply, Enter-to-send). Wired into `mode-tabs.tsx`; the topic page now also fetches `getConversation`. Refactored the Organize route onto the shared `aiErrorResponse`. Verified all four modes live in the browser (credits funded): Brief/Questions render numbered lists, Challenge renders the paradox tag, Convo streams and persists across reload. No console errors.
-
----
-
-## Key decisions made this session
-
-- **Next bumped to `^15.1.0` (resolved 15.5.18).** Next 15.0.0 only accepts React 19 RC as a peer; the project pins React 19 stable.
-- **`@supabase/ssr` bumped 0.5.2 to 0.10.3.** The old version's `createServerClient<Database>` generic was not propagating the schema type, so every table resolved to `never`.
-- **shadcn approach: hand-built primitives on the plumage tokens** (CVA, shadcn-style API) rather than the shadcn CLI, because the scaffold tokens (`--bg`, `--text`, `--teal`) do not match stock shadcn var names.
-- **Auth: magic link + a dev-only password sign-in** (so testing does not need an email round-trip).
-- **Fonts: kept the existing CSS `@import`** for Fraunces + DM Sans; `next/font` upgrade deferred to Phase 8.
-- **DB pooler is `aws-1` (not `aws-0`)** for this project, and direct connection is IPv6-only. Captured as the default in `scripts/db/*`.
-- **Fixed latent strict-mode `any` types** in the scaffold's `lib/supabase/server.ts` and `middleware.ts` cookie callbacks (the scaffold was never type-checked because node_modules never existed).
-- **`lib/ai/client.ts` is now lazy.** It threw on a missing key at module load, and `next build` imports every route module when collecting page data, so the first AI route broke the build. Now `getClient()` checks the key at call time and throws a 401-tagged error the routes catch. Still compatible with the planned Krava wrap.
-- **Thought CRUD = server actions; Organize = API route.** CRUD is pure DB (server actions + optimistic client state for snappy capture, no revalidate on every keystroke). AI stays in `app/api/ai/*` per the doc, so the Krava wrap stays a one-file change.
-- **mic-stop IS the save** (per the gotcha). Stopping the mic commits the live transcript as a bullet; click-to-edit fixes messy dictation after.
-- **Organize errors are billing-aware.** 401/403 maps to "add your key", credit-balance/quota maps to "out of Anthropic credits" (HTTP 402), everything else to a generic retry. Phase 5 extracted this into the shared `lib/ai/errors.ts` used by every AI route.
-- **Text modes share one handler + cache.** `handleTextMode` runs the read-through `ai_cache` for Brief/Challenge/Questions, so those three routes are one-liners. Lazy fetch on tab activate (not all-on-load) keeps Anthropic spend down; the cache makes tab revisits instant.
-- **Convo persistence avoids the cookies-in-stream trap.** All Supabase reads plus the user-message write happen at the route's handler top (request scope), before the streaming Response. The assistant turn is saved by the client via a server action once the stream finishes. The stream body only talks to Anthropic.
-- **Convo opener is display-only.** "hey, what's pulling you on this one?" shows when there is no history; it is not persisted, so the saved thread is real exchanges only.
+(Phase 6/7/12 scaffolding in `lib/ai/prompts.ts`, `lib/seed/bakes/*`, and unused `lib/queries/*` functions is intentional forward-work per CLAUDE.md, not dead code. Leave it.)
 
 ---
 
-## Known issues and watch-outs
-
-- **Welcome hint dismiss is session-only** (reappears on hard refresh). Persistent dismissal parked for Phase 8 polish.
-- **Preview MCP is usable but finicky here.** Screenshots work (sometimes slow). Start ONE dev instance and wait for compile; a second `preview_start` on port 3000 collides and kills the server. The session cookie expires between sessions, so re-sign-in via the dev panel; `preview_fill` may not trigger React `onChange`, so set values via the native input setter scoped to the dev form.
-- **Magic link is untested in-browser** until the Supabase Auth URL config is set (see secrets table). Dev password sign-in is the working path for now.
-- **`pg` is a devDependency** used only by `scripts/db/*` admin helpers (apply migration, create user, smoke test). Not used by the app.
-- **Anthropic credits: funded and verified.** All AI modes return real output. The routes still degrade gracefully (HTTP 402 "out of Anthropic credits") if the balance hits zero again.
-- **No ESLint config yet.** `npm run lint` drops into `next lint`'s interactive setup prompt (and `next lint` is deprecated in Next 16). type-check + build are the real gates. Set up a flat ESLint config in a polish pass.
-- **`next build` on OneDrive can hit `EINVAL readlink .next`.** A crashed or partial build leaves OneDrive-virtualized artifacts that break the next build. Fix: delete `.next` before rebuilding. Also delete `.next` before `npm run dev` if you just ran a production build (a prod `.next` makes the dev server crash on start).
-
----
-
-## Next steps: get to the hackathon split (tonight)
-
-The hackathon (Sat May 30) reorders the plan. Before any more feature phases, get a tested, deployed base live and branch off it. **Full runbook: `docs/SOP_SPLIT.md`.** The short version:
-
-1. **Close the Level 1 identity seam** (base plumbing, ~30 min): thread `userId` through `callClaude`/`streamClaude` and the four AI routes so `master` is Krava-ready. Not Krava code, just plumbing.
-2. **Test pass** (`docs/SOP_SPLIT.md` Step 2): auth + magic link, capture, all four modes, RLS with a second user, no-key-leak, mobile 375px.
-3. **Deploy `master` to magpie.wiki**: push to GitHub (repo is local-only right now), Vercel project + env vars, the apex domain, Supabase Auth URLs, then verify magic link works on the live domain.
-4. **Nail the split**: branch `hackathon` off the tested commit, assign hackathon.magpie.wiki to it. `master` stays clean.
-
-Stop there. The Krava + Linq build is a separate session on the `hackathon` branch: see the "locked decisions" section at the bottom of `docs/HACKATHON_KRAVA_LINQ.md`.
-
-After the hackathon: resume the normal build at Phase 6 (Facets), then 7 (Discover/Add), 8 (Settings/Polish), 9 (full deploy hardening).
-
----
-
-## Commits this session
+## Commits this session (4)
 
 ```
-feat(phase-5): AI modes (Brief, Challenge, Questions, Convo) (this commit)
-56b2ebe  feat(phase-4): persona capture, mic-to-text, organize route
-e358cc2  feat(phase-3): home grid, subject + topic navigation, onboarding
-592bae8  feat(phase-2): schema applied, typed query spine, seed action
-db1f977  feat(phase-1): app shell, magic-link auth, branded home
-b6ed98e  chore: baseline scaffold snapshot before Phase 1
+92476ae  refactor(qa): hardening pass (reroll, persona copy, doc cleanup)
+ba82e86  feat(auth): offer password sign-in in production alongside magic link
+afb6c99  fix(auth): surface magic-link errors instead of hanging
+72021e6  chore: gitignore .mcp.json (local connector config)
+67bf741  feat: thread userId through the AI layer (krava-ready)   [session 3 carryover]
 ```
 
 ---
 
 ## Session log
 
-### 2026-05-29 (session 1): Phases 1 to 3
+### 2026-05-29 (sessions 1 to 3): Phases 1 to 5
+Built and verified the full base app (auth, schema + typed query spine, home/subject nav, persona capture with mic + organize, four AI modes with caching + streaming). type-check and prod build green each session. See git history (`db1f977` to `67bf741`).
 
-- Mapped the scaffold (config + lib helpers existed; no app shell, no node_modules, no git).
-- Phase 1: installed deps, fixed the Next/React peer conflict, built the app shell and auth, verified `/` to `/login` redirect and the branded login render.
-- Wired real Supabase creds, verified the project is live.
-- Phase 2: applied the schema via the pooler, generated types, fixed the ssr `never`-types issue, built the whole query spine + seed action, created and verified the dev user, smoke-tested the query layer against the live DB.
-- Phase 3: built home grid, subject and topic navigation, and starter-pack onboarding. Drove the full flow in the browser (sign in, seed, browse subject, open topic). Seeded the dogsled account.
-- Wrote this progress doc.
-
-### 2026-05-29 (session 2): Phase 4
-
-- Built {persona} capture end to end: mic hook + button (Web Speech, feature-detected), thought CRUD server actions, the capture surface (riff timer, optimistic bullets, click-to-edit, hover-delete, auto-save on Enter and mic-stop), and the Organize route (Sonnet, learn_more to Discover, billing-aware errors).
-- Refactored `lib/ai/client.ts` to lazy init after a module-load throw broke `next build`.
-- Verified in the browser on the History "empire" topic: add/edit/delete persist across reload, Organize gates at 3+, mic renders enabled. Cleaned up the test thoughts after.
-- Found the Anthropic account is out of credits (live AI returns HTTP 400). Organize degrades gracefully; flagged credits as the Phase 5 blocker.
-- type-check and production build both green.
-
-### 2026-05-29 (session 3): Phase 5
-
-- Credits got funded; verified both models live before building (Sonnet + Haiku each answered a ping).
-- Built the four AI modes: shared `aiErrorResponse` + `handleTextMode` (cached), the Brief/Challenge/Questions routes, the streaming Convo route + `saveAssistantMessage`, and the `TextMode`/`ConvoMode` components. Refactored Organize onto the shared error helper.
-- Verified all four live in the browser on the History "empire" topic: Brief (Haiku numbered list), Challenge (Sonnet paradox tag), Questions (Haiku open questions), Convo (Sonnet streamed reply, persisted across reload). No console errors.
-- Gotchas hit: a stale prod `.next` crashes `next dev` (clear it first); the session cookie expired (re-signed in); `preview_fill` needed the React-native value setter scoped to the dev form.
-- Left a sample Convo thread + cached Brief/Challenge/Questions on the empire topic from testing (harmless; caching is intended behavior).
-- type-check and production build both green.
+### 2026-05-30 (session 4): deploy + QA hardening
+- Closed the Level 1 identity seam (`67bf741`, carried from session 3 work): `userId` threads through the AI layer (Krava-ready, no Krava import).
+- Ran the full local test pass at 375px via the preview tools: capture CRUD persists, all four AI modes (Brief/Challenge/Questions cached + reroll, Convo streamed + persisted), no key leak (verified `/api/ai/*` only, no `api.anthropic.com` from the browser, no key in client chunks), RLS verified static + logged-out redirect + dev password sign-in + session survives refresh. Static RLS check: all 9 tables owner-scoped.
+- Connected `vercel-chris` (Vercel MCP) to the dogsled team; `gh-chris` did not initialize, used plain git instead. Fixed the local git author (was Jessica's identity) to Chris for this repo.
+- Deployed: created `dogsleddev/magpie` (public), pushed `master`, imported into Vercel on the dogsled team with env vars, attached `magpie.wiki` (apex redirects to www). HTTPS live, app serving.
+- Debugged magic link to root cause (see "The auth saga"): missing build-time env vars (fixed), the www-vs-apex redirect allow-list gap (fix pending), and the email rate limit (needs SMTP). Shipped a password sign-in option on prod as the working way in.
+- QA hardening pass + safe fixes (`92476ae`); flagged the rest as known issues above.
+- type-check clean throughout. Vercel build green on each push.
