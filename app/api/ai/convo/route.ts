@@ -4,6 +4,7 @@ import { getSettings } from '@/lib/queries/settings';
 import { getConversation, appendMessage } from '@/lib/queries/conversations';
 import { streamClaude, modelFor, MAX_TOKENS } from '@/lib/ai/client';
 import { convoSystemPrompt } from '@/lib/ai/prompts';
+import { requireUser } from '@/lib/supabase/server';
 import type { ConversationMessage } from '@/lib/queries/types';
 
 export async function POST(request: Request) {
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
   // All Supabase reads/writes happen here, in request scope (cookies valid),
   // before the streaming Response is returned. The stream body below only talks
   // to Anthropic.
+  const { id: userId } = await requireUser();
   const topic = await getTopic(topicId);
   if (!topic) {
     return NextResponse.json({ error: 'Topic not found.' }, { status: 404 });
@@ -46,6 +48,7 @@ export async function POST(request: Request) {
           system,
           messages,
           maxTokens: MAX_TOKENS.convo,
+          userId,
         })) {
           controller.enqueue(encoder.encode(chunk));
         }

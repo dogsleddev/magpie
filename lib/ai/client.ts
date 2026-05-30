@@ -85,6 +85,7 @@ export type CallClaudeArgs = {
   messages?: Array<{ role: 'user' | 'assistant'; content: string }>;
   user?: string;
   maxTokens: number;
+  userId?: string; // carried for per-user privacy routing; Krava reads it on the hackathon branch, direct Anthropic ignores it
 };
 
 export async function callClaude(args: CallClaudeArgs): Promise<string> {

@@ -4,6 +4,7 @@ import { getCached, setCached, clearCached, type CacheMode } from '@/lib/queries
 import { callClaude, modelFor, MAX_TOKENS } from '@/lib/ai/client';
 import type { AIPrompt, Topic as PromptTopic } from '@/lib/ai/prompts';
 import { aiErrorResponse } from '@/lib/ai/errors';
+import { requireUser } from '@/lib/supabase/server';
 
 type TextTask = 'brief' | 'challenge' | 'questions';
 
@@ -40,6 +41,7 @@ export async function handleTextMode(
 
   let content = await getCached(topicId, mode);
   if (!content) {
+    const { id: userId } = await requireUser();
     const p = prompt({ id: topic.id, title: topic.title });
     try {
       content = await callClaude({
@@ -47,6 +49,7 @@ export async function handleTextMode(
         system: p.system,
         user: p.user,
         maxTokens: MAX_TOKENS[task],
+        userId,
       });
     } catch (err) {
       return aiErrorResponse(err);

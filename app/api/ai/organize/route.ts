@@ -5,6 +5,7 @@ import { addDiscoverItems } from '@/lib/queries/discover';
 import { callClaude, modelFor, MAX_TOKENS } from '@/lib/ai/client';
 import { organizePrompt, extractJSON, type OrganizeOutput } from '@/lib/ai/prompts';
 import { aiErrorResponse } from '@/lib/ai/errors';
+import { requireUser } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
   let topicId: string | undefined;
@@ -30,6 +31,8 @@ export async function POST(request: Request) {
 
   const prompt = organizePrompt({ id: topic.id, title: topic.title }, contents);
 
+  const { id: userId } = await requireUser();
+
   let raw: string;
   try {
     raw = await callClaude({
@@ -37,6 +40,7 @@ export async function POST(request: Request) {
       system: prompt.system,
       user: prompt.user,
       maxTokens: MAX_TOKENS.organize,
+      userId,
     });
   } catch (err) {
     return aiErrorResponse(err);
