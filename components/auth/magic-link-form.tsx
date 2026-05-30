@@ -14,17 +14,22 @@ export default function MagicLinkForm() {
     e.preventDefault();
     setStatus('sending');
     setError('');
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) {
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) {
+        setStatus('error');
+        setError(error.message);
+        return;
+      }
+      setStatus('sent');
+    } catch {
       setStatus('error');
-      setError(error.message);
-      return;
+      setError('Could not reach sign-in. Please try again in a moment.');
     }
-    setStatus('sent');
   }
 
   if (status === 'sent') {
