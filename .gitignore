@@ -24,6 +24,9 @@ dist/
 # Vercel
 .vercel
 
+# Local MCP connector config (per-machine, account-specific, do not commit)
+.mcp.json
+
 # Misc
 .DS_Store
 *.pem
