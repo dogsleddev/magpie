@@ -68,7 +68,13 @@ export default function ModeTabs({
         <PersonaMode key={topicId} topicId={topicId} initialThoughts={thoughts} />
       )}
       {active === 'brief' && (
-        <TextMode key={`brief-${topicId}`} topicId={topicId} mode="brief" tagline={TAGLINES.brief} />
+        <TextMode
+          key={`brief-${topicId}`}
+          topicId={topicId}
+          mode="brief"
+          tagline={TAGLINES.brief}
+          personaName={personaName}
+        />
       )}
       {active === 'challenge' && (
         <TextMode
@@ -76,6 +82,7 @@ export default function ModeTabs({
           topicId={topicId}
           mode="challenge"
           tagline={TAGLINES.challenge}
+          personaName={personaName}
         />
       )}
       {active === 'questions' && (
@@ -84,6 +91,7 @@ export default function ModeTabs({
           topicId={topicId}
           mode="questions"
           tagline={TAGLINES.questions}
+          personaName={personaName}
         />
       )}
       {active === 'convo' && (

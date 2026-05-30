@@ -13,9 +13,9 @@ export function aiErrorResponse(err: unknown): NextResponse {
   }
   if (/credit balance|billing|insufficient|quota/i.test(message)) {
     return NextResponse.json(
-      { error: 'Maggie is out of Anthropic credits. Add credits to continue.' },
+      { error: 'Magpie is out of Anthropic credits. Add credits to continue.' },
       { status: 402 },
     );
   }
-  return NextResponse.json({ error: 'Maggie could not answer right now. Try again.' }, { status: 502 });
+  return NextResponse.json({ error: 'Magpie could not answer right now. Try again.' }, { status: 502 });
 }

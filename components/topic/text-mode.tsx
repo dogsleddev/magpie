@@ -9,10 +9,12 @@ export default function TextMode({
   topicId,
   mode,
   tagline,
+  personaName,
 }: {
   topicId: string;
   mode: Mode;
   tagline: string;
+  personaName: string;
 }) {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ export default function TextMode({
         {loading ? (
           <div className="flex items-center gap-2 py-6 text-sm text-text-dim">
             <Spinner />
-            <span>asking maggie...</span>
+            <span>asking {personaName.toLowerCase()}...</span>
           </div>
         ) : error ? (
           <div className="flex flex-col items-start gap-3">

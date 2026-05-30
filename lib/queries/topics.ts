@@ -140,3 +140,81 @@ export async function spinRandomTopic(): Promise<Topic | null> {
   if (!data || data.length === 0) return null;
   return data[Math.floor(Math.random() * data.length)];
 }
+
+export async function getRecentTopics(limit = 50): Promise<TopicWithSubjectAndFacets[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('topics')
+    .select('*, subject:subjects(*), topic_facets(facets(*))')
+    .eq('is_group', false)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+    .returns<TopicWithSubjectFacetEmbed[]>();
+  if (error) throw error;
+  return (data ?? []).map(toWithSubjectAndFacets);
+}
+
+/**
+ * Keyword search across the user's wiki: matches topic titles, and topics
+ * tagged with a facet whose name matches. Newest first. RLS scopes to the user.
+ */
+export async function searchTopics(query: string): Promise<TopicWithSubjectAndFacets[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const supabase = await createClient();
+  const pattern = `%${q}%`;
+  const select = '*, subject:subjects(*), topic_facets(facets(*))';
+
+  const { data: byTitle, error: titleErr } = await supabase
+    .from('topics')
+    .select(select)
+    .eq('is_group', false)
+    .ilike('title', pattern)
+    .returns<TopicWithSubjectFacetEmbed[]>();
+  if (titleErr) throw titleErr;
+
+  let byFacet: TopicWithSubjectFacetEmbed[] = [];
+  const { data: facetRows } = await supabase.from('facets').select('id').ilike('name', pattern);
+  const facetIds = (facetRows ?? []).map((f) => f.id);
+  if (facetIds.length > 0) {
+    const { data: links } = await supabase
+      .from('topic_facets')
+      .select('topic_id')
+      .in('facet_id', facetIds);
+    const topicIds = Array.from(new Set((links ?? []).map((l) => l.topic_id)));
+    if (topicIds.length > 0) {
+      const { data, error } = await supabase
+        .from('topics')
+        .select(select)
+        .eq('is_group', false)
+        .in('id', topicIds)
+        .returns<TopicWithSubjectFacetEmbed[]>();
+      if (error) throw error;
+      byFacet = data ?? [];
+    }
+  }
+
+  const merged = new Map<string, TopicWithSubjectFacetEmbed>();
+  for (const row of [...(byTitle ?? []), ...byFacet]) merged.set(row.id, row);
+  return Array.from(merged.values())
+    .map(toWithSubjectAndFacets)
+    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+}
+
+/** Re-file a topic under a different subject, placing it at the end of the destination. */
+export async function updateTopicSubject(id: string, subjectId: string): Promise<void> {
+  const supabase = await createClient();
+  const { data: last } = await supabase
+    .from('topics')
+    .select('position')
+    .eq('subject_id', subjectId)
+    .order('position', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const position = (last?.position ?? -1) + 1;
+  const { error } = await supabase
+    .from('topics')
+    .update({ subject_id: subjectId, position })
+    .eq('id', id);
+  if (error) throw error;
+}

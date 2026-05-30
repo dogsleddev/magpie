@@ -95,6 +95,40 @@ export function questionsPrompt(topic: Topic): AIPrompt {
   };
 }
 
+export type CategorizeOutput = {
+  title: string;
+  subject: string;
+  facets: string[];
+};
+
+/**
+ * Turn a raw idea into a filed topic: a riff-ready title, a parent subject,
+ * and 1 to 3 facets. Strongly prefers reusing the user's existing subjects and
+ * facets so new captures land next to related ones.
+ */
+export function categorizeTopicPrompt(
+  idea: string,
+  existingSubjects: string[],
+  existingFacets: string[],
+): AIPrompt {
+  return {
+    system: `The user wants to add a conversation topic to their personal wiki. Turn their idea into a clean topic and file it.
+
+Output ONLY valid JSON with this exact shape, no other text:
+{"title":"a specific conversation topic","subject":"Subject Name","facets":["facet","facet"]}
+
+Rules:
+- "title" is a specific conversation prompt someone could riff on for 3 to 5 minutes, written naturally. Keep the user's intent. Do not just echo a bare category.
+- "subject" is the single best parent category. Strongly prefer reusing one of the user's existing subjects when one fits. Invent a new subject only if none fit.
+- "facets" are 1 to 3 lowercase cross-cutting tags. Strongly prefer reusing the user's existing facets when they fit.
+${NO_EM_DASH}`,
+    user: `Idea: "${idea}"
+
+Existing subjects: ${existingSubjects.join(', ') || '(none yet)'}
+Existing facets: ${existingFacets.join(', ') || '(none yet)'}`,
+  };
+}
+
 // ============================================
 // Draw Out mode (charisma layer, post-MVP)
 // See docs/CHARISMA.md for the full spec.
