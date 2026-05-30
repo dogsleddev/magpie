@@ -7,10 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 /**
- * Dev-only quick sign-in. Skips the magic-link email round-trip during local
- * development. Create a confirmed email+password user in the Supabase dashboard
- * (Authentication > Users > Add user, Auto Confirm on) and use it here.
- * This component is only rendered when NODE_ENV is not production.
+ * Email + password sign-in. An alternative to the magic link for accounts that
+ * have a password set (Supabase Authentication > Users). Rendered in all
+ * environments. (File name is historical; this is the password sign-in option.)
  */
 export default function DevSignIn() {
   const router = useRouter();
@@ -36,11 +35,11 @@ export default function DevSignIn() {
 
   return (
     <details className="mt-6 rounded-lg border border-dashed border-border bg-bg-card/50 p-3">
-      <summary className="cursor-pointer text-xs text-text-dim">Dev sign-in (password)</summary>
+      <summary className="cursor-pointer text-xs text-text-dim">Sign in with password</summary>
       <form onSubmit={handleSubmit} className="mt-3 flex flex-col gap-2">
         <Input
           type="email"
-          placeholder="dev email"
+          placeholder="you@email.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="username"
@@ -53,7 +52,7 @@ export default function DevSignIn() {
           autoComplete="current-password"
         />
         <Button type="submit" variant="secondary" size="sm" disabled={busy}>
-          {busy ? 'Signing in...' : 'Dev sign-in'}
+          {busy ? 'Signing in...' : 'Sign in'}
         </Button>
         {error && <p className="text-xs text-danger">{error}</p>}
       </form>

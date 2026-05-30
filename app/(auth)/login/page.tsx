@@ -18,8 +18,6 @@ export default async function LoginPage() {
   }
   if (user) redirect('/');
 
-  const isDev = process.env.NODE_ENV !== 'production';
-
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
@@ -33,7 +31,7 @@ export default async function LoginPage() {
         <div className="mt-8">
           <MagicLinkForm />
         </div>
-        {isDev && <DevSignIn />}
+        <DevSignIn />
       </div>
     </main>
   );
