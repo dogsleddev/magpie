@@ -15,6 +15,13 @@ export async function getFacetsWithCounts(): Promise<FacetWithCount[]> {
   }));
 }
 
+export async function getFacet(id: string): Promise<Facet | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('facets').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function getFacetsForSubject(subjectId: string): Promise<FacetWithCount[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
