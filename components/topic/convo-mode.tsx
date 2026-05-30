@@ -51,7 +51,7 @@ export default function ConvoMode({
         body: JSON.stringify({ topicId, message: text }),
       });
       if (!res.ok || !res.body) {
-        setMessages((prev) => replaceLast(prev, 'maggie hit a snag. try again.'));
+        setMessages((prev) => replaceLast(prev, `${personaName.toLowerCase()} hit a snag. try again.`));
         return;
       }
       const reader = res.body.getReader();
@@ -67,7 +67,7 @@ export default function ConvoMode({
       setMessages((prev) => replaceLast(prev, full));
       if (full) await saveAssistantMessage(topicId, full);
     } catch {
-      setMessages((prev) => replaceLast(prev, 'maggie hit a snag. try again.'));
+      setMessages((prev) => replaceLast(prev, `${personaName.toLowerCase()} hit a snag. try again.`));
     } finally {
       setStreaming(false);
     }
@@ -122,7 +122,7 @@ export default function ConvoMode({
           }}
           rows={1}
           placeholder={`Reply to ${personaName}...`}
-          aria-label="Message Maggie"
+          aria-label={`Message ${personaName}`}
           className="flex max-h-[120px] w-full resize-none rounded border border-border bg-bg-input px-3.5 py-2.5 text-sm text-text transition-colors placeholder:text-text-dim focus-visible:border-border-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-teal"
         />
         <button

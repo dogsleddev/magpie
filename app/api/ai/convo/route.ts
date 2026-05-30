@@ -57,7 +57,7 @@ export async function POST(request: Request) {
         const note =
           status === 401 || status === 403
             ? 'add your anthropic key to keep chatting.'
-            : 'maggie hit a snag. try again in a sec.';
+            : `${settings.persona_name.toLowerCase()} hit a snag. try again in a sec.`;
         controller.enqueue(encoder.encode(note));
       } finally {
         controller.close();

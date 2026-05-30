@@ -19,14 +19,14 @@
 
 ---
 
-## Step 0 — Pre-flight (5 min)
+## Step 0 - Pre-flight (5 min)
 - Open tabs: GitHub (`dogsleddev`), Vercel, Supabase dashboard, magpie.wiki registrar DNS.
 - Confirm clean state:
   ```powershell
   git status   # nothing to commit, on master
   ```
 
-## Step 1 — Close the Level 1 identity seam (~30 min, Claude drives)
+## Step 1 - Close the Level 1 identity seam (~30 min, Claude drives)
 Base-app plumbing so the AI layer carries the authenticated user id. This is NOT Krava code (no Krava import); it just makes `master` Krava-ready so tomorrow is a one-file swap with zero route edits.
 
 Edits:
@@ -45,7 +45,7 @@ Remove-Item -Recurse -Force .next; npm run build
 git add -A; git commit -m "feat: thread userId through the AI layer (krava-ready)"
 ```
 
-## Step 2 — Test pass (~45 min)
+## Step 2 - Test pass (~45 min)
 Run `npm run dev`, drive at 375px in Chrome or Edge. Automated gates first:
 - [ ] `npm run type-check` clean.
 - [ ] `Remove-Item -Recurse -Force .next; npm run build` clean. (Clear `.next` first; OneDrive corrupts stale build artifacts, and a prod `.next` makes `next dev` crash on start.)
@@ -69,9 +69,9 @@ Run `npm run dev`, drive at 375px in Chrome or Edge. Automated gates first:
 - [ ] RLS: a SECOND user sees none of the first user's data.
 - [ ] Zero console errors. 375px: no horizontal scroll, comfortable touch targets, bottom tab clears the safe area.
 
-## Step 3 — Fix anything Step 2 surfaced, then commit.
+## Step 3 - Fix anything Step 2 surfaced, then commit.
 
-## Step 4 — Deploy master to magpie.wiki (~60 to 90 min)
+## Step 4 - Deploy master to magpie.wiki (~60 to 90 min)
 You do the dashboard clicks; Claude can draft configs and drive parts of Vercel via the integration.
 
 1. **Push to GitHub:**
@@ -94,7 +94,7 @@ You do the dashboard clicks; Claude can draft configs and drive parts of Vercel 
    - [ ] Magic-link sign-up with a real email works end to end on the live domain.
    - [ ] A fresh user seeds the starter pack, all four AI modes work, and RLS isolates them from your main account.
 
-## Step 5 — Nail the split (~20 min)
+## Step 5 - Nail the split (~20 min)
 1. Confirm `master` is the deployed, green commit.
 2. Branch and push:
    ```powershell
