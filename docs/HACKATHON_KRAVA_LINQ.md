@@ -116,6 +116,8 @@ Put this in `supabase/migrations/0002_hackathon.sql` so the base schema stays cl
 
 ## Integration: Krava wrapper
 
+> **The pseudocode below is superseded.** It predates the live BYO docs. The real Krava API is a POST to `https://krava.io/api/platform/chat` with `{ message, system }` and a Bearer userToken (SSE response, no model/max_tokens). Follow `docs/SOP_KRAVA.md` for the accurate, timed runbook. The one-file-change principle below still holds.
+
 The whole point of the queries spine is that wrapping the AI layer is a one-file change. `lib/ai/client.ts` becomes:
 
 ```ts
