@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-05-30 (session 4: deploy + QA hardening)
 **Status:** Phases 1 to 5 complete and committed. Base app is **DEPLOYED and LIVE at https://magpie.wiki**. Magic-link sign-in is not finished (blocked on email delivery); a password sign-in option is live as the working way in. The hackathon split (SOP Step 5) is NOT done yet.
-**Branch:** `master` (deployed commit `92476ae`)
+**Branch:** `master` (Vercel auto-deploys the latest `master`; see `git log`)
 **Hackathon clock:** Krava x Linq, Saturday May 30 2026, Frontier Tower SF. Base product is live; the split + Krava/Linq work is the next session.
 
 This is the living "where are we" doc. For "what Magpie is," read `CLAUDE.md`. For the deploy runbook, `docs/SOP_SPLIT.md`. For the hackathon build, `docs/HACKATHON_KRAVA_LINQ.md`.
@@ -114,7 +114,7 @@ Ran a thorough multi-pass review (correctness, security, conventions, AI/data la
 - **[LOW] `components/topic/convo-mode.tsx`:** missing final `decoder.decode()` flush after the stream loop; `replaceLast` assumes a non-empty list. Both safe in current usage.
 
 **Second-pass UI / a11y findings (flagged):**
-- **Demo polish (judge-facing), worth 10 min before the demo:** the "Add topic" primary button is disabled with no explanation, and the Facets / Discover / Journal bottom tabs are dead. They read as broken to a judge. Cheapest fix (per SOP "Optional polish"): hide them or add "coming soon" tooltips. `app/(main)/page.tsx`, `components/nav/bottom-tab-bar.tsx`.
+- **Demo polish (DONE this session):** unavailable features now read as clean "coming soon" placeholders. The "Add topic" button is a muted **outline** (was a faded teal primary), and the Facets / Discover / Journal tabs were already greyed (`opacity-40`). Verified clean at 375px. Chris says "coming soon" verbally in the demo, so no tooltip clutter. `app/(main)/page.tsx`, `components/nav/bottom-tab-bar.tsx`.
 - **[MED] No `error.tsx` boundary** on the `(main)` routes: a transient Supabase error (the query layer throws) shows the raw Next error screen instead of a styled state. Add a route-level `error.tsx`.
 - **[MED] Mic silence auto-stop** can commit an unintended bullet and leave residual text in the input (Web Speech `onend` fires on silence). `components/mic/use-speech-to-text.ts`, `components/topic/persona-mode.tsx`.
 - **[LOW] a11y nits:** mode tabs lack tablist/tab ARIA roles; the wordmark image `alt="Magpie"` doubles with the adjacent text for screen readers (use `alt=""` when text shows); some touch targets (facet chips, small timer/delete buttons) are under the 44px guideline.
@@ -149,4 +149,5 @@ Built and verified the full base app (auth, schema + typed query spine, home/sub
 - Deployed: created `dogsleddev/magpie` (public), pushed `master`, imported into Vercel on the dogsled team with env vars, attached `magpie.wiki` (apex redirects to www). HTTPS live, app serving.
 - Debugged magic link to root cause (see "The auth saga"): missing build-time env vars (fixed), the www-vs-apex redirect allow-list gap (fix pending), and the email rate limit (needs SMTP). Shipped a password sign-in option on prod as the working way in.
 - QA hardening pass + safe fixes (`92476ae`); flagged the rest as known issues above.
+- Demo polish: muted the disabled "Add topic" button (outline) so unavailable features read as clean coming-soon placeholders (the dead nav tabs were already greyed). Verified the look at 375px in the browser.
 - type-check clean throughout. Vercel build green on each push.
