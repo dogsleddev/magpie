@@ -99,7 +99,13 @@ function flattenToMessage(args: CallClaudeArgs): string {
 
 export async function callClaude(args: CallClaudeArgs): Promise<string> {
   if (kravaEnabled && args.userId) {
-    return kravaChat({ externalUserId: args.userId, system: args.system, message: flattenToMessage(args) });
+    try {
+      return await kravaChat({ externalUserId: args.userId, system: args.system, message: flattenToMessage(args) });
+    } catch (err) {
+      // Krava failed at runtime (auth, network, rate limit). Fall back to direct
+      // Anthropic so a Krava hiccup never breaks a mode. Logged so we can see why.
+      console.error('[krava] callClaude failed, falling back to Anthropic:', err);
+    }
   }
   const messages = args.messages ?? (args.user ? [{ role: 'user' as const, content: args.user }] : []);
   if (messages.length === 0) {
@@ -124,8 +130,17 @@ export async function callClaude(args: CallClaudeArgs): Promise<string> {
 
 export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string> {
   if (kravaEnabled && args.userId) {
-    yield* kravaChatStream({ externalUserId: args.userId, system: args.system, message: flattenToMessage(args) });
-    return;
+    let yielded = false;
+    try {
+      for await (const chunk of kravaChatStream({ externalUserId: args.userId, system: args.system, message: flattenToMessage(args) })) {
+        yielded = true;
+        yield chunk;
+      }
+      return;
+    } catch (err) {
+      console.error('[krava] streamClaude failed, falling back to Anthropic:', err);
+      if (yielded) throw err; // mid-stream failure: cannot cleanly restart, surface it
+    }
   }
   const messages = args.messages ?? (args.user ? [{ role: 'user' as const, content: args.user }] : []);
   const stream = await getClient().messages.stream({
