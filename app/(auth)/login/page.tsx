@@ -1,13 +1,19 @@
 import type { User } from '@supabase/supabase-js';
 import { redirect } from 'next/navigation';
 import Wordmark from '@/components/brand/wordmark';
-import MagicLinkForm from '@/components/auth/magic-link-form';
-import DevSignIn from '@/components/auth/dev-sign-in';
+import { Button } from '@/components/ui/button';
+import { demoLogin } from '@/lib/actions/demo-login';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata = { title: 'Sign in' };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+
   let user: User | null = null;
   try {
     const supabase = await createClient();
@@ -28,10 +34,16 @@ export default async function LoginPage() {
         <p className="mt-3 text-center text-sm leading-relaxed text-text-muted">
           A personal wiki for the things you find shiny, with a conversation partner who remembers.
         </p>
-        <div className="mt-8">
-          <MagicLinkForm />
-        </div>
-        <DevSignIn />
+        <form action={demoLogin} className="mt-8">
+          <Button type="submit" variant="primary" size="lg" className="w-full">
+            Enter Magpie
+          </Button>
+        </form>
+        {error === 'demo' && (
+          <p className="mt-3 text-center text-sm text-danger">
+            Could not open the demo. Tap again, or check the login config.
+          </p>
+        )}
       </div>
     </main>
   );
