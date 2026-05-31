@@ -1,6 +1,6 @@
 export const metadata = { title: 'Magpie · Krava × Linq' };
 
-const DECK_URL = 'https://www.magpie.wiki/krava/deck.pptx';
+const DECK_URL = 'https://www.magpie.wiki/krava/deck.pptx?v=2';
 const EMBED_URL = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(DECK_URL)}`;
 
 export default function KravaDeckPage() {
@@ -16,7 +16,7 @@ export default function KravaDeckPage() {
           <span className="ml-2 font-sans text-sm font-normal text-text-dim">Krava × Linq</span>
         </h1>
         <a
-          href="/krava/deck.pptx"
+          href="/krava/deck.pptx?v=2"
           download
           className="shrink-0 rounded border border-border px-3 py-1.5 text-sm text-text-muted transition-colors hover:border-border-strong hover:text-text"
         >
