@@ -1,23 +1,25 @@
 # Magpie · Progress
 
-**Last updated:** 2026-05-30 (session 5: hackathon-day feature build + facets)
-**Status:** Base app is **LIVE at https://magpie.wiki** and has grown well past the MVP base. This session shipped manual/AI **Add Topic**, **search**, **Recent Ideas** with inline editing, **Facets navigation**, the persona rename to **Magpie**, and brand polish. The **split is abandoned**: `master` is the single build line and the hackathon work lands here. **Krava is next** (see `docs/SOP_KRAVA.md`), then Linq.
+**Last updated:** 2026-05-31 (session 6: hackathon won; Krava + Linq + demo pages + one-click login; product-phase docs)
+**Status:** **WON runner-up + $250** at the Krava × Linq hackathon (May 30, 2026), positive judge feedback (a real product, not a wrapper). Base app **LIVE at https://magpie.wiki**. Now in the **product phase**. Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**.
 **Branch:** `master` (Vercel auto-deploys the latest `master` to magpie.wiki).
-**Hackathon:** Krava x Linq, Saturday May 30 2026, Frontier Tower SF.
 
-This is the living "where are we" doc. For "what Magpie is," read `CLAUDE.md`. For the Krava integration runbook, `docs/SOP_KRAVA.md`. For the hackathon plan, `docs/HACKATHON_KRAVA_LINQ.md`.
+This is the living build log. For direction read `docs/BRD.md`; for "what Magpie is," `CLAUDE.md`.
 
 ---
 
-## START HERE next session (ordered)
+## START HERE next session (the post-hackathon sequence)
 
-1. **Krava** (`docs/SOP_KRAVA.md`). Wrap `lib/ai/client.ts` so every AI call routes through Krava, fallback-gated on `KRAVA_APP_KEY` so the demo survives an SDK hiccup. `callClaude`/`streamClaude` already carry `userId`, so this is a one-file change with zero route edits. Lands on `master`, deploys to magpie.wiki.
-2. **Linq** (bonus track). Inbound webhook at `app/api/linq/webhook/route.ts` (HMAC verify) + `lib/linq/send.ts` outbound, plus the iMessage inbox. Webhook URL is `https://magpie.wiki/api/linq/webhook` (no subdomain). See `docs/HACKATHON_KRAVA_LINQ.md`.
-3. **Magic link for real attendees (optional).** Still pending custom SMTP (Resend) + the `www` callback URL in Supabase. Password sign-in is the working way in and Chris is set to present on it, so this is only needed if outside attendees must sign up. See "The auth saga" below.
+Read **`HANDOFF.md`** then **`docs/BRD.md`**. Chris's agreed order: **BRD → landing page → UI → the rest.**
 
-**Security (decided):** Chris has chosen NOT to rotate secrets or flip the repo private. He knows the room and accepts the exposure for the event. Do not re-raise it.
+1. **BRD / PRD** (done: `docs/BRD.md`) + positioning (`docs/COMPETITORS.md`).
+2. **Landing page** + waitlist (scroll-through functionality; `docs/homepage.html` is the reference, build it for real).
+3. **UI:** **revert persona to Maggie**, upper-right home nav, edit/delete topics, subtopics, new-user subject/facet onboarding, custom tone, guardrails, the 3D curiosity graph ("shape of your curiosity," per COMPETITORS §3).
+4. **The rest:** iPhone app, finish the real Linq inbound loop, verify Krava routes on prod, screenshot-and-converse capture, "where'd you hear it" provenance, social.
 
-To get in right now: **https://magpie.wiki**, expand **"Sign in with password"**, use `dogsled@dogsled.dev` + the password. Localhost: `npm run dev` (clear `.next` first), `http://localhost:3000`, same panel.
+**Time-sensitive GTM:** LinkedIn post in ~2 days, Gemini presentation, Loom (BRD §8).
+**Security (still deferred):** repo is public, secrets not rotated. Revisit before a wider launch.
+**Get in:** magpie.wiki has a one-click **"Enter Magpie"** demo login. Localhost: `npm run dev` (clear `.next` first).
 
 ---
 
@@ -25,38 +27,38 @@ To get in right now: **https://magpie.wiki**, expand **"Sign in with password"**
 
 | Item | Value |
 |---|---|
-| Production URL | https://magpie.wiki (HTTPS, valid cert) |
-| Apex behavior | `magpie.wiki` **307-redirects to `www.magpie.wiki`** (matters for auth redirect allow-listing) |
-| Build model | **Single line.** `master` → magpie.wiki, auto-deploy on push. No `hackathon` branch, no `hackathon.magpie.wiki`. Krava + Linq land on `master`. |
-| Vercel team / project | `dogsled` (`team_i1Es1eTRb83TisgbHEU6gcA5`) / `magpie` (`prj_Ko7a9i0drxCPWMccMT1yFrlj6ahC`), git-linked to `dogsleddev/magpie`, Next.js, auto-deploy on push to `master` |
-| GitHub repo | `github.com/dogsleddev/magpie` (PUBLIC) |
-| Vercel env (Production) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `ANTHROPIC_API_KEY` (NEXT_PUBLIC vars bake at build time). Krava/Linq will add `KRAVA_APP_KEY`, `LINQ_API_TOKEN`, `LINQ_PHONE_NUMBER`. |
-| Routes | `/`, `/subject/[id]`, `/topic/[id]`, `/facets`, `/facets/[id]`, `/recent`, `/search`, `/login`, `/auth/callback`, `/api/ai/*` |
-| Persona | Default name is **Magpie** (migration default + the live `user_settings` row). Rename UI is still Phase 8; the default is correct everywhere today. |
-| Sign-in | Magic link (NOT finished) + password option (working). The password panel renders on prod intentionally; re-gate or remove post-hackathon. |
+| Production URL | https://magpie.wiki (apex 307s to www.magpie.wiki) |
+| Build model | Single line: `master` → magpie.wiki, auto-deploy on push. No hackathon branch/subdomain. |
+| Vercel / repo | team `dogsled` (`team_i1Es1eTRb83TisgbHEU6gcA5`) / project `magpie` (`prj_Ko7a9i0drxCPWMccMT1yFrlj6ahC`), git-linked to `dogsleddev/magpie` (PUBLIC) |
+| Vercel env (Production) | `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY`, `ANTHROPIC_API_KEY`, `KRAVA_APP_KEY`, `LINQ_API_TOKEN`, `LINQ_PHONE_NUMBER` (+1 404 384 5892), `LINQ_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` (an `sb_secret_` key). Optional `DEMO_LOGIN_PASSWORD` backstop for the one-click login. |
+| Routes | `/`, `/subject/[id]`, `/topic/[id]`, `/facets`, `/facets/[id]`, `/recent`, `/search`, `/login` (one-click), `/auth/callback`, `/krava`, `/linq`, `/api/ai/*`, `/api/linq/webhook` |
+| Sign-in | **One-click "Enter Magpie"** (`demoLogin`: passwordless via the service-role key, falls back to `DEMO_LOGIN_PASSWORD`) as `dogsled@dogsled.dev`. Magic link still pending SMTP. |
+| Persona | **Decision: product = Magpie, persona = Maggie.** Code currently shows **Magpie** (renamed session 5); **revert to Maggie** in the UI phase (migration default, live `user_settings.persona_name`, threaded `personaName`). `CLAUDE.md` already says Maggie. |
+| Krava | Wrapped in `lib/ai/client.ts`, falls back to Anthropic on any error. Local probe confirmed it works; **prod routing unverified.** |
+| Linq | Tier 0 webhook live (`/api/linq/webhook`, HMAC). Sandbox is outbound-only, so the **inbound loop is not real**; the demo used a staged thread. `0002_hackathon.sql` applied; phone linked. |
+| Demo pages | `/krava` (deck embed + download), `/linq` (iMessage screenshot) |
 
 ---
 
-## Features shipped this session (session 5)
+## Session 6 (2026-05-30 to 05-31): hackathon + product-phase docs
 
-All on `master`, all live on magpie.wiki.
+- **Krava integration.** `lib/ai/krava.ts` + wrappers route every AI call through Krava's `/api/platform/chat` (verified the SSE `{text}` shape with `scripts/krava-probe.mjs`; functional output good). Hit a prod issue where a Krava 401 was mislabeled as an Anthropic-key error; fixed by making `callClaude`/`streamClaude` **fall back to Anthropic on any runtime Krava error** (not just when the key is absent) and logging the cause. So a Krava hiccup never breaks a mode.
+- **Linq Tier 0.** `0002_hackathon.sql` (phone_number, topics.source, conversations.kind, nullable conversations.topic_id, imessage_inbox + RLS), `lib/supabase/admin.ts` (server-only service-role client, since the webhook is unauthenticated), `lib/linq/send.ts` + `lib/linq/store.ts`, `app/api/linq/webhook/route.ts` (HMAC verify, dedupe, Krava-wrapped Convo reply, persist both turns). Outbound confirmed via the Linq sandbox; inbound webhook not wired (sandbox is outbound-only).
+- **Demo/submission pages.** `/krava` (Office-viewer deck embed + download, cache-busted) and `/linq` (the iMessage demo screenshot).
+- **One-click judge login.** `lib/actions/demo-login.ts` + a single "Enter Magpie" button on `/login` (replaced the magic-link/password forms). Passwordless via service-role, `DEMO_LOGIN_PASSWORD` backstop.
+- **Outcome: WON runner-up + $250**, positive feedback.
+- **Product-phase docs (this update).** `docs/BRD.md` (requirements + new direction), `docs/COMPETITORS.md` (positioning from the judges' competitor list), `HANDOFF.md` rewritten for the product phase, this PROGRESS rewrite. **Naming locked: Magpie product / Maggie persona** (revert the session-5 code rename).
 
-- **Add Topic (talk to Magpie).** `+Add topic` (home + every subject page) opens a dialog; the idea goes through Claude (Haiku) which assigns a subject + facets, then the topic is created and you land on it. **"High Agency" is force-filed** to Psychology & Behavior + `skills`/`challenges` for a deterministic demo. New: `lib/actions/topics.ts` (`addTopicViaMagpie`), `categorizeTopicPrompt` in `lib/ai/prompts.ts`, `components/home/add-topic-dialog.tsx`.
-- **Search.** `/search` keyword match over topic titles + facet names, rendered with the shared `TopicList`. `searchTopics` in `lib/queries/topics.ts`, `components/home/topic-search.tsx`.
-- **Recent Ideas.** Section at the bottom of the grid → `/recent`, newest-first, with **inline subject reassignment + facet add/remove** (the topic-editing that was missing). `getRecentTopics` + `updateTopicSubject` queries, `moveTopicToSubject`/`updateTopicFacetsByName` actions, `components/recent/recent-ideas-list.tsx`.
-- **Facets navigation (Phase 6, basic).** Facets bottom tab is live (no longer greyed): `/facets` lists facets by topic count, `/facets/[id]` shows all topics carrying that facet across subjects. Data layer (`getFacetsWithCounts`, `getTopicsByFacet`) already existed; added `getFacet`.
-- **Persona rename Maggie → Magpie.** Single-sourced from `user_settings.persona_name`; threaded through `TextMode`; error copy updated; migration default changed.
-- **Brand + copy.** Wordmark mark enlarged (correct aspect, was squashed) with the teal shiny dot after the word. "Convo Roulette" relabeled **"Remember this topic?"**.
-- **Polish.** `/facets` revalidation on add/move/facet-edit; facet-name lowercase dedupe; Add Topic modal gets Escape-to-close + `role="dialog"`.
+### Earlier sessions
+- **Sessions 1 to 3 (May 29):** built + verified the base app (auth, typed query spine, home/subject nav, persona capture with mic + organize, four AI modes with caching + streaming).
+- **Session 4 (May 30):** deployed `master` to magpie.wiki. Debugged magic link to root cause (www-vs-apex redirect gap + email rate limit); shipped a password sign-in. QA hardening pass.
+- **Session 5 (May 30):** dropped the split (single `master` line). Shipped Add Topic (talk to the persona, AI-assigned subject + facets, "High Agency" force-filed), search (`/search`), Recent Ideas + inline subject/facet edit (`/recent`), Facets nav (`/facets`), wordmark dot + larger mark, "Remember this topic?". Cleaned docs (SOP_SPLIT superseded, hackathon split reversed).
 
 ---
 
 ## The auth saga (magic link still pending)
 
-Magic link is not finished. Root causes (from session 4):
-1. **www-vs-apex redirect gap.** The app runs on `www.magpie.wiki`, so `emailRedirectTo` is the www callback, but only the apex callback is in Supabase's allow-list. Fix: add `https://www.magpie.wiki/auth/callback` to Supabase > Authentication > URL Configuration.
-2. **Email rate limit.** The built-in Supabase sender throttles. Fix: custom SMTP (Resend free tier) in Supabase > Authentication > SMTP Settings.
-Then send one fresh link and confirm it lands on the grid. Until then, password sign-in (`signInWithPassword`, no redirect dependency) is the working way in. When wiring SMTP, confirm the email template emits `?code=` (PKCE), which `app/auth/callback/route.ts` handles.
+Magic link is not finished (the one-click demo login is the way in now). Root causes: the app runs on `www.magpie.wiki` but only the apex callback is in Supabase's allow-list (add `https://www.magpie.wiki/auth/callback`), and the built-in Supabase email sender throttles (needs custom SMTP, e.g. Resend). When wiring SMTP, confirm the email template emits `?code=` (PKCE), which `app/auth/callback/route.ts` handles.
 
 ---
 
@@ -64,61 +66,37 @@ Then send one fresh link and confirm it lands on the grid. Until then, password 
 
 | Phase | Title | Status |
 |---|---|---|
-| 1 | Scaffold + Auth | DONE |
-| 2 | Schema + Queries | DONE |
-| 3 | Home + Subject Navigation | DONE |
-| 4 | {persona} capture (bullets, mic, organize) | DONE |
-| 5 | AI modes (Brief, Challenge, Questions, Convo) | DONE |
-| 6 | Facets navigation | BASIC DONE (list + facet detail; no facet-filtered cross views beyond this) |
+| 1 to 5 | Scaffold/Auth, Schema/Queries, Home/Subject nav, persona capture, AI modes | DONE |
+| 6 | Facets navigation | BASIC DONE (list + facet detail) |
 | 7 | Discover + Add Topic | ADD TOPIC DONE (manual + AI-assist); Discover not started |
-| 8 | Settings + Polish | PARTIAL (persona is Magpie by default; rename UI / settings screen not built) |
-| 9 | Deploy to magpie.wiki | DONE (live; magic link still pending SMTP + www URL) |
+| 8 | Settings + Polish | PARTIAL (persona rename UI / settings screen not built; persona revert to Maggie pending) |
+| 9 | Deploy to magpie.wiki | DONE (live; magic link pending SMTP) |
+| Hackathon | Krava + Linq | Krava wrapped (prod routing to verify); Linq Tier 0 (inbound loop not real, sandbox-limited) |
 
 ---
 
-## Known issues / tech debt (flagged, not blocking the demo)
+## Known issues / tech debt
 
-- **[HIGH, post-hackathon] Convo persistence.** On an Anthropic error mid-stream, the fallback text gets saved as a real assistant turn and replayed; the user turn is persisted before the reply, so a failure/closed-tab can leave a dangling user turn. Only triggers on model error. `app/api/ai/convo/route.ts`, `components/topic/convo-mode.tsx`, `lib/queries/conversations.ts`.
-- **[MED] `appendMessage` is non-atomic** (`lib/queries/conversations.ts`): concurrent appends can drop a message. Matters once Linq drives the same conversation. Fix: a Postgres `jsonb` append RPC.
-- **[MED] Seed is not transactional** (`lib/actions/seed-starter-topics.ts`). The pending-disable mitigates the common case.
-- **[MED] Persona capture edges** (`components/topic/persona-mode.tsx`): starting the mic overwrites typed input; mic silence auto-stop can commit a stray bullet.
-- **[MED] No `error.tsx`** on `(main)` routes: a transient query throw shows the raw Next error screen.
-- **[LOW] Add Topic AI categorization is non-deterministic** for inputs other than "High Agency" (subject/facets are model-chosen). Recent Ideas is the safety net to refile. `lib/actions/topics.ts`.
-- **[LOW] `searchTopics` does not escape LIKE wildcards** (`%`, `_`) in the query. Harmless for normal words.
-- **[LOW] Misnamed component:** `components/auth/dev-sign-in.tsx` / `DevSignIn` is the production password login. Rename to `password-sign-in.tsx`.
-- **[LOW] `extractJSON` brace-slice** is fragile and Organize/categorize output is not shape-validated. Failure mode is a clean "try again", not bad data.
-- **[LOW] Middleware fails open** and does not guard `/api/*`. Add a guard before the Linq webhook ships, and verify the webhook does its own auth (HMAC).
-- **[LOW] `as unknown as ConversationMessage[]`** cast repeated in 3 places.
-
-(Resolved this session: the hardcoded "Maggie" in `text-mode.tsx` and `errors.ts` is gone; persona is threaded/renamed.)
-
-(Phase 5.5 / 9.5+ scaffolding in `lib/ai/prompts.ts`, `lib/seed/bakes/*`, and unused `lib/queries/*` is intentional forward-work per CLAUDE.md, not dead code.)
+- **[HIGH] Krava prod routing unverified.** It may be silently falling back to Anthropic if the Vercel `KRAVA_APP_KEY` is off or the passwordless path errors. Verify via the runtime logs (look for `[krava] ... failed`) before claiming "every call runs through Krava" on prod.
+- **[HIGH] Linq inbound loop is not real.** The sandbox is outbound-only; the Tier 0 webhook is untested against real inbound, and the demo thread was staged in the Linq playground. Finishing the real loop is a "the rest" item.
+- **[HIGH, pre-existing] Convo persistence on error.** A mid-stream model error saves a fallback line as a real assistant turn; a closed tab can leave a dangling user turn. `app/api/ai/convo/route.ts`, `components/topic/convo-mode.tsx`, `lib/queries/conversations.ts`.
+- **[MED] Persona revert pending.** Code shows "Magpie"; the decision is "Maggie."
+- **[MED] `appendMessage` is non-atomic** (`lib/queries/conversations.ts`). Matters more now that Linq can drive the same conversation. Fix: a Postgres `jsonb` append RPC.
+- **[MED] No `error.tsx`** on `(main)` routes (raw Next error screen on a transient throw). Seed not transactional. Mic capture edges (overwrites typed input).
+- **[MED] `demoLogin` passwordless path uses `verifyOtp` type `'email'`** which is unverified against the live API; the `DEMO_LOGIN_PASSWORD` fallback covers it. Confirm or simplify to password-only.
+- **[LOW] Add Topic categorization is non-deterministic** (Recent Ideas is the refile safety net). `searchTopics` does not escape LIKE wildcards. `DevSignIn` component is unused now (login is one-click). `extractJSON` is fragile. `as unknown as ConversationMessage[]` cast repeated.
+- **Security:** repo public; secrets (incl. the DB password + now the service-role key) live in env. Rotate / private before a wider launch.
 
 ---
 
-## Commits this session (5)
+## Notable commits this session (6)
 
 ```
-0712468  refactor: facets revalidation, facet-name dedupe, modal a11y polish
-5c5615b  feat(facets): activate Facets nav (list + facet detail)
-b3d744d  feat: talk-to-Magpie add, search, recent ideas, persona rename, brand dot
-9a8f4a8  docs: update PROGRESS for deploy + QA state, add SOP_SPLIT status note   [session 4]
-78bdf05  polish: mute disabled Add topic button                                   [session 4]
+6eb681e  feat: one-click demo login (judges enter as the demo account)
+618dc18  feat(linq): show the real Linq sandbox screenshot on /linq
+da8b4b5  feat: host the Krava x Linq deck at /krava
+bea5903  fix(ai): fall back to Anthropic when Krava errors at runtime
+e65c72c  feat: route the AI layer through Krava (fallback-gated)
+953f6dd  feat(linq): iMessage webhook Tier 0 (HMAC + Krava-wrapped reply)
 ```
-
----
-
-## Session log
-
-### 2026-05-29 (sessions 1 to 3): Phases 1 to 5
-Built and verified the full base app (auth, typed query spine, home/subject nav, persona capture with mic + organize, four AI modes with caching + streaming).
-
-### 2026-05-30 (session 4): deploy + QA hardening
-Deployed `master` to magpie.wiki (Vercel, dogsled team, public repo). Debugged magic link to root cause (www redirect gap + email rate limit), shipped password sign-in as the working way in. QA hardening pass + safe fixes.
-
-### 2026-05-30 (session 5): hackathon-day feature build
-- **Pivot:** dropped the split. `master` is the single build line; everything (incl. Krava/Linq) ships to magpie.wiki. Security rotation declined by Chris (knows the room).
-- Shipped Add Topic (manual + AI-assist via Magpie, High Agency forced), search, Recent Ideas with inline subject/facet editing, Facets navigation (Phase 6 basic), persona rename to Magpie, wordmark dot + larger mark, "Remember this topic?".
-- Code review pass: revalidate `/facets`, facet-name dedupe, modal a11y.
-- type-check + clean prod build green on each push; deploys verified live by polling the production domain.
-- Docs cleaned (this update), `docs/SOP_SPLIT.md` marked superseded, `docs/HACKATHON_KRAVA_LINQ.md` split decision reversed. `docs/SOP_KRAVA.md` added for the next session.
+(Plus the product-phase docs commit for BRD/COMPETITORS/HANDOFF/PROGRESS.)
