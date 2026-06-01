@@ -1,6 +1,6 @@
 # Magpie · Progress
 
-**Last updated:** 2026-05-31 (session 6: hackathon won; Krava + Linq + demo pages + one-click login; product-phase docs)
+**Last updated:** 2026-06-01 (session 7: landing page built on branch `feat/landing-page`, pending migration + deploy)
 **Status:** **WON runner-up + $250** at the Krava × Linq hackathon (May 30, 2026), positive judge feedback (a real product, not a wrapper). Base app **LIVE at https://magpie.wiki**. Now in the **product phase**. Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**.
 **Branch:** `master` (Vercel auto-deploys the latest `master` to magpie.wiki).
 
@@ -9,6 +9,10 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 ---
 
 ## START HERE next session (the post-hackathon sequence)
+
+> **Session 7 (in flight):** the **landing page is BUILT** and committed to branch **`feat/landing-page`** (not on master, so not deployed). Clean build, verified desktop + mobile. The grid moved from `/` to **`/app`**; `/` is now the public marketing landing. Demo CTA is gated by `DEMO_OPEN` (default open; lock down later with `DEMO_OPEN=false` in Vercel). demoLogin was cleaned up (password-first + logging); local "Enter Magpie" needs `DEMO_LOGIN_PASSWORD` in `.env.local`.
+>
+> **To ship it:** (1) apply `supabase/migrations/0003_waitlist.sql` in Supabase, (2) merge `feat/landing-page` to master + push (auto-deploys), (3) verify prod via vercel-chris. Then the LinkedIn post has its destination.
 
 Read **`HANDOFF.md`** then **`docs/BRD.md`**. Chris's agreed order: **BRD → landing page → UI → the rest.**
 
