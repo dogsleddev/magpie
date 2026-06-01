@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Magpie · PRD / BRD (editable)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a09; --panel: #161513; --panel-2: #1f1d1a; --input: #100f0d;
+    --border: #2a2925; --border-strong: #3a3833;
+    --text: #f5f4ef; --text-muted: #a5a39a; --text-dim: #76746c;
+    --teal: #1d9e75; --blue: #378add; --purple: #7f77dd; --warn: #ef9f27; --danger: #e24b4a;
+    --display: 'Fraunces', Georgia, serif; --body: 'DM Sans', system-ui, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--body); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+
+  /* Toolbar */
+  .bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 14px;
+    padding: 12px 24px; background: rgba(10,10,9,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  .bar .mark { font-family: var(--display); font-weight: 500; font-size: 17px; letter-spacing: -0.02em; }
+  .bar .mark .dot { color: var(--teal); }
+  .bar .status { font-size: 12px; color: var(--text-dim); font-style: italic; font-family: var(--display); margin-right: auto; }
+  .bar .status.dirty { color: var(--warn); }
+  .bar .status.saved { color: var(--teal); }
+  .bar button { font-family: var(--body); font-size: 13px; font-weight: 500; color: var(--text); background: var(--panel-2);
+    border: 1px solid var(--border-strong); border-radius: 8px; padding: 7px 14px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+  .bar button:hover { border-color: var(--text-muted); background: var(--panel); }
+  .bar button.warn:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Document */
+  .doc { max-width: 820px; margin: 40px auto 120px; padding: 48px 56px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 16px; outline: none; }
+  .doc:focus-within { border-color: var(--border-strong); }
+  .doc h1 { font-family: var(--display); font-weight: 500; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 10px; }
+  .doc h1 .sub { color: var(--teal); }
+  .doc h2 { font-family: var(--display); font-weight: 500; font-size: 25px; letter-spacing: -0.015em; margin: 44px 0 14px; padding-top: 22px; border-top: 1px solid var(--border); }
+  .doc h2:first-of-type { border-top: none; padding-top: 0; }
+  .doc h3 { font-family: var(--display); font-weight: 500; font-size: 19px; margin: 26px 0 8px; color: var(--text); }
+  .doc p { margin: 12px 0; color: var(--text-muted); }
+  .doc strong { color: var(--text); font-weight: 600; }
+  .doc em { font-family: var(--display); font-style: italic; color: var(--text); }
+  .doc a { color: var(--blue); }
+  .doc ul, .doc ol { margin: 12px 0 12px 24px; color: var(--text-muted); }
+  .doc li { margin: 6px 0; }
+  .doc code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.86em; background: var(--input);
+    border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; color: var(--text); }
+  .doc .meta { font-size: 14px; color: var(--text-dim); margin: 4px 0; }
+  .doc .lede { font-size: 15px; color: var(--text-muted); font-style: italic; font-family: var(--display); margin-bottom: 8px; }
+  .doc table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 14.5px; }
+  .doc th, .doc td { text-align: left; padding: 9px 12px; border: 1px solid var(--border); vertical-align: top; }
+  .doc th { background: var(--panel-2); color: var(--text); font-weight: 600; }
+  .doc td { color: var(--text-muted); }
+  .doc .pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 1px 8px; border-radius: 20px; }
+  .pill.live { color: var(--teal); background: rgba(29,158,117,0.12); }
+  .pill.next { color: var(--blue); background: rgba(55,138,221,0.12); }
+  .pill.later { color: var(--text-dim); background: rgba(118,116,108,0.14); }
+  .doc hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+  .editnote { max-width: 820px; margin: 0 auto; padding: 0 56px; font-size: 12px; color: var(--text-dim); }
+  @media (max-width: 680px) { .doc { padding: 32px 22px; margin: 20px 12px 80px; } .editnote { padding: 0 22px; } .bar { padding: 10px 14px; gap: 10px; } .bar button { padding: 6px 10px; } }
+</style>
+</head>
+<body>
+  <header class="bar">
+    <span class="mark">Magpie<span class="dot">.</span></span>
+    <span class="status" id="status">original</span>
+    <button id="copy">Copy all</button>
+    <button id="print">Print / PDF</button>
+    <button id="reset" class="warn">Reset</button>
+  </header>
+
+  <p class="editnote">Editable review copy. Type anywhere to edit; changes autosave to this browser only. <strong>BRD.md is the source of truth</strong> &mdash; paste your edits back to Claude (or hit Copy all) to sync them in. Reset restores the original.</p>
+
+  <article class="doc" id="doc" contenteditable="true" spellcheck="false">
+    <h1>Magpie · Business + Product Requirements <span class="sub">(BRD / PRD)</span></h1>
+    <p class="meta"><strong>Owner:</strong> Chris Dougherty (dogsled.dev) · <strong>Updated:</strong> 2026-05-31 (post-hackathon) · <strong>Status:</strong> living</p>
+    <p class="meta"><strong>Companions:</strong> COMPETITORS.md (positioning), PRODUCT.md (product spec), MESSAGING.md + MICROCOPY.md (locked copy), BRAND.md (voice), FUTURE_FEATURES.md (deep backlog), PROGRESS.md (build log), HANDOFF.md (new-session entry point).</p>
+    <p>This is the #1 post-hackathon deliverable. The agreed build sequence is <strong>BRD → landing page → UI → the rest.</strong></p>
+
+    <h2>0. Snapshot</h2>
+    <ul>
+      <li><strong>Won runner-up + $250</strong> at the Krava × Linq hackathon (Frontier Tower SF, May 30, 2026). Judge feedback was positive: a real product, not an LLM wrapper.</li>
+      <li><strong>Live at https://magpie.wiki</strong> (one-click judge login), with <code>magpie.wiki/krava</code> (deck) and <code>magpie.wiki/linq</code> (iMessage demo).</li>
+      <li>Phases 1 to 5 shipped, plus this session's adds (Add Topic via the persona, search, Recent Ideas + editing, Facets nav, Krava privacy wrap, Linq Tier 0 webhook).</li>
+    </ul>
+
+    <h2>1. Vision and one-liner</h2>
+    <ul>
+      <li><strong>One-liner (locked hero):</strong> <em>Collect curiosities. Talk them through.</em></li>
+      <li><strong>Manifesto:</strong> <em>Curiosity is charisma, slowed down.</em></li>
+      <li><strong>What it is:</strong> a personal <strong>conversation gym</strong>. You build a wiki of the things you find shiny, and <strong>Maggie</strong> (the AI persona) helps you talk them out loud for 3 to 5 minutes and remembers everything, so your curiosity compounds into things you can actually say.</li>
+    </ul>
+
+    <h2>2. Problem and insight</h2>
+    <p>People are not boring, they are under-rehearsed. Curiosity is the source of charisma, but almost no one practices articulating what they are curious about out loud. Capture tools store; chat tools answer; neither builds the muscle. <strong>Insight:</strong> capture what pulls you, talk it through in short reps, and a partner who remembers turns scattered bullets into conversation.</p>
+
+    <h2>3. Target user</h2>
+    <ul>
+      <li><strong>Primary:</strong> curious knowledge workers, "talkers and thinkers" who want to be sharper in real conversation (dinner parties, meetings, dates, networking). SMB / startup context by default.</li>
+      <li><strong>Secondary:</strong> students, lifelong learners, creators who think out loud.</li>
+    </ul>
+
+    <h2>4. Positioning and differentiation</h2>
+    <p>Full analysis in COMPETITORS.md. The short version:</p>
+    <ul>
+      <li><strong>The white space (verified):</strong> the entire AI mind-map category is document-to-diagram. No competitor does voice / talk-it-out / a persona that remembers. Magpie owns the "conversation gym" quadrant alone.</li>
+      <li><strong>The moat is behavior + memory + trust</strong>, not the artifact:
+        <ul>
+          <li><strong>Behavior:</strong> the talk-out-loud rep is the product, not an input method.</li>
+          <li><strong>Memory:</strong> Maggie remembers across topics. A relationship, not a feature. Deepest moat.</li>
+          <li><strong>Trust:</strong> privacy infra (TEE inference, identity decoupled) is genuinely rare here.</li>
+        </ul>
+      </li>
+      <li><strong>Honest gut-check:</strong> the 3D graph and screenshot capture are <strong>table-stakes</strong>, not differentiators. <strong>Pitch the gym, not the map.</strong></li>
+      <li><strong>Closest threats:</strong> mindmapai.app (fastest shipper) near-term; horizontal assistants with voice + memory (ChatGPT/Gemini) long-term. Defense: opinionated structure (Subject/Facet ontology, five modes, the ritual) + privacy.</li>
+    </ul>
+
+    <h2>5. The product (current shape)</h2>
+    <ul>
+      <li><strong>Three dimensions:</strong> Subject × Topic × Facet (Subjects hold Topics; Facets are cross-cutting tags that surface the same curiosity through different lenses).</li>
+      <li><strong>Five modes per topic:</strong> <strong>Maggie</strong> (voice-first bullet capture, the default tab), <strong>Brief</strong> (talking points, Haiku), <strong>Challenge</strong> (a hot take / steelman, Sonnet), <strong>Questions</strong> (generative questions, Haiku), <strong>Convo</strong> (streaming chat with Maggie, Sonnet).</li>
+      <li><strong>Persona:</strong> <strong>Maggie</strong> (the personality you talk to). <strong>Brand / product / domain:</strong> <strong>Magpie</strong>.</li>
+      <li><strong>Surfaces today:</strong> home grid by Subject, Add Topic (talk to the persona, auto-files subject + facets), search, Recent Ideas (newest-first, inline edit), Facets navigation, "Remember this topic?" (random resurfacing), mic-to-text on every input, Organize.</li>
+      <li><strong>Front door:</strong> iMessage via Linq. <strong>Privacy:</strong> every AI call wrapped through Krava, fallback to Anthropic.</li>
+    </ul>
+
+    <h2>6. Current state (built and live)</h2>
+    <table>
+      <thead><tr><th>Area</th><th>State</th></tr></thead>
+      <tbody>
+        <tr><td>Auth</td><td>One-click "Enter Magpie" demo login (judges) + password. Magic link pending SMTP.</td></tr>
+        <tr><td>Grid + Subjects</td><td>Live</td></tr>
+        <tr><td>Topic + 5 modes</td><td>Live (Brief/Challenge/Questions cached, Convo streamed + persisted)</td></tr>
+        <tr><td>Add Topic (talk to persona)</td><td>Live (AI assigns subject + facets)</td></tr>
+        <tr><td>Search, Recent Ideas + edit, Facets nav</td><td>Live</td></tr>
+        <tr><td>Krava privacy wrap</td><td>Live, fallback-gated; <strong>prod routing needs verifying</strong></td></tr>
+        <tr><td>Linq iMessage</td><td>Tier 0 webhook live; sandbox outbound-only, so the live inbound loop is <strong>not</strong> real yet</td></tr>
+        <tr><td>/krava, /linq</td><td>Live demo/submission pages</td></tr>
+        <tr><td>Persona name</td><td>Decision: product = Magpie, persona = Maggie. (Revert complete on the landing.)</td></tr>
+      </tbody>
+    </table>
+
+    <h2>7. Requirements</h2>
+
+    <h3>7.1 Naming (locked decision)</h3>
+    <ul>
+      <li><strong>Product / brand / domain = Magpie. Persona = Maggie.</strong></li>
+      <li><strong>Action:</strong> revert the session-5 persona rename. The capture tab is named after the persona ("Maggie"), distinct from the "Convo" chat mode. Touch: migration default, the live <code>user_settings.persona_name</code>, and any threaded <code>personaName</code>.</li>
+    </ul>
+
+    <h3>7.2 Build sequence (Chris's priority)</h3>
+    <ol>
+      <li><strong>PRD / BRD</strong> (this doc) + positioning. <em>(done)</em></li>
+      <li><strong>Landing page:</strong> a real marketing landing with scroll-through functionality and a waitlist. <em>(built, pending deploy)</em></li>
+      <li><strong>UI:</strong> app polish (see 7.3 "Next").</li>
+      <li><strong>The rest:</strong> iPhone app, finish Linq, verify Krava, deeper features.</li>
+    </ol>
+
+    <h3>7.3 Functional requirements (Live / Next / Later)</h3>
+    <p><strong>Capture and wiki</strong></p>
+    <ul>
+      <li>Bullet capture with mic-to-text, auto-save, edit, delete. <span class="pill live">Live</span></li>
+      <li>Organize bullets into buckets. <span class="pill live">Live</span></li>
+      <li>Edit topics, delete topics, subtopics. <span class="pill next">Next</span></li>
+      <li>New-user setup: pick subjects + facets onboarding (Substack-style). <span class="pill next">Next</span></li>
+      <li>Screenshot + link capture → Maggie logs, analyzes, stores → you converse about it later. The twist vs mindmapai is the <em>converse</em> layer. <span class="pill later">Later</span></li>
+      <li>"Where did you learn / hear about it?" provenance on a topic or thought. <span class="pill later">Later</span></li>
+    </ul>
+    <p><strong>AI modes and persona</strong></p>
+    <ul>
+      <li>Brief / Challenge / Questions / Convo. <span class="pill live">Live</span></li>
+      <li>Custom tone and personality for Maggie (per-user variants beyond name). <span class="pill next">Next</span></li>
+      <li>Guardrails (content/safety bounds on Maggie's output + behavior). <span class="pill next">Next</span></li>
+      <li>Cross-topic memory (Maggie remembers; the moat, prioritize). <span class="pill later">Later</span></li>
+    </ul>
+    <p><strong>Navigation and graph</strong></p>
+    <ul>
+      <li>Home grid, search, Recent Ideas, Facets nav. <span class="pill live">Live</span></li>
+      <li>Home navigation in the upper right. <span class="pill next">Next</span></li>
+      <li>3D mind-map / graph = "the shape of your curiosity" (Topics as nodes weighted by talk-time, edges = facet + memory links). <span class="pill next">Next</span></li>
+    </ul>
+    <p><strong>Channels and platform</strong></p>
+    <ul>
+      <li>iMessage front door (Linq). Tier 0 live; finish the real inbound loop + Organize-to-topic. <span class="pill later">Later</span></li>
+      <li>Verify Krava actually routes on prod; understand the SDK + retention guarantees. <span class="pill later">Later</span></li>
+      <li>iPhone app (native vs PWA, decide). <span class="pill later">Later</span></li>
+    </ul>
+    <p><strong>GTM surfaces</strong></p>
+    <ul>
+      <li>Landing page + waitlist. <span class="pill next">Next</span> (built, pending deploy)</li>
+      <li>Public profile / demo mode. <span class="pill later">Later</span></li>
+    </ul>
+
+    <h3>7.4 Hero features (what to pitch)</h3>
+    <ol>
+      <li><strong>The conversation gym</strong> (the five modes, the 3 to 5 minute rep).</li>
+      <li><strong>Maggie remembers</strong> (cross-context memory, the relationship).</li>
+      <li><strong>The curiosity graph</strong> ("the shape of your curiosity," not a generated diagram).</li>
+    </ol>
+    <p>Supporting wow: <strong>iMessage capture.</strong> Proof of trust: <strong>privacy / Krava.</strong> Lead with the gym + memory; privacy is the proof, not the headline.</p>
+
+    <h2>8. Go-to-market (time-sensitive)</h2>
+    <ul>
+      <li><strong>LinkedIn post in ~2 days</strong> about the win. Suggested angle uses the demoted line "Get better at the conversations that matter." Lead with the runner-up + the "real product, not a wrapper" story.</li>
+      <li><strong>Gemini presentation prep</strong> (positioning from COMPETITORS, the hero features, the demo).</li>
+      <li><strong>Loom demo video</strong> (the gym loop + iMessage capture + the graph vision).</li>
+      <li><strong>Marketing strategy:</strong> waitlist from the landing page, the hackathon win as proof, dogsled.dev portfolio funnel.</li>
+    </ul>
+
+    <h2>9. Success metrics (early-stage)</h2>
+    <ul>
+      <li><strong>North Star:</strong> weekly <strong>riffs</strong> (3 to 5 min talk-throughs completed).</li>
+      <li>Activation: % of new users who capture a thought and run one mode in session 1.</li>
+      <li>Engagement: thoughts/week, topics added/week, modes used per topic.</li>
+      <li>Retention: weekly active, streaks.</li>
+      <li>Virality: waitlist growth, shares, iMessage captures.</li>
+    </ul>
+
+    <h2>10. Tech and infrastructure</h2>
+    <ul>
+      <li>Next.js 15 (App Router, TS strict), Supabase (Postgres + RLS), Anthropic (Sonnet 4.5 + Haiku 4.5), <strong>Krava</strong> (TEE inference wrap, fallback-gated on <code>KRAVA_APP_KEY</code>), <strong>Linq</strong> (iMessage), Vercel.</li>
+      <li>The <code>lib/queries/</code> spine is the single source of truth (UI + AI + webhook).</li>
+      <li>Added: service-role admin client (for the unauthenticated Linq webhook), one-click demo login.</li>
+    </ul>
+
+    <h2>11. Open questions / decisions</h2>
+    <ul>
+      <li>Free vs paid tier (Substack-style limits)?</li>
+      <li>Privacy default: public-opt-in or private-with-toggle?</li>
+      <li>How deep is Maggie persona customization (just tone, or full alternate system prompts)?</li>
+      <li>iPhone: native app or installable PWA first?</li>
+      <li>When does the graph ship, and does it gate on cross-context memory?</li>
+      <li>Does Krava stay in production long-term, or is it a hackathon proof?</li>
+    </ul>
+  </article>
+
+<script>
+  (function () {
+    var doc = document.getElementById('doc');
+    var status = document.getElementById('status');
+    var KEY = 'magpie-brd-edits-v1';
+    var t;
+
+    var saved = localStorage.getItem(KEY);
+    if (saved) { doc.innerHTML = saved; setStatus('saved', 'edited (restored)'); }
+
+    function setStatus(cls, text) {
+      status.className = 'status ' + cls;
+      status.textContent = text;
+    }
+
+    doc.addEventListener('input', function () {
+      setStatus('dirty', 'editing...');
+      clearTimeout(t);
+      t = setTimeout(function () {
+        localStorage.setItem(KEY, doc.innerHTML);
+        setStatus('saved', 'saved to this browser');
+      }, 500);
+    });
+
+    document.getElementById('copy').addEventListener('click', function () {
+      var range = document.createRange();
+      range.selectNodeContents(doc);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      try {
+        navigator.clipboard.writeText(doc.innerText);
+        setStatus('saved', 'copied to clipboard');
+      } catch (e) {
+        document.execCommand('copy');
+        setStatus('saved', 'copied');
+      }
+      sel.removeAllRanges();
+    });
+
+    document.getElementById('print').addEventListener('click', function () { window.print(); });
+
+    document.getElementById('reset').addEventListener('click', function () {
+      if (confirm('Discard your edits and restore the original PRD?')) {
+        localStorage.removeItem(KEY);
+        location.reload();
+      }
+    });
+  })();
+</script>
+</body>
+</html>
