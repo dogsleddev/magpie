@@ -12,7 +12,7 @@ You are picking up **Magpie**, a personal conversation gym at **magpie.wiki**. F
 
 **Agreed next-phase sequence:** **BRD → landing page → UI → the rest.**
 
-**Read in this order:**
+**Read in this order** (for the fastest orientation, skim `docs/STATUS.md` then `docs/SOP.md` first):
 1. **`docs/BRD.md`** (the business + product requirements, the new direction, the backlog) ← start here
 2. **`docs/COMPETITORS.md`** (positioning: "pitch the gym, not the map")
 3. **`PROGRESS.md`** (build state + known issues)

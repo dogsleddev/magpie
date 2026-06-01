@@ -88,7 +88,7 @@ Magic link is not finished (the one-click demo login is the way in now). Root ca
 - **[MED] `appendMessage` is non-atomic** (`lib/queries/conversations.ts`). Matters more now that Linq can drive the same conversation. Fix: a Postgres `jsonb` append RPC.
 - **[MED] No `error.tsx`** on `(main)` routes (raw Next error screen on a transient throw). Seed not transactional. Mic capture edges (overwrites typed input).
 - **[MED] `demoLogin` passwordless path uses `verifyOtp` type `'email'`** which is unverified against the live API; the `DEMO_LOGIN_PASSWORD` fallback covers it. Confirm or simplify to password-only.
-- **[LOW] Add Topic categorization is non-deterministic** (Recent Ideas is the refile safety net). `searchTopics` does not escape LIKE wildcards. `DevSignIn` component is unused now (login is one-click). `extractJSON` is fragile. `as unknown as ConversationMessage[]` cast repeated.
+- **[LOW] Add Topic categorization is non-deterministic** (Recent Ideas is the refile safety net). `extractJSON` is fragile. `as unknown as ConversationMessage[]` cast repeated. (Session 7 QC: `searchTopics` LIKE-wildcard escaping fixed; dead `DevSignIn` + `MagicLinkForm` auth forms removed.)
 - **Security:** repo public; secrets (incl. the DB password + now the service-role key) live in env. Rotate / private before a wider launch.
 
 ---
