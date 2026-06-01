@@ -17,7 +17,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <BackLink href="/" label="Grid" />
+      <BackLink href="/app" label="Grid" />
       <h1 className="font-display text-2xl font-medium text-text">{subject.name}</h1>
       <AddTopicDialog
         subjectId={subject.id}

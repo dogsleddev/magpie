@@ -14,7 +14,7 @@ export default async function SearchPage({
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <BackLink href="/" label="Grid" />
+      <BackLink href="/app" label="Grid" />
       <TopicSearch defaultValue={query} />
       {query ? (
         results.length > 0 ? (

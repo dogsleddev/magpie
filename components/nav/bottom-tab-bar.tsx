@@ -30,7 +30,7 @@ export default function BottomTabBar() {
         const Icon = tab.icon;
         const enabled = tab.key === 'grid' || tab.key === 'facets';
         const active =
-          (tab.key === 'grid' && pathname === '/') ||
+          (tab.key === 'grid' && pathname === '/app') ||
           (tab.key === 'facets' && pathname.startsWith('/facets'));
 
         const inner = (
@@ -48,7 +48,7 @@ export default function BottomTabBar() {
 
         if (tab.key === 'grid') {
           return (
-            <Link key={tab.key} href="/" className="flex flex-1">
+            <Link key={tab.key} href="/app" className="flex flex-1">
               {inner}
             </Link>
           );

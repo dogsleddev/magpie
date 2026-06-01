@@ -6,5 +6,5 @@ import { spinRandomTopic } from '@/lib/queries/topics';
 export async function convoRoulette() {
   const topic = await spinRandomTopic();
   if (topic) redirect(`/topic/${topic.id}`);
-  redirect('/');
+  redirect('/app');
 }

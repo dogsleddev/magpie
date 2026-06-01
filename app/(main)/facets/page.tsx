@@ -9,7 +9,7 @@ export default async function FacetsPage() {
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <BackLink href="/" label="Grid" />
+      <BackLink href="/app" label="Grid" />
       <div>
         <h1 className="font-display text-2xl font-medium text-text">Facets</h1>
         <p className="text-xs italic text-text-dim">where the connections live</p>

@@ -102,7 +102,7 @@ export async function addTopicViaMagpie(
   const subjects = await getSubjectsWithCounts();
   const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? plan.subject;
 
-  revalidatePath('/');
+  revalidatePath('/app');
   revalidatePath('/recent');
   revalidatePath('/facets');
   revalidatePath(`/subject/${subjectId}`);
@@ -112,7 +112,7 @@ export async function addTopicViaMagpie(
 export async function moveTopicToSubject(topicId: string, subjectId: string): Promise<void> {
   await updateTopicSubject(topicId, subjectId);
   revalidatePath('/recent');
-  revalidatePath('/');
+  revalidatePath('/app');
   revalidatePath('/facets');
   revalidatePath(`/subject/${subjectId}`);
 }

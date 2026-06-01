@@ -29,7 +29,7 @@ export default function DevSignIn() {
       setError(error.message);
       return;
     }
-    router.push('/');
+    router.push('/app');
     router.refresh();
   }
 

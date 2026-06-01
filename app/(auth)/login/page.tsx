@@ -22,7 +22,7 @@ export default async function LoginPage({
   } catch {
     // No Supabase env yet (pre-creds boot). Render the login screen anyway.
   }
-  if (user) redirect('/');
+  if (user) redirect('/app');
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6">

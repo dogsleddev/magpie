@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
 
   // Redirect unauthenticated users to login for protected routes
   const protectedPaths = [
-    '/',
+    '/app',
     '/subject',
     '/topic',
     '/facet',

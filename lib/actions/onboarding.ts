@@ -5,6 +5,6 @@ import { seedStarterTopics, type SeedResult } from './seed-starter-topics';
 
 export async function loadStarterPack(): Promise<SeedResult> {
   const result = await seedStarterTopics();
-  revalidatePath('/');
+  revalidatePath('/app');
   return result;
 }

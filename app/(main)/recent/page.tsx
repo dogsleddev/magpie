@@ -13,7 +13,7 @@ export default async function RecentPage() {
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <BackLink href="/" label="Grid" />
+      <BackLink href="/app" label="Grid" />
       <h1 className="font-display text-2xl font-medium text-text">Recent Ideas</h1>
       <RecentIdeasList
         topics={topics}
