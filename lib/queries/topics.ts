@@ -162,7 +162,8 @@ export async function searchTopics(query: string): Promise<TopicWithSubjectAndFa
   const q = query.trim();
   if (!q) return [];
   const supabase = await createClient();
-  const pattern = `%${q}%`;
+  // Escape LIKE wildcards so "50%" or "a_b" matches literally, not as a pattern.
+  const pattern = `%${q.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
   const select = '*, subject:subjects(*), topic_facets(facets(*))';
 
   const { data: byTitle, error: titleErr } = await supabase
