@@ -19,8 +19,9 @@ const DEMO_EMAIL = 'dogsled@dogsled.dev';
  * silently bouncing to the error screen. redirect() stays outside every
  * try/catch because it signals by throwing.
  */
-export async function demoLogin() {
+export async function demoLogin(formData?: FormData) {
   const supabase = await createClient();
+  const openAdd = formData?.get('openAdd') === '1';
   let ok = false;
 
   const password = process.env.DEMO_LOGIN_PASSWORD;
@@ -57,5 +58,5 @@ export async function demoLogin() {
     );
   }
 
-  redirect(ok ? '/app' : '/login?error=demo');
+  redirect(ok ? (openAdd ? '/app?add=1' : '/app') : '/login?error=demo');
 }

@@ -7,15 +7,16 @@ import TextMode from '@/components/topic/text-mode';
 import ConvoMode from '@/components/topic/convo-mode';
 import type { ConversationMessage, Thought } from '@/lib/queries/types';
 
-type ModeKey = 'persona' | 'brief' | 'challenge' | 'questions' | 'convo';
+// 'persona' is the persona-named tab (the chat with Maggie); 'thoughts' is the
+// bullet capture. They render the swapped components below.
+type ModeKey = 'persona' | 'brief' | 'challenge' | 'questions' | 'thoughts';
 
-const MODE_KEYS: ModeKey[] = ['persona', 'brief', 'challenge', 'questions', 'convo'];
+const MODE_KEYS: ModeKey[] = ['persona', 'brief', 'challenge', 'questions', 'thoughts'];
 
-const TAGLINES: Record<Exclude<ModeKey, 'persona'>, string> = {
+const TAGLINES: Record<'brief' | 'challenge' | 'questions', string> = {
   brief: 'the primer you needed earlier',
   challenge: "the pushback you didn't see coming",
   questions: 'doors, not dead-ends',
-  convo: 'talk it through',
 };
 
 export default function ModeTabs({
@@ -41,7 +42,7 @@ export default function ModeTabs({
     { key: 'brief', label: 'Brief' },
     { key: 'challenge', label: 'Challenge' },
     { key: 'questions', label: 'Questions' },
-    { key: 'convo', label: 'Convo' },
+    { key: 'thoughts', label: 'Thoughts' },
   ];
 
   return (
@@ -65,7 +66,13 @@ export default function ModeTabs({
       </div>
 
       {active === 'persona' && (
-        <PersonaMode key={topicId} topicId={topicId} initialThoughts={thoughts} />
+        <ConvoMode
+          key={`convo-${topicId}`}
+          topicId={topicId}
+          personaName={personaName}
+          initialMessages={conversationMessages}
+          tagline="talk it through"
+        />
       )}
       {active === 'brief' && (
         <TextMode
@@ -94,14 +101,8 @@ export default function ModeTabs({
           personaName={personaName}
         />
       )}
-      {active === 'convo' && (
-        <ConvoMode
-          key={`convo-${topicId}`}
-          topicId={topicId}
-          personaName={personaName}
-          initialMessages={conversationMessages}
-          tagline={TAGLINES.convo}
-        />
+      {active === 'thoughts' && (
+        <PersonaMode key={`thoughts-${topicId}`} topicId={topicId} initialThoughts={thoughts} />
       )}
     </div>
   );

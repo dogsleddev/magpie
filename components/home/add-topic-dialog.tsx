@@ -8,14 +8,16 @@ import { addTopicViaMagpie } from '@/lib/actions/topics';
 
 export default function AddTopicDialog({
   subjectId,
-  personaName = 'Magpie',
+  personaName = 'Maggie',
   triggerClassName,
+  defaultOpen = false,
 }: {
   subjectId?: string;
   personaName?: string;
   triggerClassName?: string;
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [idea, setIdea] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

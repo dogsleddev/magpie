@@ -9,7 +9,7 @@ export default function WelcomeHint() {
 
   return (
     <div className="relative rounded-lg border border-border bg-bg-card-2 py-3 pl-4 pr-10 text-sm text-text-muted">
-      Tap a subject to dive in, or let Convo Roulette pick for you.
+      Tap a subject to dive in. Click Add a Topic and connect to the community.
       <button
         type="button"
         onClick={() => setDismissed(true)}

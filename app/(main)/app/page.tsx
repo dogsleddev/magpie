@@ -1,18 +1,21 @@
 import Link from 'next/link';
-import { ChevronRight, Shuffle } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { getSubjectsWithCounts } from '@/lib/queries/subjects';
 import { getRecentTopics } from '@/lib/queries/topics';
 import { getSettings } from '@/lib/queries/settings';
-import { convoRoulette } from '@/lib/actions/convo-roulette';
-import { Button } from '@/components/ui/button';
 import SubjectList from '@/components/home/subject-list';
 import WelcomeHint from '@/components/home/welcome-hint';
 import EmptyOnboarding from '@/components/home/empty-onboarding';
 import AddTopicDialog from '@/components/home/add-topic-dialog';
 import TopicSearch from '@/components/home/topic-search';
 
-export default async function HomePage() {
-  const [subjects, recent, settings] = await Promise.all([
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ add?: string }>;
+}) {
+  const [{ add }, subjects, recent, settings] = await Promise.all([
+    searchParams,
     getSubjectsWithCounts(),
     getRecentTopics(6),
     getSettings(),
@@ -22,30 +25,13 @@ export default async function HomePage() {
     return <EmptyOnboarding />;
   }
 
-  const hasTopics = subjects.some((s) => s.topic_count > 0);
-
   return (
     <div className="flex flex-col gap-6 py-2">
       <div className="flex flex-col gap-3">
-        <div className="flex gap-3">
-          <AddTopicDialog personaName={settings.persona_name} triggerClassName="flex-1" />
-          <form action={convoRoulette} className="flex-1">
-            <Button
-              type="submit"
-              variant="secondary"
-              size="md"
-              className="w-full"
-              disabled={!hasTopics}
-            >
-              <Shuffle className="h-4 w-4" strokeWidth={2.5} />
-              Remember this topic?
-            </Button>
-          </form>
-        </div>
+        <WelcomeHint />
+        <AddTopicDialog personaName={settings.persona_name} defaultOpen={add === '1'} />
         <TopicSearch />
       </div>
-
-      <WelcomeHint />
 
       <section className="flex flex-col gap-3">
         <div>

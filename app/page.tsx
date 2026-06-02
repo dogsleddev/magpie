@@ -51,8 +51,9 @@ export default function LandingPage() {
           </a>
           {demoOpen ? (
             <form action={demoLogin} style={{ display: 'contents' }}>
+              <input type="hidden" name="openAdd" value="1" />
               <button type="submit" className="btn-secondary">
-                Try the demo
+                Add a Curiosity to the Community
               </button>
             </form>
           ) : (

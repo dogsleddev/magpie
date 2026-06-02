@@ -5,6 +5,7 @@ import { requireUser } from '@/lib/supabase/server';
 import { callClaude, MODELS } from '@/lib/ai/client';
 import { categorizeTopicPrompt, extractJSON, type CategorizeOutput } from '@/lib/ai/prompts';
 import { createTopic, updateTopicSubject } from '@/lib/queries/topics';
+import { createThought } from '@/lib/queries/thoughts';
 import { createSubject, getSubjectsWithCounts } from '@/lib/queries/subjects';
 import { findOrCreateFacet, getFacetsWithCounts, setTopicFacets } from '@/lib/queries/facets';
 
@@ -98,6 +99,13 @@ export async function addTopicViaMagpie(
   const subjectId = options?.subjectId ?? (await resolveSubjectId(plan.subject));
   const facetIds = await resolveFacetIds(plan.facets);
   const topic = await createTopic({ title: plan.title, subjectId, facetIds });
+
+  // Seed the first Thought with exactly what the user typed.
+  try {
+    await createThought(topic.id, trimmed);
+  } catch (e) {
+    console.error('[addTopic] failed to seed first thought:', e);
+  }
 
   const subjects = await getSubjectsWithCounts();
   const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? plan.subject;
