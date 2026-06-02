@@ -39,8 +39,8 @@
   --radius-xl: 22px;
 
   /* Fonts */
-  --font-display: 'Fraunces', 'Georgia', serif;
-  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-fraunces), 'Fraunces', 'Georgia', serif;
+  --font-body: var(--font-dm-sans), 'DM Sans', system-ui, -apple-system, sans-serif;
 
   /* Transitions */
   --transition: 160ms cubic-bezier(.4, 0, .2, 1);

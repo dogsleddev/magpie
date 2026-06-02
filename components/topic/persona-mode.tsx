@@ -80,10 +80,31 @@ export default function PersonaMode({
     [topicId],
   );
 
+  // Mic appends to whatever is already typed (snapshotted as base on start),
+  // and commits the full field value, not just the spoken part.
+  const baseRef = useRef('');
+  const liveRef = useRef('');
   const { supported, recording, toggle } = useSpeechToText({
-    onTranscript: (text) => setInput(text),
-    onStop: (finalText) => void commit(finalText),
+    onTranscript: (spoken) => {
+      const next = baseRef.current ? `${baseRef.current} ${spoken}` : spoken;
+      liveRef.current = next;
+      setInput(next);
+    },
+    onStop: () => {
+      const text = liveRef.current.trim();
+      liveRef.current = '';
+      baseRef.current = '';
+      if (text) void commit(text);
+    },
   });
+
+  const handleMic = () => {
+    if (!recording) {
+      baseRef.current = input.trim();
+      liveRef.current = input.trim();
+    }
+    toggle();
+  };
 
   const startEdit = (t: Thought) => {
     setEditingId(t.id);
@@ -216,7 +237,7 @@ export default function PersonaMode({
           autoComplete="off"
           aria-label="Capture a thought"
         />
-        <MicButton supported={supported} recording={recording} onClick={toggle} />
+        <MicButton supported={supported} recording={recording} onClick={handleMic} />
         <button
           type="button"
           onClick={() => void commit(input)}

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getTopic } from '@/lib/queries/topics';
 import { getSettings } from '@/lib/queries/settings';
-import { getConversation, appendMessage } from '@/lib/queries/conversations';
+import { getConversation } from '@/lib/queries/conversations';
 import { streamClaude, modelFor, MAX_TOKENS } from '@/lib/ai/client';
 import { convoSystemPrompt } from '@/lib/ai/prompts';
+import { CONVO_STREAM_ERROR_MARK } from '@/lib/ai/stream-markers';
 import { requireUser } from '@/lib/supabase/server';
 import type { ConversationMessage } from '@/lib/queries/types';
 
@@ -22,20 +23,26 @@ export async function POST(request: Request) {
   }
   const userMessage = message.trim();
 
-  // All Supabase reads/writes happen here, in request scope (cookies valid),
-  // before the streaming Response is returned. The stream body below only talks
-  // to Anthropic.
-  const { id: userId } = await requireUser();
-  const topic = await getTopic(topicId);
+  // Reads run in parallel, in request scope (cookies valid). Persistence is
+  // client-driven after a clean stream (saveConvoTurn), so a mid-stream failure
+  // never writes a turn. We also drop a dangling trailing user turn left by a
+  // prior aborted stream, so we never send consecutive user messages (which the
+  // Anthropic API rejects with a 400).
+  const [{ id: userId }, topic, settings, convo] = await Promise.all([
+    requireUser(),
+    getTopic(topicId),
+    getSettings(),
+    getConversation(topicId),
+  ]);
   if (!topic) {
     return NextResponse.json({ error: 'Topic not found.' }, { status: 404 });
   }
-  const settings = await getSettings();
-  const convo = await getConversation(topicId);
-  const history = (convo?.messages ?? []) as unknown as ConversationMessage[];
-  const messages: ConversationMessage[] = [...history, { role: 'user', content: userMessage }];
 
-  await appendMessage(topicId, 'user', userMessage);
+  let history = (convo?.messages ?? []) as unknown as ConversationMessage[];
+  while (history.length > 0 && history[history.length - 1]?.role === 'user') {
+    history = history.slice(0, -1);
+  }
+  const messages: ConversationMessage[] = [...history, { role: 'user', content: userMessage }];
 
   const system = convoSystemPrompt({ id: topic.id, title: topic.title }, settings.persona_name);
   const encoder = new TextEncoder();
@@ -58,7 +65,9 @@ export async function POST(request: Request) {
           status === 401 || status === 403
             ? 'add your anthropic key to keep chatting.'
             : `${settings.persona_name.toLowerCase()} hit a snag. try again in a sec.`;
-        controller.enqueue(encoder.encode(note));
+        // The marker tells the client this is an error note (not model output),
+        // so it shows the note but never persists it as a real assistant turn.
+        controller.enqueue(encoder.encode(CONVO_STREAM_ERROR_MARK + note));
       } finally {
         controller.close();
       }

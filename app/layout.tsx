@@ -1,5 +1,20 @@
 import type { Metadata, Viewport } from 'next';
+import { Fraunces, DM_Sans } from 'next/font/google';
 import './globals.css';
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  axes: ['opsz'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-fraunces',
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
+});
 
 export const metadata: Metadata = {
   title: { default: 'Magpie', template: '%s · Magpie' },
@@ -18,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={`dark ${fraunces.variable} ${dmSans.variable}`}>
       <body>{children}</body>
     </html>
   );

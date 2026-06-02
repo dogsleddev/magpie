@@ -1,14 +1,25 @@
 'use server';
 
-import { appendMessage } from '@/lib/queries/conversations';
+import { appendMessages } from '@/lib/queries/conversations';
+import type { ConversationMessage } from '@/lib/queries/types';
 
 /**
- * Persists Maggie's reply after the Convo stream finishes. The user message is
- * persisted server-side in the convo route before streaming; this saves the
- * assistant turn once the client has the full text.
+ * Persist a completed Convo exchange (the user turn + Maggie's reply) together,
+ * only after a clean stream. Saving both at once means an aborted or failed
+ * stream never leaves a dangling user turn (which would 400 the next call) and
+ * never writes an error note as a real assistant turn.
  */
-export async function saveAssistantMessage(topicId: string, content: string): Promise<void> {
-  const trimmed = content.trim();
-  if (!trimmed) return;
-  await appendMessage(topicId, 'assistant', trimmed);
+export async function saveConvoTurn(
+  topicId: string,
+  userMessage: string,
+  assistantMessage: string,
+): Promise<void> {
+  const user = userMessage.trim();
+  const assistant = assistantMessage.trim();
+  if (!user || !assistant) return;
+  const turns: ConversationMessage[] = [
+    { role: 'user', content: user },
+    { role: 'assistant', content: assistant },
+  ];
+  await appendMessages(topicId, turns);
 }

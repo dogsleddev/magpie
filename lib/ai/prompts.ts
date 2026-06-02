@@ -219,16 +219,43 @@ export type DrawOutScore = {
 };
 
 /**
- * Extract JSON from an AI response that may have stray text around it.
- * Returns the parsed value or null if parse fails.
+ * Extract JSON from an AI response that may wrap it in prose or markdown fences.
+ * Tries a fenced ```json block first, then scans for the first brace-balanced
+ * object that actually parses (string-aware, so braces inside strings are safe).
  */
 export function extractJSON<T>(text: string): T | null {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end === -1) return null;
-  try {
-    return JSON.parse(text.slice(start, end + 1)) as T;
-  } catch {
-    return null;
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  for (const candidate of fence ? [fence[1], text] : [text]) {
+    const parsed = scanForJSONObject<T>(candidate);
+    if (parsed !== null) return parsed;
   }
+  return null;
+}
+
+function scanForJSONObject<T>(text: string): T | null {
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== '{') continue;
+    let depth = 0;
+    let inStr = false;
+    let esc = false;
+    for (let j = i; j < text.length; j++) {
+      const ch = text[j];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (ch === '\\') esc = true;
+        else if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"') inStr = true;
+      else if (ch === '{') depth++;
+      else if (ch === '}' && --depth === 0) {
+        try {
+          return JSON.parse(text.slice(i, j + 1)) as T;
+        } catch {
+          break; // this '{' didn't start valid JSON; try the next one
+        }
+      }
+    }
+  }
+  return null;
 }

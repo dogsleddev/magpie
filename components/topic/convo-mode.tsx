@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Send } from 'lucide-react';
-import { saveAssistantMessage } from '@/lib/actions/conversations';
+import { saveConvoTurn } from '@/lib/actions/conversations';
+import { CONVO_STREAM_ERROR_MARK } from '@/lib/ai/stream-markers';
 import type { ConversationMessage } from '@/lib/queries/types';
+import { useSpeechToText } from '@/components/mic/use-speech-to-text';
+import MicButton from '@/components/mic/mic-button';
 import { cn } from '@/lib/utils';
 
 const OPENER = "hey, what's pulling you on this one?";
@@ -30,6 +33,19 @@ export default function ConvoMode({
   const [streaming, setStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const micBaseRef = useRef('');
+
+  // Speech-to-text fills the input; it does not auto-send (you review, then send).
+  const { supported: micSupported, recording: micRecording, toggle: micToggle } = useSpeechToText({
+    onTranscript: (spoken) => {
+      setInput(micBaseRef.current ? `${micBaseRef.current} ${spoken}` : spoken);
+    },
+  });
+
+  const handleMic = () => {
+    if (!micRecording) micBaseRef.current = input.trim();
+    micToggle();
+  };
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -41,7 +57,11 @@ export default function ConvoMode({
     if (!text || streaming) return;
     setInput('');
     if (taRef.current) taRef.current.style.height = 'auto';
-    setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'assistant', content: '' }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content: text },
+      { role: 'assistant', content: '' },
+    ]);
     setStreaming(true);
 
     try {
@@ -51,7 +71,9 @@ export default function ConvoMode({
         body: JSON.stringify({ topicId, message: text }),
       });
       if (!res.ok || !res.body) {
-        setMessages((prev) => replaceLast(prev, `${personaName.toLowerCase()} hit a snag. try again.`));
+        setMessages((prev) =>
+          replaceLast(prev, `${personaName.toLowerCase()} hit a snag. try again.`),
+        );
         return;
       }
       const reader = res.body.getReader();
@@ -61,11 +83,20 @@ export default function ConvoMode({
         const { done, value } = await reader.read();
         if (done) break;
         full += decoder.decode(value, { stream: true });
-        setMessages((prev) => replaceLast(prev, full));
+        // Show only the text before any error marker while streaming.
+        setMessages((prev) => replaceLast(prev, full.split(CONVO_STREAM_ERROR_MARK)[0]));
+      }
+      const mark = full.indexOf(CONVO_STREAM_ERROR_MARK);
+      if (mark !== -1) {
+        const note =
+          full.slice(mark + CONVO_STREAM_ERROR_MARK.length).trim() ||
+          `${personaName.toLowerCase()} hit a snag. try again.`;
+        setMessages((prev) => replaceLast(prev, note));
+        return; // error note: shown to the user, never persisted
       }
       full = full.trim();
       setMessages((prev) => replaceLast(prev, full));
-      if (full) await saveAssistantMessage(topicId, full);
+      if (full) await saveConvoTurn(topicId, text, full);
     } catch {
       setMessages((prev) => replaceLast(prev, `${personaName.toLowerCase()} hit a snag. try again.`));
     } finally {
@@ -93,9 +124,7 @@ export default function ConvoMode({
               key={i}
               className={cn(
                 'max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm',
-                isUser
-                  ? 'self-end bg-teal/15 text-text'
-                  : 'self-start bg-bg-card-2 text-text',
+                isUser ? 'self-end bg-teal/15 text-text' : 'self-start bg-bg-card-2 text-text',
               )}
             >
               {isStreamingPlaceholder ? <Typing /> : m.content}
@@ -125,6 +154,7 @@ export default function ConvoMode({
           aria-label={`Message ${personaName}`}
           className="flex max-h-[120px] w-full resize-none rounded border border-border bg-bg-input px-3.5 py-2.5 text-sm text-text transition-colors placeholder:text-text-dim focus-visible:border-border-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-teal"
         />
+        <MicButton supported={micSupported} recording={micRecording} onClick={handleMic} />
         <button
           type="button"
           onClick={() => void send()}

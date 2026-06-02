@@ -3,17 +3,15 @@ import type { UserSettings } from './types';
 
 export async function getSettings(): Promise<UserSettings> {
   const supabase = await createClient();
-  const user = await requireUser();
-  const { data, error } = await supabase
-    .from('user_settings')
-    .select('*')
-    .eq('user_id', user.id)
-    .maybeSingle();
+  // RLS scopes user_settings to the current user (user_id is the PK), so we read
+  // without an explicit auth round-trip; maybeSingle returns the one row.
+  const { data, error } = await supabase.from('user_settings').select('*').maybeSingle();
   if (error) throw error;
   if (data) return data;
 
   // The on_auth_user_created trigger normally makes this row. Fall back to
-  // creating it if it is somehow missing.
+  // creating it if it is somehow missing (the insert needs the id).
+  const user = await requireUser();
   const { data: created, error: insErr } = await supabase
     .from('user_settings')
     .insert({ user_id: user.id })
