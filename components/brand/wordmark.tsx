@@ -15,7 +15,7 @@ export default function Wordmark({
   className,
   showText = true,
   showDot = true,
-  size = 40,
+  size = 44,
 }: WordmarkProps) {
   const width = Math.round(size * MARK_RATIO);
   return (
@@ -33,10 +33,9 @@ export default function Wordmark({
         <span className="font-display text-xl font-semibold tracking-tight text-text">
           Magpie
           {showDot && (
-            <span
-              aria-hidden
-              className="ml-1 inline-block h-2 w-2 rounded-full bg-teal align-middle"
-            />
+            <span aria-hidden className="text-teal" style={{ fontSize: '1.1em' }}>
+              .
+            </span>
           )}
         </span>
       )}

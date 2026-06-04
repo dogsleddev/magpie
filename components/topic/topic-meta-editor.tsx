@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { moveTopicToSubject, updateTopicFacetsByName } from '@/lib/actions/topics';
@@ -21,14 +22,16 @@ export default function TopicMetaEditor({
 }: {
   topicId: string;
   subjectId: string;
-  initialFacets: string[];
+  initialFacets: { name: string; id: string }[];
   subjects: SubjectOption[];
   allFacets: string[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [facets, setFacets] = useState<string[]>(initialFacets);
+  const [facets, setFacets] = useState<string[]>(() => initialFacets.map((f) => f.name));
   const [adding, setAdding] = useState('');
+  // name -> id for the facets that exist, so each chip can link to its filtered page.
+  const facetId = new Map(initialFacets.map((f) => [f.name, f.id]));
 
   function persistFacets(next: string[]) {
     setFacets(next);
@@ -71,23 +74,36 @@ export default function TopicMetaEditor({
         ))}
       </select>
 
-      {facets.map((name) => (
-        <span
-          key={name}
-          className="inline-flex items-center gap-1 rounded-full bg-bg-card-2 px-2.5 py-0.5 text-xs text-text-dim"
-        >
-          #{name}
-          <button
-            type="button"
-            onClick={() => persistFacets(facets.filter((f) => f !== name))}
-            disabled={pending}
-            aria-label={`Remove ${name}`}
-            className="text-text-dim transition-colors hover:text-danger"
+      {facets.map((name) => {
+        const id = facetId.get(name);
+        return (
+          <span
+            key={name}
+            className="inline-flex items-center gap-1 rounded-full bg-bg-card-2 px-2.5 py-0.5 text-xs text-text-dim"
           >
-            <X className="h-3 w-3" />
-          </button>
-        </span>
-      ))}
+            {id ? (
+              <Link
+                href={`/facets/${id}`}
+                className="transition-colors hover:text-teal"
+                title={`See all #${name} topics`}
+              >
+                #{name}
+              </Link>
+            ) : (
+              <span>#{name}</span>
+            )}
+            <button
+              type="button"
+              onClick={() => persistFacets(facets.filter((f) => f !== name))}
+              disabled={pending}
+              aria-label={`Remove ${name}`}
+              className="text-text-dim transition-colors hover:text-danger"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        );
+      })}
 
       <input
         list={`facets-${topicId}`}

@@ -5,17 +5,11 @@
  *
  * Three edge kinds encode the three dimensions:
  *   containment  Subject -> Topic -> Sub-topic   (the structural spine)
- *   facet        the cross-subject web (bridge: facet nodes; thread: necklaces)
+ *   facet        the cross-subject web (bridge: facet nodes; thread: necklaces; off: hidden)
  *   resonance    faint Topic <-> Topic when they share >= N facets (emergent)
  */
 
-import type {
-  NestBuildOptions,
-  NestGraph,
-  NestLink,
-  NestNode,
-  NestSource,
-} from './types';
+import type { NestBuildOptions, NestGraph, NestLink, NestNode, NestSource } from './types';
 
 const FACET_COLOR = '#C9C6BC'; // soft plumage white
 
@@ -37,9 +31,16 @@ export function buildNestGraph(source: NestSource, options: NestBuildOptions): N
   for (const [i, s] of source.subjects.entries()) {
     const childCount = source.topics.filter((t) => t.subjectId === s.id && !t.parentId).length;
     nodes.push({
-      id: s.id, type: 'subject', label: s.name, color: subjectColor(i, total),
-      subjectId: s.id, parentId: null, facetIds: [], isGroup: false,
-      weight: 0, degree: childCount,
+      id: s.id,
+      type: 'subject',
+      label: s.name,
+      color: subjectColor(i, total),
+      subjectId: s.id,
+      parentId: null,
+      facetIds: [],
+      isGroup: false,
+      weight: 0,
+      degree: childCount,
     });
   }
 
@@ -48,10 +49,16 @@ export function buildNestGraph(source: NestSource, options: NestBuildOptions): N
     const si = subjectIndex.get(t.subjectId) ?? 0;
     const isSub = !!t.parentId;
     nodes.push({
-      id: t.id, type: isSub ? 'subtopic' : 'topic', label: t.title,
+      id: t.id,
+      type: isSub ? 'subtopic' : 'topic',
+      label: t.title,
       color: subjectColor(si, total, isSub ? 66 : 60),
-      subjectId: t.subjectId, parentId: t.parentId, facetIds: t.facetIds,
-      isGroup: t.isGroup, weight: t.weight, degree: t.facetIds.length,
+      subjectId: t.subjectId,
+      parentId: t.parentId,
+      facetIds: t.facetIds,
+      isGroup: t.isGroup,
+      weight: t.weight,
+      degree: t.facetIds.length,
     });
   }
 
@@ -75,13 +82,20 @@ export function buildNestGraph(source: NestSource, options: NestBuildOptions): N
   if (facetMode === 'bridge') {
     for (const [fid, ids] of facetToTopics) {
       nodes.push({
-        id: fid, type: 'facet', label: facetName.get(fid) ?? fid, color: FACET_COLOR,
-        subjectId: null, parentId: null, facetIds: [], isGroup: false,
-        weight: 0, degree: ids.length,
+        id: fid,
+        type: 'facet',
+        label: facetName.get(fid) ?? fid,
+        color: FACET_COLOR,
+        subjectId: null,
+        parentId: null,
+        facetIds: [],
+        isGroup: false,
+        weight: 0,
+        degree: ids.length,
       });
       for (const tid of ids) links.push({ source: tid, target: fid, kind: 'facet' });
     }
-  } else {
+  } else if (facetMode === 'thread') {
     // thread: a necklace per facet (consecutive co-tagged topics, closed loop).
     // O(n) per facet rather than O(n^2), so it reads as a thread, not a hairball.
     for (const ids of facetToTopics.values()) {

@@ -1,10 +1,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/supabase/server';
 import { callClaude, MODELS } from '@/lib/ai/client';
 import { categorizeTopicPrompt, extractJSON, type CategorizeOutput } from '@/lib/ai/prompts';
-import { createTopic, updateTopicSubject } from '@/lib/queries/topics';
+import {
+  createTopic,
+  deleteTopic,
+  spinRandomTopic,
+  updateTopicSubject,
+} from '@/lib/queries/topics';
 import { createThought } from '@/lib/queries/thoughts';
 import { createSubject, getSubjectsWithCounts } from '@/lib/queries/subjects';
 import { findOrCreateFacet, getFacetsWithCounts, setTopicFacets } from '@/lib/queries/facets';
@@ -48,7 +54,10 @@ async function categorize(idea: string, userId: string): Promise<CategorizeOutpu
     title: parsed?.title?.trim() || idea,
     subject: parsed?.subject?.trim() || 'Ideas',
     facets: Array.isArray(parsed?.facets)
-      ? parsed!.facets.map((f) => f.trim()).filter(Boolean).slice(0, 3)
+      ? parsed!.facets
+          .map((f) => f.trim())
+          .filter(Boolean)
+          .slice(0, 3)
       : [],
   };
 }
@@ -130,4 +139,22 @@ export async function updateTopicFacetsByName(topicId: string, names: string[]):
   await setTopicFacets(topicId, ids);
   revalidatePath('/recent');
   revalidatePath('/facets');
+}
+
+/**
+ * Rediscover: spin to a random topic in the wiki (the old roulette). Lands on
+ * its topic page; falls back to the grid if the wiki is empty.
+ */
+export async function rediscover(): Promise<void> {
+  const topic = await spinRandomTopic();
+  redirect(topic ? `/topic/${topic.id}` : '/app');
+}
+
+/** Delete a topic. Backs the quiet delete control on the topic page. */
+export async function deleteTopicById(topicId: string): Promise<void> {
+  await deleteTopic(topicId);
+  revalidatePath('/app');
+  revalidatePath('/recent');
+  revalidatePath('/facets');
+  revalidatePath('/nest');
 }

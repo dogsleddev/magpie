@@ -8,7 +8,7 @@
  * lens (bridge vs thread) can be re-derived on the client without re-querying.
  */
 
-export type NestFacetMode = 'bridge' | 'thread';
+export type NestFacetMode = 'bridge' | 'thread' | 'off';
 
 export type NestSourceSubject = { id: string; name: string };
 export type NestSourceTopic = {

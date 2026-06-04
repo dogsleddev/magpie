@@ -22,6 +22,7 @@ const DEMO_EMAIL = 'dogsled@dogsled.dev';
 export async function demoLogin(formData?: FormData) {
   const supabase = await createClient();
   const openAdd = formData?.get('openAdd') === '1';
+  const goNest = formData?.get('goNest') === '1';
   let ok = false;
 
   const password = process.env.DEMO_LOGIN_PASSWORD;
@@ -58,5 +59,5 @@ export async function demoLogin(formData?: FormData) {
     );
   }
 
-  redirect(ok ? (openAdd ? '/app?add=1' : '/app') : '/login?error=demo');
+  redirect(ok ? (goNest ? '/nest' : openAdd ? '/app?add=1' : '/app') : '/login?error=demo');
 }

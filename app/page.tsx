@@ -47,9 +47,6 @@ export default function LandingPage() {
           A personal wiki for the things you find shiny, with a conversation partner who remembers.
         </p>
         <div className="herobtns">
-          <a href="#join" className="btn-primary">
-            Join the waitlist
-          </a>
           {demoOpen ? (
             <form action={demoLogin} style={{ display: 'contents' }}>
               <input type="hidden" name="openAdd" value="1" />
@@ -62,6 +59,17 @@ export default function LandingPage() {
               See how it works
             </a>
           )}
+          {demoOpen && (
+            <form action={demoLogin} style={{ display: 'contents' }}>
+              <input type="hidden" name="goNest" value="1" />
+              <button type="submit" className="btn-secondary">
+                See the community nest
+              </button>
+            </form>
+          )}
+          <a href="#join" className="btn-primary">
+            Join the waitlist
+          </a>
         </div>
         <p className="scrollcue">scroll to explore</p>
       </header>
@@ -79,13 +87,28 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section id="nest-showcase">
+        <div className="wrap">
+          <p className="eyebrow">Nest View</p>
+          <h2 className="section-title">See your nest of curiosities as a constellation.</h2>
+          <p className="section-lede">
+            Every topic is a node, every cross-subject connection a thread. Your whole wiki, woven
+            into one living map.
+          </p>
+          <div className="nest-stage">
+            <NestEmbed />
+          </div>
+        </div>
+      </section>
+
       <section id="how">
         <div className="wrap">
           <p className="eyebrow">How it works</p>
           <h2 className="section-title">Three dimensions. One simple shape.</h2>
           <p className="section-lede">
-            Every thought finds its place in a wiki that grows with you. <em>Subject. Topic. Facet.</em>{' '}
-            Add bullets when something hits, then explore from any angle.
+            Every thought finds its place in a wiki that grows with you.{' '}
+            <em>Subject. Topic. Facet.</em> Add bullets when something hits, then explore from any
+            angle.
           </p>
 
           <div className="how-grid">
@@ -93,8 +116,8 @@ export default function LandingPage() {
               <div className="num">01</div>
               <h3>Subject</h3>
               <p>
-                The big buckets you care about. Books, history, AI, music, philosophy, whatever pulls
-                you.
+                The big buckets you care about. Books, history, AI, music, philosophy, whatever
+                pulls you.
               </p>
               <p className="step-detail">your curiosity, organized</p>
             </div>
@@ -146,8 +169,8 @@ export default function LandingPage() {
               </div>
               <h3>Brief</h3>
               <p>
-                A short, smart primer on the topic. The thing you wish a friend would send you before
-                a dinner party.
+                A short, smart primer on the topic. The thing you wish a friend would send you
+                before a dinner party.
               </p>
             </div>
             <div className="mode-card amber">
@@ -156,8 +179,8 @@ export default function LandingPage() {
               </div>
               <h3>Challenge</h3>
               <p>
-                A hot take, a steelman, or a paradox you didn't see coming. Sharpens your thinking by
-                pushing back on it.
+                A hot take, a steelman, or a paradox you didn't see coming. Sharpens your thinking
+                by pushing back on it.
               </p>
             </div>
             <div className="mode-card purple">
@@ -212,7 +235,10 @@ export default function LandingPage() {
               <p>
                 Not "Recommended for you." Not a feed. <em>"You wrote about this when..."</em>
               </p>
-              <p>Pull, not push. They live on your home grid and inside topic pages. Tap one, jump back in.</p>
+              <p>
+                Pull, not push. They live on your home grid and inside topic pages. Tap one, jump
+                back in.
+              </p>
             </div>
             <div className="feature-visual">
               <p className="vh">Glints</p>
@@ -237,14 +263,16 @@ export default function LandingPage() {
               <span className="feature-tag purple">Draw Out</span>
               <h3>Practice making someone else brilliant.</h3>
               <p>
-                A role-play mode where you talk with a character who has something interesting to say
-                but won't volunteer it. Your job is to draw it out.
+                A role-play mode where you talk with a character who has something interesting to
+                say but won't volunteer it. Your job is to draw it out.
               </p>
               <p>
                 At the end, you get scored on conversational generosity.{' '}
                 <em>Did the other person light up?</em>
               </p>
-              <p>Be the most interesting person in the room by making everyone else feel like one.</p>
+              <p>
+                Be the most interesting person in the room by making everyone else feel like one.
+              </p>
             </div>
             <div className="feature-visual">
               <p className="chat-meta">DIANE · retired air traffic controller</p>
@@ -268,24 +296,6 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-
-          <div className="feature-row">
-            <div className="feature-text">
-              <span className="feature-tag blue">Nest View</span>
-              <h3>See your curiosity as a constellation.</h3>
-              <p>
-                Every topic is a node. Every cross-subject connection is a line. Watch your thinking
-                take shape as a living map.
-              </p>
-              <p>
-                Hover a node to see what it is. Tap to open it. Drift, drag, explore.{' '}
-                <em>This is what compounding curiosity actually looks like.</em>
-              </p>
-            </div>
-            <div className="feature-visual">
-              <NestEmbed />
-            </div>
-          </div>
         </div>
       </section>
 
@@ -294,14 +304,17 @@ export default function LandingPage() {
           <p className="eyebrow">Why Magpie</p>
           <h2 className="section-title">A different kind of note app.</h2>
           <p className="section-lede">
-            No streaks. No engagement metrics. No feed. Just the things you find shiny, and a partner
-            who helps you turn them into <em>something you can say out loud</em>.
+            No streaks. No engagement metrics. No feed. Just the things you find shiny, and a
+            partner who helps you turn them into <em>something you can say out loud</em>.
           </p>
 
           <div className="why-grid">
             <div className="why-card">
               <h3>Voice-first capture</h3>
-              <p>Tap the mic. Talk. Bullets appear. The friction between thought and capture goes to zero.</p>
+              <p>
+                Tap the mic. Talk. Bullets appear. The friction between thought and capture goes to
+                zero.
+              </p>
             </div>
             <div className="why-card">
               <h3>Maggie remembers</h3>
@@ -312,13 +325,16 @@ export default function LandingPage() {
             </div>
             <div className="why-card">
               <h3>Pull, never push</h3>
-              <p>No notifications. No alerts. Magpie shows up when you do. The shiny things wait for you.</p>
+              <p>
+                No notifications. No alerts. Magpie shows up when you do. The shiny things wait for
+                you.
+              </p>
             </div>
             <div className="why-card">
               <h3>No ads. Ever.</h3>
               <p>
-                What you collect is yours. The connections Maggie surfaces serve you, not advertisers.
-                Period.
+                What you collect is yours. The connections Maggie surfaces serve you, not
+                advertisers. Period.
               </p>
             </div>
             <div className="why-card">
@@ -330,7 +346,10 @@ export default function LandingPage() {
             </div>
             <div className="why-card">
               <h3>Yours, exportable</h3>
-              <p>Your wiki is real data. Take it with you. Magpie earns your trust by not locking you in.</p>
+              <p>
+                Your wiki is real data. Take it with you. Magpie earns your trust by not locking you
+                in.
+              </p>
             </div>
           </div>
         </div>

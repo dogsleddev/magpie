@@ -9,7 +9,8 @@ import { useSpeechToText } from '@/components/mic/use-speech-to-text';
 import MicButton from '@/components/mic/mic-button';
 import { cn } from '@/lib/utils';
 
-const OPENER = "hey, what's pulling you on this one?";
+// Shown only if the AI opener call fails; the live opener is fetched per topic.
+const FALLBACK_OPENER = "what's your honest take on this one?";
 
 function replaceLast(list: ConversationMessage[], content: string): ConversationMessage[] {
   const next = [...list];
@@ -31,12 +32,17 @@ export default function ConvoMode({
   const [messages, setMessages] = useState<ConversationMessage[]>(initialMessages);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
+  const [opener, setOpener] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const micBaseRef = useRef('');
 
   // Speech-to-text fills the input; it does not auto-send (you review, then send).
-  const { supported: micSupported, recording: micRecording, toggle: micToggle } = useSpeechToText({
+  const {
+    supported: micSupported,
+    recording: micRecording,
+    toggle: micToggle,
+  } = useSpeechToText({
     onTranscript: (spoken) => {
       setInput(micBaseRef.current ? `${micBaseRef.current} ${spoken}` : spoken);
     },
@@ -51,6 +57,28 @@ export default function ConvoMode({
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
+
+  // Fetch the persona's short, personal opener once, only for a fresh (empty) chat.
+  useEffect(() => {
+    if (initialMessages.length > 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/ai/convo-opener', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topicId }),
+        });
+        const data = (await res.json().catch(() => ({}))) as { opener?: string };
+        if (!cancelled) setOpener(data.opener?.trim() || FALLBACK_OPENER);
+      } catch {
+        if (!cancelled) setOpener(FALLBACK_OPENER);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [topicId, initialMessages.length]);
 
   const send = async () => {
     const text = input.trim();
@@ -98,14 +126,17 @@ export default function ConvoMode({
       setMessages((prev) => replaceLast(prev, full));
       if (full) await saveConvoTurn(topicId, text, full);
     } catch {
-      setMessages((prev) => replaceLast(prev, `${personaName.toLowerCase()} hit a snag. try again.`));
+      setMessages((prev) =>
+        replaceLast(prev, `${personaName.toLowerCase()} hit a snag. try again.`),
+      );
     } finally {
       setStreaming(false);
     }
   };
 
+  const loadingOpener = messages.length === 0 && opener === null;
   const shown: ConversationMessage[] =
-    messages.length === 0 ? [{ role: 'assistant', content: OPENER }] : messages;
+    messages.length === 0 ? [{ role: 'assistant', content: opener ?? '' }] : messages;
 
   return (
     <div className="flex flex-col gap-3">
@@ -118,7 +149,7 @@ export default function ConvoMode({
         {shown.map((m, i) => {
           const isUser = m.role === 'user';
           const isStreamingPlaceholder =
-            streaming && !isUser && i === shown.length - 1 && m.content === '';
+            !isUser && i === shown.length - 1 && m.content === '' && (streaming || loadingOpener);
           return (
             <div
               key={i}

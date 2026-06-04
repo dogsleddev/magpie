@@ -7,6 +7,7 @@ import {
   forceManyBody,
   forceCenter,
   forceCollide,
+  forceRadial,
   forceX,
   forceY,
 } from 'd3-force';
@@ -29,6 +30,10 @@ type Props = {
   linkLen?: number;
   /** tap on a topic / sub-topic node (null = tapped empty space) */
   onTopicTap?: (info: NestTapInfo | null) => void;
+  /** drive the highlight from outside (panel facet chip / subject legend). null = none. */
+  externalHighlight?: { type: 'facet' | 'node'; id: string } | null;
+  /** push the big subject nodes out to a ring so the interior weaves like a nest */
+  subjectsOutside?: boolean;
   className?: string;
 };
 
@@ -47,13 +52,15 @@ export default function NestCanvas({
   repel = 70,
   linkLen = 34,
   onTopicTap,
+  externalHighlight = null,
+  subjectsOutside = false,
   className,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   // config that can change without rebuilding the sim
-  const cfg = useRef({ showLabels, onTopicTap });
-  cfg.current = { showLabels, onTopicTap };
+  const cfg = useRef({ showLabels, onTopicTap, externalHighlight });
+  cfg.current = { showLabels, onTopicTap, externalHighlight };
   // node positions preserved across graph rebuilds (facet-mode toggles)
   const positions = useRef<Map<string, { x: number; y: number }>>(new Map());
   // imperative repaint hook, so toggling Labels repaints a settled (non-ticking) graph
@@ -62,6 +69,10 @@ export default function NestCanvas({
   useEffect(() => {
     repaintRef.current?.();
   }, [showLabels]);
+
+  useEffect(() => {
+    repaintRef.current?.();
+  }, [externalHighlight]);
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
@@ -96,9 +107,15 @@ export default function NestCanvas({
 
     const subjectCount = nodes.filter((n) => n.type === 'subject').length || 1;
 
-    // seed positions: radial bloom by subject so it opens arranged
+    // seed positions: radial bloom by subject so it opens arranged. With
+    // subjectsOutside, subjects seed on an outer ring and topics inside it, so
+    // the sim settles into a nest: big nodes on the rim, a woven interior.
+    const ring = subjectsOutside ? 340 : 230;
+    const innerScale = subjectsOutside ? 0.5 : 1;
     const subjAngle = new Map<string, number>();
-    nodes.filter((n) => n.type === 'subject').forEach((n, i) => subjAngle.set(n.id, (i / subjectCount) * Math.PI * 2));
+    nodes
+      .filter((n) => n.type === 'subject')
+      .forEach((n, i) => subjAngle.set(n.id, (i / subjectCount) * Math.PI * 2));
     for (const n of nodes) {
       const saved = positions.current.get(n.id);
       if (saved) {
@@ -108,15 +125,15 @@ export default function NestCanvas({
       }
       if (n.type === 'subject') {
         const a = subjAngle.get(n.id) ?? 0;
-        n.x = Math.cos(a) * 230;
-        n.y = Math.sin(a) * 230;
+        n.x = Math.cos(a) * ring;
+        n.y = Math.sin(a) * ring;
       } else if (n.type === 'facet') {
         n.x = (Math.random() - 0.5) * 120;
         n.y = (Math.random() - 0.5) * 120;
       } else {
         const a = subjAngle.get(n.subjectId ?? '') ?? Math.random() * Math.PI * 2;
-        n.x = Math.cos(a) * 230 + (Math.random() - 0.5) * 90;
-        n.y = Math.sin(a) * 230 + (Math.random() - 0.5) * 90;
+        n.x = Math.cos(a) * ring * innerScale + (Math.random() - 0.5) * 90;
+        n.y = Math.sin(a) * ring * innerScale + (Math.random() - 0.5) * 90;
       }
     }
 
@@ -128,15 +145,49 @@ export default function NestCanvas({
         if (l.kind === 'resonance') return linkLen * 2.2;
         return linkLen * 1.25;
       })
-      .strength((l) => (l.kind === 'containment' ? 0.7 : l.kind === 'resonance' ? 0.04 : 0.14));
+      .strength((l) =>
+        l.kind === 'containment'
+          ? subjectsOutside
+            ? 0.5
+            : 0.7
+          : l.kind === 'resonance'
+            ? 0.04
+            : 0.14,
+      );
 
     const sim = forceSimulation<NestNode>(nodes)
       .force('link', linkForce)
-      .force('charge', forceManyBody<NestNode>().strength((n) => (n.type === 'subject' ? -repel * 3 : -repel)))
+      .force(
+        'charge',
+        forceManyBody<NestNode>().strength((n) => (n.type === 'subject' ? -repel * 3 : -repel)),
+      )
       .force('center', forceCenter(0, 0))
-      .force('collide', forceCollide<NestNode>().radius((n) => baseRadius(n) + 3).iterations(2))
-      .force('x', forceX(0).strength(0.015))
-      .force('y', forceY(0).strength(0.015))
+      .force(
+        'collide',
+        forceCollide<NestNode>()
+          .radius((n) => baseRadius(n) + 3)
+          .iterations(2),
+      )
+      .force(
+        'radial',
+        subjectsOutside
+          ? forceRadial<NestNode>((n) => (n.type === 'subject' ? ring : 0), 0, 0).strength((n) =>
+              n.type === 'subject' ? 0.9 : 0,
+            )
+          : null,
+      )
+      .force(
+        'x',
+        forceX<NestNode>(0).strength(
+          subjectsOutside ? (n) => (n.type === 'subject' ? 0 : 0.04) : 0.015,
+        ),
+      )
+      .force(
+        'y',
+        forceY<NestNode>(0).strength(
+          subjectsOutside ? (n) => (n.type === 'subject' ? 0 : 0.04) : 0.015,
+        ),
+      )
       .alpha(0.6)
       .alphaTarget(ambient ? 0.015 : 0)
       .stop();
@@ -147,7 +198,10 @@ export default function NestCanvas({
 
     function fitView(padding = 48) {
       if (!nodes.length) return;
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      let minX = Infinity,
+        minY = Infinity,
+        maxX = -Infinity,
+        maxY = -Infinity;
       for (const n of nodes) {
         minX = Math.min(minX, n.x ?? 0);
         maxX = Math.max(maxX, n.x ?? 0);
@@ -156,15 +210,43 @@ export default function NestCanvas({
       }
       const spanX = Math.max(1, maxX - minX);
       const spanY = Math.max(1, maxY - minY);
-      view.scale = Math.max(0.2, Math.min((W - padding * 2) / spanX, (H - padding * 2) / spanY, 1.6));
+      view.scale = Math.max(
+        0.2,
+        Math.min((W - padding * 2) / spanX, (H - padding * 2) / spanY, 1.6),
+      );
       view.tx = W / 2 - ((minX + maxX) / 2) * view.scale;
       view.ty = H / 2 - ((minY + maxY) / 2) * view.scale;
     }
 
-    const toScreen = (x: number, y: number) => ({ x: x * view.scale + view.tx, y: y * view.scale + view.ty });
+    const toScreen = (x: number, y: number) => ({
+      x: x * view.scale + view.tx,
+      y: y * view.scale + view.ty,
+    });
 
     function highlightSet(): Set<string> | null {
-      const id = focus || selected || hover;
+      if (focus) {
+        const s = new Set<string>([focus]);
+        adj.get(focus)?.forEach((x) => s.add(x));
+        return s;
+      }
+      // external highlight (panel facet chip / subject legend) beats hover/selected
+      const ext = cfg.current.externalHighlight;
+      if (ext) {
+        if (ext.type === 'facet') {
+          const s = new Set<string>();
+          if (byId.has(ext.id)) s.add(ext.id);
+          for (const n of nodes) {
+            if ((n.type === 'topic' || n.type === 'subtopic') && n.facetIds.includes(ext.id))
+              s.add(n.id);
+          }
+          if (s.size) return s;
+        } else if (byId.has(ext.id)) {
+          const s = new Set<string>([ext.id]);
+          adj.get(ext.id)?.forEach((x) => s.add(x));
+          return s;
+        }
+      }
+      const id = selected || hover;
       if (!id) return null;
       const s = new Set<string>([id]);
       adj.get(id)?.forEach((x) => s.add(x));
@@ -181,7 +263,14 @@ export default function NestCanvas({
 
     function render() {
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      const wash = ctx.createRadialGradient(W / 2, H * 0.42, 0, W / 2, H * 0.42, Math.max(W, H) * 0.75);
+      const wash = ctx.createRadialGradient(
+        W / 2,
+        H * 0.42,
+        0,
+        W / 2,
+        H * 0.42,
+        Math.max(W, H) * 0.75,
+      );
       wash.addColorStop(0, '#13110f');
       wash.addColorStop(1, '#0A0A09');
       ctx.fillStyle = wash;
@@ -274,7 +363,8 @@ export default function NestCanvas({
             ctx.fillRect(lx - 3, p.y - fz / 2 - 2, tw + 6, fz + 4);
           }
           ctx.globalAlpha = on ? 0.96 : 0.3;
-          ctx.fillStyle = n.type === 'subject' ? '#F5F4EF' : n.type === 'facet' ? FACET_COLOR : '#E7E5DC';
+          ctx.fillStyle =
+            n.type === 'subject' ? '#F5F4EF' : n.type === 'facet' ? FACET_COLOR : '#E7E5DC';
           ctx.textBaseline = 'middle';
           ctx.fillText(label, lx, p.y);
           ctx.globalAlpha = 1;
@@ -494,13 +584,18 @@ export default function NestCanvas({
         canvas.removeEventListener('wheel', onWheel);
       }
     };
-  }, [graph, ambient, interactive, repel, linkLen]);
+  }, [graph, ambient, interactive, repel, linkLen, subjectsOutside]);
 
   return (
     <div ref={wrapRef} className={className} style={{ position: 'relative', touchAction: 'none' }}>
       <canvas
         ref={canvasRef}
-        style={{ position: 'absolute', inset: 0, display: 'block', pointerEvents: interactive ? 'auto' : 'none' }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'block',
+          pointerEvents: interactive ? 'auto' : 'none',
+        }}
       />
     </div>
   );

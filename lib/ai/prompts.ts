@@ -4,7 +4,8 @@
  * See docs/PROMPTS.md for the rationale behind each prompt.
  */
 
-const NO_EM_DASH = 'Do not use em dashes anywhere in your output. Use periods, commas, parentheses, or colons instead.';
+const NO_EM_DASH =
+  'Do not use em dashes anywhere in your output. Use periods, commas, parentheses, or colons instead.';
 
 export type AIPrompt = {
   system: string;
@@ -46,6 +47,25 @@ Pacing rules (these apply at every cross-context level, see docs/MEMORY.md):
 Topic context for this session: "${topic.title}"
 
 Riff with them like you both have already been talking about this for a while. ${NO_EM_DASH}`;
+}
+
+/**
+ * The first thing the persona says when a user opens a topic with no chat yet:
+ * one short, personal, topic-specific question that pulls them in. Replaces the
+ * old generic "what's pulling you on this one?" opener.
+ */
+export function convoOpenerPrompt(topic: Topic, personaName: string): AIPrompt {
+  return {
+    system: `You are ${personaName}, the user's casual conversation partner (a smart friend at a party). The user just opened a topic. Greet them by asking ONE short, warm, personal question that makes them want to talk about it.
+
+Rules:
+- Lowercase, casual, ONE sentence, under 14 words.
+- Engage with THIS specific topic and make it a little personal: ask their angle, their honest take, what drew them to it, or their own experience of it. Never generic.
+- No throat-clearing. Never start with "Great question", "That's interesting", "Let's", "So,". Just the question.
+- Output ONLY the question itself, no quotes, no preamble, no options.
+${NO_EM_DASH}`,
+    user: `Topic: "${topic.title}"`,
+  };
 }
 
 export function organizePrompt(topic: Topic, thoughts: string[]): AIPrompt {

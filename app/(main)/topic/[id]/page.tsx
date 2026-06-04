@@ -7,6 +7,7 @@ import { getFacetsWithCounts } from '@/lib/queries/facets';
 import BackLink from '@/components/nav/back-link';
 import ModeTabs from '@/components/topic/mode-tabs';
 import TopicMetaEditor from '@/components/topic/topic-meta-editor';
+import DeleteTopic from '@/components/topic/delete-topic';
 import type { ConversationMessage } from '@/lib/queries/types';
 
 export default async function TopicPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,7 +31,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
         <TopicMetaEditor
           topicId={topic.id}
           subjectId={topic.subject_id}
-          initialFacets={topic.facets.map((f) => f.name)}
+          initialFacets={topic.facets.map((f) => ({ name: f.name, id: f.id }))}
           subjects={subjects.map((s) => ({ id: s.id, name: s.name }))}
           allFacets={facets.map((f) => f.name)}
         />
@@ -44,6 +45,10 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
         thoughts={topic.thoughts}
         conversationMessages={conversationMessages}
       />
+
+      <div className="mt-4 flex justify-center pt-2">
+        <DeleteTopic topicId={topic.id} subjectId={topic.subject_id} />
+      </div>
     </div>
   );
 }

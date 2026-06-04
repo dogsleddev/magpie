@@ -150,11 +150,19 @@
 .magpie-landing .herobtns {
   margin-top: 38px;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
   opacity: 0;
   animation: mp-rise 1s cubic-bezier(0.2, 0.7, 0.3, 1) 0.48s forwards;
+}
+/* The three hero CTAs read as a centered stack: the two community buttons as
+   cards above and below, the primary waitlist button centered between them. */
+.magpie-landing .herobtns .btn-primary,
+.magpie-landing .herobtns .btn-secondary {
+  width: 100%;
+  max-width: 340px;
+  justify-content: center;
 }
 .magpie-landing .btn-primary {
   background: var(--text);
@@ -299,7 +307,9 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 28px;
-  transition: transform 0.25s ease, border-color 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease;
 }
 .magpie-landing .mode-card:hover {
   transform: translateY(-4px);
@@ -529,8 +539,19 @@
   font-weight: 500;
 }
 
-/* nest preview: rendered live by <NestEmbed /> (components/nest), which brings
-   its own canvas sizing. The old static dot-mockup styles lived here. */
+/* NEST SHOWCASE: the near-top, desktop-styled constellation, rendered live by
+   <NestEmbed /> (components/nest). The old static dot-mockup styles lived here. */
+.magpie-landing #nest-showcase .nest-stage {
+  position: relative;
+  height: clamp(380px, 54vh, 560px);
+  margin-top: 8px;
+  background:
+    radial-gradient(ellipse 72% 60% at 50% 46%, rgba(29, 158, 117, 0.05), transparent 70%),
+    var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
 
 /* WHY MAGPIE */
 .magpie-landing .why-grid {

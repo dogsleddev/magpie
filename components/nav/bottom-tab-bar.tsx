@@ -2,23 +2,22 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Tags, Compass, Waypoints } from 'lucide-react';
+import { LayoutGrid, Tags, Shuffle, Waypoints } from 'lucide-react';
+import { rediscover } from '@/lib/actions/topics';
 import { cn } from '@/lib/utils';
 
 type Tab = {
-  key: 'grid' | 'facets' | 'nest' | 'discover';
+  key: 'grid' | 'facets' | 'nest' | 'rediscover';
   label: string;
   icon: typeof LayoutGrid;
 };
 
-// Grid, Facets, and Nest route. Discover lands in a later phase; rendered as a
-// disabled stub until its route exists (typedRoutes would fail the build on a
-// Link to a non-existent route).
+// Grid, Facets, and Nest route. Rediscover spins to a random topic (server action).
 const TABS: Tab[] = [
   { key: 'grid', label: 'Grid', icon: LayoutGrid },
   { key: 'facets', label: 'Facets', icon: Tags },
   { key: 'nest', label: 'Nest', icon: Waypoints },
-  { key: 'discover', label: 'Discover', icon: Compass },
+  { key: 'rediscover', label: 'Rediscover', icon: Shuffle },
 ];
 
 export default function BottomTabBar() {
@@ -28,7 +27,6 @@ export default function BottomTabBar() {
     <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto flex w-full max-w-md items-stretch justify-around border-t border-border bg-bg/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
       {TABS.map((tab) => {
         const Icon = tab.icon;
-        const enabled = tab.key === 'grid' || tab.key === 'facets' || tab.key === 'nest';
         const active =
           (tab.key === 'grid' && pathname === '/app') ||
           (tab.key === 'facets' && pathname.startsWith('/facets')) ||
@@ -39,7 +37,6 @@ export default function BottomTabBar() {
             className={cn(
               'flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium',
               active ? 'text-teal' : 'text-text-dim',
-              !enabled && 'opacity-40',
             )}
           >
             <Icon className="h-5 w-5" strokeWidth={2} />
@@ -71,16 +68,13 @@ export default function BottomTabBar() {
           );
         }
 
+        // Rediscover: spin to a random topic in the wiki.
         return (
-          <button
-            key={tab.key}
-            type="button"
-            disabled
-            aria-disabled
-            className="flex flex-1 cursor-not-allowed"
-          >
-            {inner}
-          </button>
+          <form key={tab.key} action={rediscover} className="flex flex-1">
+            <button type="submit" className="flex w-full">
+              {inner}
+            </button>
+          </form>
         );
       })}
     </nav>
