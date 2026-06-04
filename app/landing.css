@@ -529,37 +529,8 @@
   font-weight: 500;
 }
 
-/* nest preview */
-.magpie-landing .nest-canvas {
-  position: relative;
-  height: 240px;
-}
-.magpie-landing .nest-node {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--text);
-}
-.magpie-landing .nest-node.big {
-  width: 18px;
-  height: 18px;
-  background: var(--teal);
-}
-.magpie-landing .nest-node.mid {
-  width: 13px;
-  height: 13px;
-  background: var(--blue);
-}
-.magpie-landing .nest-node.alt {
-  background: var(--purple);
-}
-.magpie-landing .nest-line {
-  position: absolute;
-  height: 1px;
-  background: rgba(245, 244, 239, 0.15);
-  transform-origin: left center;
-}
+/* nest preview: rendered live by <NestEmbed /> (components/nest), which brings
+   its own canvas sizing. The old static dot-mockup styles lived here. */
 
 /* WHY MAGPIE */
 .magpie-landing .why-grid {

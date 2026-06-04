@@ -2,23 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Tags, Compass, BookText } from 'lucide-react';
+import { LayoutGrid, Tags, Compass, Waypoints } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Tab = {
-  key: 'grid' | 'facets' | 'discover' | 'journal';
+  key: 'grid' | 'facets' | 'nest' | 'discover';
   label: string;
   icon: typeof LayoutGrid;
 };
 
-// Grid and Facets route. Discover / Journal land in later phases; rendered as
-// disabled stubs until their routes exist (typedRoutes would fail the build on
-// a Link to a non-existent route).
+// Grid, Facets, and Nest route. Discover lands in a later phase; rendered as a
+// disabled stub until its route exists (typedRoutes would fail the build on a
+// Link to a non-existent route).
 const TABS: Tab[] = [
   { key: 'grid', label: 'Grid', icon: LayoutGrid },
   { key: 'facets', label: 'Facets', icon: Tags },
+  { key: 'nest', label: 'Nest', icon: Waypoints },
   { key: 'discover', label: 'Discover', icon: Compass },
-  { key: 'journal', label: 'Journal', icon: BookText },
 ];
 
 export default function BottomTabBar() {
@@ -28,10 +28,11 @@ export default function BottomTabBar() {
     <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto flex w-full max-w-md items-stretch justify-around border-t border-border bg-bg/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
       {TABS.map((tab) => {
         const Icon = tab.icon;
-        const enabled = tab.key === 'grid' || tab.key === 'facets';
+        const enabled = tab.key === 'grid' || tab.key === 'facets' || tab.key === 'nest';
         const active =
           (tab.key === 'grid' && pathname === '/app') ||
-          (tab.key === 'facets' && pathname.startsWith('/facets'));
+          (tab.key === 'facets' && pathname.startsWith('/facets')) ||
+          (tab.key === 'nest' && pathname.startsWith('/nest'));
 
         const inner = (
           <span
@@ -57,6 +58,14 @@ export default function BottomTabBar() {
         if (tab.key === 'facets') {
           return (
             <Link key={tab.key} href="/facets" className="flex flex-1">
+              {inner}
+            </Link>
+          );
+        }
+
+        if (tab.key === 'nest') {
+          return (
+            <Link key={tab.key} href="/nest" className="flex flex-1">
               {inner}
             </Link>
           );

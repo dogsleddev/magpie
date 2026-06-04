@@ -34,7 +34,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`dark ${fraunces.variable} ${dmSans.variable}`}>
-      <body>{children}</body>
+      {/* suppressHydrationWarning: browser extensions (e.g. Grammarly) inject
+          data-* attributes onto <body> before hydration; ignore that mismatch. */}
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

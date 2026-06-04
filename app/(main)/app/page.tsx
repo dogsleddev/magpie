@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Waypoints } from 'lucide-react';
 import { getSubjectsWithCounts } from '@/lib/queries/subjects';
 import { getRecentTopics } from '@/lib/queries/topics';
 import { getSettings } from '@/lib/queries/settings';
@@ -32,6 +32,20 @@ export default async function HomePage({
         <AddTopicDialog personaName={settings.persona_name} defaultOpen={add === '1'} />
         <TopicSearch />
       </div>
+
+      <Link
+        href="/nest"
+        className="flex items-center gap-3 rounded-xl border border-border bg-bg-card px-4 py-3.5 transition-colors hover:border-border-strong hover:bg-bg-card-2"
+      >
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-teal/15 text-teal">
+          <Waypoints className="h-5 w-5" />
+        </span>
+        <span className="flex flex-1 flex-col">
+          <span className="font-display text-base font-medium text-text">Open your Nest</span>
+          <span className="text-[11px] text-text-dim">see your curiosity as a constellation</span>
+        </span>
+        <ChevronRight className="h-5 w-5 shrink-0 text-text-dim" />
+      </Link>
 
       <section className="flex flex-col gap-3">
         <div>

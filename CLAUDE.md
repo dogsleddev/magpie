@@ -20,6 +20,15 @@ Magpie is a mobile-first web app for people who love to talk and think out loud.
 
 ---
 
+## Current status (read first)
+
+- **The Nest mind map is built and shipped.** It replaced the Journal tab: a force-directed constellation of the whole wiki with three dimensions (Subject to Topic to Sub-topic containment, the cross-subject Facet web, and emergent Resonance). Full details in `docs/NEST.md`. Live in-app at the `/nest` tab, embedded on the landing page, plus a self-contained `docs/nest-portable.html` you can open offline.
+- **Launch mode: shared-account community.** Everyone enters the same `dogsled@dogsled.dev` account ("Enter Magpie") and grows one shared grid + Nest. Per-user private accounts are deferred to post-waitlist (RLS + seed-on-first-login already support them).
+- **Local login** needs `SUPABASE_SERVICE_ROLE_KEY` (or `DEMO_LOGIN_PASSWORD`) in `.env.local` (it reads the file, not Vercel). Heads up: Supabase legacy `anon`/`service_role` keys are deprecated **end of 2026**; migrate the service-role value to a new `sb_secret_` key before then (the anon key is already on the new publishable format).
+- **Not yet committed or deployed** as of this writing.
+
+---
+
 ## The user (Chris)
 
 This project is being built by Chris, a finance professional / solo builder operating under the `dogsled.dev` brand. When you (Claude Code) work with him, match this register:
@@ -200,6 +209,7 @@ Full plan: `docs/BUILD_PLAN.md`. Phased build, each phase shippable. Do not skip
 - `docs/MEMORY.md`: how Maggie's cross-context awareness grows across four levels, plus the pacing rules that govern her conversation behavior
 - `docs/RESPONSIVE.md`: mobile-first plus a beautiful desktop layout, including the left rail pattern and reading-width discipline
 - `docs/FUTURE_FEATURES.md`: post-MVP roadmap including Glints, Nest View, and Personalized Surfacing principles
+- `docs/NEST.md`: **the Nest mind map, BUILT and shipped** (replaces the Journal tab). Architecture, the 3-dimension model, surfaces, community mode, and the Supabase key-migration note. Read this for the current state of the flagship visual feature.
 - `docs/HACKATHON_KRAVA_LINQ.md`: integration plan for the Krava + Linq hackathon (iMessage front door + privacy gateway)
 - `docs/brand-page.html`: working brand showcase, open in any browser
 - `docs/magpie-v1-reference.html`: v1 prototype, open in browser
@@ -218,9 +228,12 @@ Full plan: `docs/BUILD_PLAN.md`. Phased build, each phase shippable. Do not skip
 - `lib/ai/prompts.ts`: typed prompt factory functions (includes Questions and the Draw Out scaffolds)
 - `lib/ai/client.ts`: Anthropic SDK client wrapper
 - `lib/supabase/client.ts`, `lib/supabase/server.ts`, `lib/supabase/middleware.ts`: Supabase SSR clients
-- `lib/seed/starter-topics.ts`: curated starter pack for new users
+- `lib/seed/starter-topics.ts`: curated starter pack for new users (now activates the Red Rising group via `is_group`/`parent_topic_id`)
 - `styles/tokens.css`: the plumage palette as CSS variables
 - `app/globals.css`: Tailwind + tokens import
+- `lib/nest/*`, `lib/queries/nest.ts`, `components/nest/*`, `app/(main)/nest/page.tsx`: the **Nest** mind map (force-directed constellation, replaces Journal). Single-source transform in `lib/nest/build-graph.ts`. See `docs/NEST.md`.
+- `lib/actions/backfill-red-rising.ts` + `app/api/dev/backfill-red-rising/route.ts`: one-time dev-only backfill to group Red Rising on accounts seeded before the group existed.
+- `docs/nest-portable.html` (self-contained, opens offline), `docs/nest-desktop.html` (desktop-locked reference), `docs/nest-prototype.html` (served prototype).
 
 ---
 

@@ -2,6 +2,7 @@
 import { Mic, FileText, Zap, MessageCircleQuestion, MessageCircleMore } from 'lucide-react';
 import { demoLogin } from '@/lib/actions/demo-login';
 import WaitlistForm from '@/components/landing/waitlist-form';
+import NestEmbed from '@/components/nest/nest-embed';
 import './landing.css';
 
 export const metadata = {
@@ -282,24 +283,7 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="feature-visual">
-              <div className="nest-canvas">
-                <div className="nest-line" style={{ top: '50%', left: '25%', width: 90, transform: 'rotate(20deg)' }} />
-                <div className="nest-line" style={{ top: '50%', left: '30%', width: 120, transform: 'rotate(-30deg)' }} />
-                <div className="nest-line" style={{ top: '30%', left: '55%', width: 80, transform: 'rotate(45deg)' }} />
-                <div className="nest-line" style={{ top: '65%', left: '55%', width: 100, transform: 'rotate(-15deg)' }} />
-                <div className="nest-line" style={{ top: '40%', left: '18%', width: 60, transform: 'rotate(70deg)' }} />
-                <div className="nest-line" style={{ top: '55%', left: '65%', width: 90, transform: 'rotate(10deg)' }} />
-                <div className="nest-node big" style={{ top: '48%', left: '30%' }} />
-                <div className="nest-node mid" style={{ top: '25%', left: '55%' }} />
-                <div className="nest-node mid alt" style={{ top: '70%', left: '55%' }} />
-                <div className="nest-node" style={{ top: '35%', left: '15%' }} />
-                <div className="nest-node" style={{ top: '60%', left: '18%' }} />
-                <div className="nest-node" style={{ top: '20%', left: '70%' }} />
-                <div className="nest-node" style={{ top: '42%', left: '75%' }} />
-                <div className="nest-node alt" style={{ top: '60%', left: '80%' }} />
-                <div className="nest-node" style={{ top: '80%', left: '70%' }} />
-                <div className="nest-node" style={{ top: '15%', left: '42%' }} />
-              </div>
+              <NestEmbed />
             </div>
           </div>
         </div>

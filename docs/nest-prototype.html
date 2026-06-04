@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Magpie · Nest View prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* Plumage palette, lifted from styles/tokens.css */
+  :root {
+    --bg: #0A0A09;
+    --bg-card: #161513;
+    --bg-card-2: #1F1D1A;
+    --border: #2A2925;
+    --border-strong: #3A3833;
+    --text: #F5F4EF;
+    --text-muted: #A5A39A;
+    --text-dim: #76746C;
+    --teal: #1D9E75;
+    --blue: #378ADD;
+    --purple: #7F77DD;
+    --danger: #E24B4A;
+    --warn: #EF9F27;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); }
+  body { font-family: var(--font-body); color: var(--text); -webkit-font-smoothing: antialiased; }
+  canvas { display: block; position: fixed; inset: 0; touch-action: none; }
+
+  /* Header */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 18px 22px; pointer-events: none;
+  }
+  .topbar h1 {
+    font-family: var(--font-display); font-weight: 500; font-size: 22px; letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .topbar .sub { color: var(--text-dim); font-size: 13px; }
+  .topbar .dot { color: var(--teal); }
+
+  /* Controls panel */
+  .panel {
+    position: fixed; top: 64px; left: 18px; z-index: 6;
+    width: 248px; max-height: calc(100vh - 96px); overflow-y: auto;
+    background: rgba(22, 21, 19, 0.86); backdrop-filter: blur(10px);
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 14px; font-size: 13px;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.5);
+  }
+  .panel.collapsed .panel-body { display: none; }
+  .panel h2 {
+    font-family: var(--font-display); font-weight: 500; font-size: 13px; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--text-muted); margin: 2px 0 10px;
+    display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+  }
+  .panel h2 .chev { color: var(--text-dim); font-size: 11px; }
+  .group { margin-bottom: 14px; }
+  .group > .lbl { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 7px; }
+
+  .seg { display: flex; background: var(--bg-input, #100F0D); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button {
+    flex: 1; border: 0; background: transparent; color: var(--text-muted);
+    font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 4px; border-radius: 7px; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .seg button.on { background: var(--teal); color: #04130d; }
+
+  .toggle { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; cursor: pointer; }
+  .toggle span { color: var(--text); }
+  .switch { width: 36px; height: 20px; border-radius: 999px; background: var(--border-strong); position: relative; transition: background .15s; flex: none; }
+  .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-muted); transition: transform .15s, background .15s; }
+  .toggle.on .switch { background: var(--teal); }
+  .toggle.on .switch::after { transform: translateX(16px); background: #04130d; }
+
+  .slider { margin: 9px 0; }
+  .slider .row { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 11px; margin-bottom: 3px; }
+  input[type=range] { width: 100%; accent-color: var(--teal); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    font-size: 11px; padding: 3px 8px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--border); color: var(--text-muted); background: transparent; font-family: inherit;
+    transition: all .12s;
+  }
+  .chip:hover { border-color: var(--border-strong); color: var(--text); }
+  .chip.on { background: var(--teal); border-color: var(--teal); color: #04130d; font-weight: 600; }
+
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+  .legend .item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); cursor: pointer; padding: 2px; border-radius: 6px; }
+  .legend .item:hover { color: var(--text); }
+  .legend .swatch { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+  .btn-reset {
+    width: 100%; margin-top: 4px; padding: 8px; border-radius: 9px; cursor: pointer;
+    background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-family: inherit; font-size: 12px;
+  }
+  .btn-reset:hover { border-color: var(--border-strong); color: var(--text); }
+  .stat { color: var(--text-dim); font-size: 11px; text-align: center; margin-top: 9px; }
+
+  /* Hint */
+  .hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 5;
+    color: var(--text-dim); font-size: 12px; text-align: center; pointer-events: none;
+    background: rgba(10,10,9,0.5); padding: 6px 14px; border-radius: 999px; backdrop-filter: blur(4px);
+  }
+
+  /* Node detail popover */
+  .detail {
+    position: fixed; z-index: 7; width: 290px; max-width: calc(100vw - 32px);
+    background: rgba(22,21,19,0.95); backdrop-filter: blur(12px);
+    border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6); display: none;
+  }
+  .detail.show { display: block; }
+  .detail .kicker { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 6px; display:flex; align-items:center; gap:6px; }
+  .detail .kicker .swatch { width: 8px; height: 8px; border-radius: 50%; }
+  .detail h3 { font-family: var(--font-display); font-weight: 500; font-size: 17px; line-height: 1.25; margin: 0 0 10px; }
+  .detail .facets { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+  .detail .facets .f { font-size: 10.5px; padding: 2px 7px; border-radius: 999px; background: var(--bg-card-2); color: var(--text-muted); }
+  .detail .open { display:inline-flex; align-items:center; gap:6px; font-size: 13px; color: var(--teal); font-weight: 600; cursor: pointer; }
+  .detail .close { position: absolute; top: 12px; right: 14px; color: var(--text-dim); cursor: pointer; font-size: 16px; line-height: 1; }
+
+  @media (max-width: 560px) {
+    .panel { left: 10px; right: 10px; width: auto; top: 58px; }
+    .topbar { padding: 14px 16px; }
+    .topbar .sub { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="topbar">
+  <h1>Nest<span class="dot">.</span></h1>
+  <span class="sub">your curiosity as a constellation &middot; prototype</span>
+</div>
+
+<div class="panel" id="panel">
+  <h2 id="panelToggle">Nest controls <span class="chev" id="chev">hide</span></h2>
+  <div class="panel-body">
+    <div class="group">
+      <div class="lbl">Facet dimension</div>
+      <div class="seg" id="facetMode">
+        <button data-mode="bridge" class="on">Bridge</button>
+        <button data-mode="thread">Threads</button>
+        <button data-mode="off">Off</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="toggle on" id="tResonance"><span>Resonance threads</span><span class="switch"></span></div>
+      <div class="toggle on" id="tLabels"><span>Labels</span><span class="switch"></span></div>
+      <div class="toggle on" id="tDrift"><span>Living drift</span><span class="switch"></span></div>
+    </div>
+
+    <div class="group">
+      <div class="lbl">Physics</div>
+      <div class="slider">
+        <div class="row"><span>Repel</span><span id="vRepel"></span></div>
+        <input type="range" id="sRepel" min="20" max="220" value="70" />
+      </div>
+      <div class="slider">
+        <div class="row"><span>Link length</span><span id="vLink"></span></div>
+        <input type="range" id="sLink" min="14" max="80" value="34" />
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="lbl">Subjects</div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="group">
+      <div class="lbl">Light up a facet (across subjects)</div>
+      <div class="chips" id="facetChips"></div>
+    </div>
+
+    <button class="btn-reset" id="reset">Reset view</button>
+    <div class="stat" id="stat"></div>
+  </div>
+</div>
+
+<div class="detail" id="detail">
+  <span class="close" id="detailClose">&times;</span>
+  <div class="kicker"><span class="swatch" id="dSwatch"></span><span id="dKicker"></span></div>
+  <h3 id="dTitle"></h3>
+  <div class="facets" id="dFacets"></div>
+  <div class="open" id="dOpen">Open topic &rarr;</div>
+</div>
+
+<div class="hint" id="hint">drag to pan &middot; scroll to zoom &middot; click a node &middot; double-click to focus</div>
+
+<script type="module">
+import {
+  forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, forceX, forceY
+} from 'https://cdn.jsdelivr.net/npm/d3-force@3/+esm';
+
+/* ----------------------------------------------------------------------------
+   DATA  ·  mirrors lib/seed/starter-topics.ts (STARTER_PACK)
+   topic tuple = [title, [facets], opts?]   opts = {group:true} | {parent:"Title"}
+   The Red Rising group is activated here (anchor + 3 children) so all three
+   tiers render: Subject -> Topic -> Sub-topic.
+---------------------------------------------------------------------------- */
+const PACK = [
+  { s: 'History', t: [
+    ['Why every empire thinks it is the last one', ['paradox','history']],
+    ['The Library of Alexandria probably burned down four separate times', ['history','fun facts','forgotten']],
+    ['The Bronze Age Collapse as historys first systems failure', ['history','paradox']],
+    ['Greek philosophers and their wildly different agorae', ['philosophy','history']],
+    ['Why medieval peasants worked fewer hours than we do', ['paradox','history','counterintuitive']],
+    ['The plague made Europe rich', ['paradox','history','counterintuitive']],
+    ['Genghis Khan killed enough people to measurably cool the planet', ['history','extremes','fun facts']],
+    ['Pirates ran the most democratic societies of the 1700s', ['paradox','history','counterintuitive']],
+    ['The Industrial Revolution was bottlenecked by typeface, not steam', ['history','paradox','discoveries']],
+  ]},
+  { s: 'Books', t: [
+    ['Red Rising', ['red rising'], { group: true }],
+    ['Red Rising: the color caste as social commentary', ['red rising','philosophy','ethics','dystopia'], { parent: 'Red Rising' }],
+    ['Red Rising: how the Society actually governs', ['red rising','thought experiment','dystopia'], { parent: 'Red Rising' }],
+    ['Red Rising: the Howler initiation as the moral pivot', ['red rising','ethics','thought experiment'], { parent: 'Red Rising' }],
+    ['How every dystopia rhymes: Red Rising, 1984, Brave New World, Hunger Games, Divergent', ['philosophy','convergent','dystopia','thought experiment']],
+    ['Why 1984s surveillance state predicted the wrong dystopia', ['philosophy','counterintuitive','ethics','dystopia']],
+    ['Brave New World was the more accurate prediction and we keep ignoring it', ['philosophy','ethics','counterintuitive','paradox','dystopia']],
+    ['Hunger Games is a YA novel hiding a coherent theory of media', ['philosophy','ethics','counterintuitive','dystopia']],
+    ['Why Divergents factions collapse under five minutes of thought', ['paradox','counterintuitive','dystopia']],
+    ['AI consciousness as imagined by Asimov vs Ted Chiang', ['philosophy','future','ethics']],
+    ['Dune on prescience as a curse, not a gift', ['philosophy','thought experiment']],
+    ['Foundation predicted behavioral econ by sixty years', ['fun facts','future']],
+    ['Why most sci-fi villains are bad economists', ['thought experiment','fun facts']],
+    ['Borges predicted the internet in 1941', ['fun facts','future','philosophy']],
+    ['The Library of Babel as a metaphor for LLMs', ['thought experiment','philosophy','future']],
+    ['Cormac McCarthy never used quotation marks and it changed dialogue forever', ['evolution','fun facts']],
+    ['Why most great novels were rejected at least seven times', ['paradox','fun facts','history']],
+    ['A Song of Ice and Fires politics are sharper on the page than on screen', ['philosophy','thought experiment','convergent']],
+  ]},
+  { s: 'AI & Tech', t: [
+    ['Can a model have intuition, or just very fast pattern matching?', ['philosophy','thought experiment']],
+    ['Agent swarms and the org chart of 2030', ['future','trends']],
+    ['LLMs can rhyme but cannot count letters, and why', ['fun facts','paradox','counterintuitive']],
+    ['The smarter the model, the harder it is to evaluate', ['paradox','challenges']],
+    ['Why prompt engineering will be a dead skill in eighteen months', ['trends','future']],
+    ['Models are getting smarter faster than we are getting smarter at testing them', ['paradox','challenges','future','ethics']],
+    ['The best AI products of 2026 will be the ones that hide AI from the user', ['trends','paradox','future','counterintuitive']],
+    ['Claude, GPT, and Gemini are converging on the same answers', ['paradox','future','challenges','convergent']],
+    ['Who owns the output when a model writes your contract', ['ethics','future','challenges']],
+  ]},
+  { s: 'Movies', t: [
+    ['The Godfather is a movie about email, decades before email', ['paradox','philosophy','counterintuitive']],
+    ['GATTACAs quiet horror is that the dystopia mostly works', ['philosophy','ethics','thought experiment','future','dystopia']],
+    ['Snowpiercer as the cleanest class-system thought experiment in film', ['philosophy','ethics','thought experiment','dystopia']],
+    ['Why Casablancas ending could not be made today', ['philosophy','history','evolution']],
+    ['The Shawshank Redemption was a box-office flop and we forgot', ['fun facts','forgotten','paradox']],
+    ['Fight Clubs twist works once and ruins every rewatch', ['paradox','counterintuitive','philosophy']],
+    ['No Country for Old Men is what happens when fate replaces villains', ['philosophy','thought experiment','ethics']],
+    ['Children of Men is a long take pretending to be a movie', ['fun facts','discoveries','philosophy','dystopia']],
+    ['Blade Runner asks if the test for humanity ever made sense', ['philosophy','ethics','thought experiment','dystopia']],
+    ['The Matrix predicted everything except the bills', ['future','paradox','counterintuitive','dystopia']],
+  ]},
+  { s: 'TV Shows', t: [
+    ['The Simpsons stopped predicting the future when reality caught up', ['paradox','evolution','fun facts']],
+    ['The Expanse is the only sci-fi show that takes physics seriously', ['fun facts','discoveries','thought experiment']],
+    ['Red Dwarf is the British sitcom hiding a real philosophy of self', ['philosophy','thought experiment','forgotten']],
+    ['Seinfelds no-hugging-no-learning rule changed every show after it', ['evolution','fun facts','history']],
+    ['Breaking Bad sells the lie that you can be Walt and still be good', ['philosophy','ethics','paradox']],
+    ['Game of Thrones ended badly because the books refuse to', ['paradox','thought experiment','convergent']],
+    ['The Wire is the only show where the city is the protagonist', ['philosophy','thought experiment','discoveries']],
+    ['Severance is a workplace comedy in a horror costume', ['paradox','counterintuitive','philosophy','dystopia']],
+  ]},
+  { s: 'Music', t: [
+    ['Why metal subgenres splinter every four years', ['trends','evolution']],
+    ['Is EDM the new classical? The compositional case', ['philosophy','evolution']],
+    ['AI-generated music and the death of the demo tape', ['future','trends','ethics']],
+    ['The Mozart effect: what the science actually says', ['fun facts','discoveries','counterintuitive']],
+    ['Why every breakup album secretly rips off the same chord progression', ['fun facts','evolution','convergent']],
+    ['Auto-Tune started as a side experiment by an oil company', ['fun facts','discoveries','counterintuitive']],
+    ['Why no two people hear the same song the same way', ['philosophy','thought experiment']],
+  ]},
+  { s: 'Wildlife', t: [
+    ['Snow leopards: the cat that never roars', ['fun facts','extremes']],
+    ['Magpies pass the mirror self-recognition test', ['fun facts','discoveries']],
+    ['Octopuses might experience color through their skin', ['discoveries','paradox','fun facts','counterintuitive','ethics']],
+    ['Ravens hold funerals', ['fun facts','discoveries']],
+    ['Why wolves changed the path of rivers in Yellowstone', ['evolution','discoveries']],
+    ['The mantis shrimp sees colors we cannot even name', ['extremes','fun facts']],
+    ['Naked mole rats do not seem to age', ['extremes','discoveries','future']],
+  ]},
+  { s: 'Astronomy & Physics', t: [
+    ['The Fermi paradox revisited', ['paradox','thought experiment']],
+    ['Time runs faster on your face than your feet, measurably', ['fun facts','paradox','counterintuitive']],
+    ['What is the universe expanding into?', ['thought experiment','paradox']],
+    ['Black holes as the universes hard drives', ['future','thought experiment']],
+    ['The universe might be inside a black hole', ['thought experiment','paradox']],
+    ['A day on Venus is longer than its year', ['fun facts','paradox','counterintuitive']],
+    ['Most of what makes you you came from inside dying stars', ['philosophy','fun facts']],
+  ]},
+  { s: 'Philosophy', t: [
+    ['Aristotle on why happiness is a practice, not a feeling', ['philosophy','ethics','skills']],
+    ['The Stoics figured out CBT two thousand years early', ['philosophy','history','convergent']],
+    ['Nietzsche is wildly misread as a nihilist, and the truth matters', ['philosophy','counterintuitive','forgotten']],
+    ['The Trolley Problem stopped being useful when a Tesla had to answer it', ['ethics','thought experiment','future']],
+    ['Humes guillotine: you cannot get a should from an is, and AI does it constantly', ['ethics','paradox','philosophy']],
+    ['Why Confucius and Aristotle independently arrived at virtue ethics', ['philosophy','ethics','convergent']],
+    ['The Ship of Theseus, with your iPhone', ['philosophy','thought experiment']],
+  ]},
+  { s: 'Psychology', t: [
+    ['Why we ask follow-up questions matters more than what we ask', ['philosophy','skills']],
+    ['The peak-end rule: your vacation memory is not the vacation', ['discoveries','counterintuitive','paradox']],
+    ['Conversational narcissism is invisible to the people doing it', ['philosophy','paradox','counterintuitive']],
+    ['Why our brains lie about our own past in measurable ways', ['discoveries','counterintuitive']],
+    ['Status games are running every conversation, and we cannot see them', ['philosophy','paradox','thought experiment']],
+    ['The bystander effect is real and the original explanation was wrong', ['discoveries','counterintuitive','forgotten']],
+  ]},
+  { s: 'Cities', t: [
+    ['Why every American downtown looks the same now', ['paradox','trends','convergent']],
+    ['How parking lots are the single biggest design decision in any city', ['paradox','counterintuitive','forgotten']],
+    ['The forgotten geometry of pre-industrial street layouts', ['history','forgotten','discoveries']],
+    ['Why Tokyo works and most cities do not', ['paradox','discoveries','thought experiment']],
+    ['The strange persistence of suburban cul-de-sacs', ['history','paradox','counterintuitive']],
+  ]},
+  { s: 'Food', t: [
+    ['Wine terroir: real science or marketing magic?', ['fun facts','paradox']],
+    ['Maillard reaction: the chemistry of why food tastes good', ['discoveries','fun facts']],
+    ['Why every cuisine independently invented dumplings', ['history','evolution','convergent']],
+    ['Why no two cultures invented the same hot sauce', ['paradox','history','evolution','counterintuitive']],
+    ['The slow death of bread because of how wheat was bred for tractors', ['evolution','history','paradox','forgotten']],
+  ]},
+  { s: 'Hobbies', t: [
+    ['Carnivorous plants and convergent evolution', ['fun facts','evolution','convergent']],
+    ['Why Zeldas Hyrule maps borrow from medieval cartography', ['history','fun facts']],
+    ['Why Lego is the most successful design system ever made', ['fun facts','evolution','discoveries']],
+    ['Vintage typewriter restoration as a meditation practice', ['philosophy','skills','forgotten']],
+    ['Why guitar players hit a wall at the same point every time', ['paradox','evolution','skills','convergent']],
+  ]},
+];
+
+/* ----------------------------------------------------------------------------
+   COLOR  ·  iridescent ramp across the teal -> blue -> purple plumage range,
+   one hue per subject so clusters read apart while staying on-brand.
+---------------------------------------------------------------------------- */
+const NSUB = PACK.length;
+function subjectColor(i, l = 60, s = 62) {
+  const hue = 150 + (282 - 150) * (i / (NSUB - 1)); // teal-green -> violet
+  return `hsl(${hue.toFixed(0)} ${s}% ${l}%)`;
+}
+const FACET_COLOR = '#C9C6BC'; // soft plumage white for facet nodes/threads
+const RES_COLOR = '#7F77DD';   // purple for resonance
+
+/* ----------------------------------------------------------------------------
+   GRAPH BUILD  ·  the single transform the production buildNestGraph() mirrors.
+   nodes: subject | topic | subtopic | facet   links: containment | facet | resonance
+---------------------------------------------------------------------------- */
+function topicId(s, title) { return 't:' + s + '::' + title; }
+
+function buildGraph(opts) {
+  const { facetMode, resonance } = opts;
+  const nodes = [];
+  const links = [];
+  const byId = new Map();
+  const push = (n) => { byId.set(n.id, n); nodes.push(n); return n; };
+
+  // Subjects
+  PACK.forEach((subj, si) => {
+    push({ id: 's:' + subj.s, type: 'subject', label: subj.s, si, color: subjectColor(si),
+           childCount: subj.t.filter(t => !(t[2] && t[2].parent)).length });
+  });
+
+  // Topics + sub-topics
+  const topics = [];
+  PACK.forEach((subj, si) => {
+    subj.t.forEach(([title, facets, o]) => {
+      const isSub = !!(o && o.parent);
+      const n = push({
+        id: topicId(subj.s, title), type: isSub ? 'subtopic' : 'topic',
+        label: title, si, color: subjectColor(si, isSub ? 66 : 60),
+        facets, isGroup: !!(o && o.group), parentTitle: o && o.parent,
+      });
+      topics.push(n);
+    });
+  });
+
+  // Containment spine: subtopic -> group topic, topic/group -> subject
+  PACK.forEach((subj) => {
+    subj.t.forEach(([title, facets, o]) => {
+      const id = topicId(subj.s, title);
+      if (o && o.parent) links.push({ source: id, target: topicId(subj.s, o.parent), kind: 'containment' });
+      else links.push({ source: id, target: 's:' + subj.s, kind: 'containment' });
+    });
+  });
+
+  // Facet web
+  const facetToTopics = new Map();
+  topics.forEach((tp) => tp.facets.forEach((f) => {
+    if (!facetToTopics.has(f)) facetToTopics.set(f, []);
+    facetToTopics.get(f).push(tp.id);
+  }));
+
+  if (facetMode === 'bridge') {
+    for (const [f, ids] of facetToTopics) {
+      push({ id: 'f:' + f, type: 'facet', label: f, color: FACET_COLOR, reach: ids.length });
+      ids.forEach((tid) => links.push({ source: tid, target: 'f:' + f, kind: 'facet' }));
+    }
+  } else if (facetMode === 'thread') {
+    // A necklace per facet: link consecutive co-tagged topics (O(n), legible) and
+    // close the loop, so each facet weaves a visible thread across subjects.
+    for (const [f, ids] of facetToTopics) {
+      if (ids.length < 2) continue;
+      for (let i = 0; i < ids.length; i++) {
+        const a = ids[i], b = ids[(i + 1) % ids.length];
+        if (a !== b) links.push({ source: a, target: b, kind: 'facet', facet: f });
+      }
+    }
+  }
+
+  // Resonance: each topic to its strongest few partners (shared >= 2 facets)
+  if (resonance) {
+    const fset = new Map(topics.map((t) => [t.id, new Set(t.facets)]));
+    const seen = new Set();
+    topics.forEach((a) => {
+      const part = [];
+      topics.forEach((b) => {
+        if (a.id === b.id) return;
+        let shared = 0; for (const f of fset.get(a.id)) if (fset.get(b.id).has(f)) shared++;
+        if (shared >= 2) part.push([b.id, shared]);
+      });
+      part.sort((x, y) => y[1] - x[1]);
+      part.slice(0, 3).forEach(([bid]) => {
+        const key = a.id < bid ? a.id + '|' + bid : bid + '|' + a.id;
+        if (seen.has(key)) return; seen.add(key);
+        links.push({ source: a.id, target: bid, kind: 'resonance' });
+      });
+    });
+  }
+
+  return { nodes, links, byId, facetToTopics };
+}
+
+/* ----------------------------------------------------------------------------
+   RENDER + SIMULATION
+---------------------------------------------------------------------------- */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let DPR = Math.min(window.devicePixelRatio || 1, 2);
+let W = 0, H = 0;
+
+const view = { scale: 1, tx: 0, ty: 0 };
+const state = {
+  facetMode: 'bridge', resonance: true, labels: true, drift: true,
+  repel: 70, linkLen: 34,
+  hover: null, selected: null, activeFacet: null, focus: null,
+};
+
+let graph, sim, positions = new Map(); // id -> {x,y} preserved across rebuilds
+let raf = null;
+
+function baseRadius(n) {
+  if (n.type === 'subject') return Math.min(8 + n.childCount * 0.55, 17);
+  if (n.type === 'facet') return Math.min(5 + n.reach * 0.22, 11);
+  if (n.type === 'subtopic') return 3.6;
+  return Math.min(4 + n.facets.length * 0.9, 9.5); // topic: degree-weighted (thoughts later)
+}
+
+function adjacency(g) {
+  const adj = new Map(g.nodes.map((n) => [n.id, new Set()]));
+  g.links.forEach((l) => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    adj.get(s).add(t); adj.get(t).add(s);
+  });
+  return adj;
+}
+let adj = new Map();
+
+function buildAndStart(rebuildPositions) {
+  const prev = positions;
+  graph = buildGraph(state);
+  adj = adjacency(graph);
+
+  // seed positions: radial bloom by subject so it opens arranged
+  graph.nodes.forEach((n) => {
+    if (prev.has(n.id)) { n.x = prev.get(n.id).x; n.y = prev.get(n.id).y; return; }
+    if (n.type === 'subject') {
+      const a = (n.si / NSUB) * Math.PI * 2;
+      n.x = Math.cos(a) * 230; n.y = Math.sin(a) * 230;
+    } else if (n.type === 'facet') {
+      n.x = (Math.random() - 0.5) * 120; n.y = (Math.random() - 0.5) * 120;
+    } else {
+      const a = (n.si / NSUB) * Math.PI * 2;
+      n.x = Math.cos(a) * 230 + (Math.random() - 0.5) * 90;
+      n.y = Math.sin(a) * 230 + (Math.random() - 0.5) * 90;
+    }
+  });
+
+  const linkForce = forceLink(graph.links).id((d) => d.id)
+    .distance((l) => l.kind === 'containment' ? (l.target.type === 'subject' ? state.linkLen : state.linkLen * 0.55)
+                    : l.kind === 'resonance' ? state.linkLen * 2.2 : state.linkLen * 1.25)
+    .strength((l) => l.kind === 'containment' ? 0.7 : l.kind === 'resonance' ? 0.04 : 0.14);
+
+  if (sim) sim.stop();
+  sim = forceSimulation(graph.nodes)
+    .force('link', linkForce)
+    .force('charge', forceManyBody().strength((n) => n.type === 'subject' ? -state.repel * 3 : -state.repel))
+    .force('center', forceCenter(0, 0))
+    .force('collide', forceCollide().radius((n) => baseRadius(n) + 3).iterations(2))
+    .force('x', forceX(0).strength(0.015))
+    .force('y', forceY(0).strength(0.015))
+    .alpha(rebuildPositions ? 0.9 : 0.5).alphaTarget(state.drift ? 0.02 : 0)
+    .on('tick', () => { graph.nodes.forEach((n) => positions.set(n.id, { x: n.x, y: n.y })); });
+
+  // pre-warm so first paint is settled
+  for (let i = 0; i < 90; i++) sim.tick();
+  document.getElementById('stat').textContent =
+    `${graph.nodes.length} nodes · ${graph.links.length} connections`;
+}
+
+function worldToScreen(x, y) { return { x: x * view.scale + view.tx, y: y * view.scale + view.ty }; }
+
+// Frame the whole graph in the viewport with padding. Used on load, resize, reset
+// so every surface (phone, desktop, landing embed) auto-fits without manual zoom.
+function fitView(padding = 56) {
+  if (!graph || !graph.nodes.length) return;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  graph.nodes.forEach((n) => { minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x); minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y); });
+  const spanX = Math.max(1, maxX - minX), spanY = Math.max(1, maxY - minY);
+  view.scale = Math.max(0.2, Math.min((W - padding * 2) / spanX, (H - padding * 2) / spanY, 1.6));
+  view.tx = W / 2 - (minX + maxX) / 2 * view.scale;
+  view.ty = H / 2 - (minY + maxY) / 2 * view.scale;
+}
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  if (view.tx === 0 && view.ty === 0) { view.tx = W / 2; view.ty = H / 2; }
+}
+
+function highlightSet() {
+  // ids that should be bright; null = everything bright
+  if (state.focus) {
+    const s = new Set([state.focus]); adj.get(state.focus).forEach((x) => s.add(x)); return s;
+  }
+  if (state.activeFacet) {
+    const ids = graph.facetToTopics.get(state.activeFacet) || [];
+    const s = new Set(ids);
+    if (graph.byId.has('f:' + state.activeFacet)) s.add('f:' + state.activeFacet);
+    return s;
+  }
+  const h = state.hover || state.selected;
+  if (h) { const s = new Set([h]); adj.get(h).forEach((x) => s.add(x)); return s; }
+  return null;
+}
+
+// Which nodes get a text label. Narrow only: a focused/hovered node and its
+// immediate neighbours. A broad facet light-up does NOT label every topic
+// (that's label soup) — the glow carries the signal; subjects always label.
+function labelTargets() {
+  const focal = state.focus || state.hover || state.selected;
+  if (!focal) return null;
+  const node = graph.byId.get(focal);
+  if (!node) return null;
+  const s = new Set([focal]);
+  const nn = adj.get(focal);
+  // skip neighbour labels during a facet light-up, or for big hubs (avoids soup)
+  if (!state.activeFacet && nn && nn.size <= 12) nn.forEach((x) => s.add(x));
+  return s;
+}
+
+function draw() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // background wash
+  const g = ctx.createRadialGradient(W / 2, H * 0.42, 0, W / 2, H * 0.42, Math.max(W, H) * 0.75);
+  g.addColorStop(0, '#13110f'); g.addColorStop(1, '#0A0A09');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  const hi = highlightSet();
+  const bright = (id) => !hi || hi.has(id);
+  const labelSet = labelTargets();
+
+  // links
+  graph.links.forEach((l) => {
+    const a = worldToScreen(l.source.x, l.source.y);
+    const b = worldToScreen(l.target.x, l.target.y);
+    const on = bright(l.source.id) && bright(l.target.id);
+    let col, w;
+    if (l.kind === 'containment') { col = l.source.color || l.target.color; w = 1.1; }
+    else if (l.kind === 'resonance') { col = RES_COLOR; w = 1; }
+    else { col = FACET_COLOR; w = 1; }
+    ctx.globalAlpha = on ? (l.kind === 'resonance' ? 0.20 : l.kind === 'facet' ? 0.26 : 0.34)
+                          : (hi ? 0.03 : 0.06);
+    ctx.strokeStyle = col; ctx.lineWidth = w;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+
+  // nodes
+  const t = performance.now() / 1000;
+  graph.nodes.forEach((n) => {
+    const p = worldToScreen(n.x, n.y);
+    if (p.x < -40 || p.x > W + 40 || p.y < -40 || p.y > H + 40) return;
+    const on = bright(n.id);
+    const r = baseRadius(n) * (0.85 + 0.15 * view.scale);
+    const breathe = n.type === 'subject' ? (1 + 0.06 * Math.sin(t * 1.3 + n.si)) : 1;
+
+    if (n.type === 'facet') {
+      // hollow diamond for facets
+      ctx.globalAlpha = on ? 0.95 : 0.18;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = FACET_COLOR; ctx.lineWidth = 1.6;
+      ctx.shadowColor = FACET_COLOR; ctx.shadowBlur = on ? 12 : 0;
+      ctx.strokeRect(-r * 0.8, -r * 0.8, r * 1.6, r * 1.6);
+      ctx.restore(); ctx.shadowBlur = 0;
+    } else {
+      ctx.globalAlpha = on ? 1 : 0.22;
+      ctx.beginPath();
+      ctx.fillStyle = n.color;
+      ctx.shadowColor = n.color; ctx.shadowBlur = on ? (n.type === 'subject' ? 22 : 12) : 0;
+      ctx.arc(p.x, p.y, r * breathe, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+      // bright core
+      ctx.globalAlpha = on ? 0.9 : 0.25;
+      ctx.beginPath(); ctx.fillStyle = '#FBFAF6';
+      ctx.arc(p.x, p.y, Math.max(1, r * 0.32), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // labels
+    const showLabel = state.labels && (
+      n.type === 'subject' ||
+      (labelSet && labelSet.has(n.id)) ||
+      (view.scale > 1.6 && on)
+    );
+    if (showLabel) {
+      const fz = n.type === 'subject' ? 13 : n.type === 'facet' ? 11 : 11.5;
+      ctx.font = `${n.type === 'subject' ? '600' : '500'} ${fz}px ${n.type === 'subject' ? 'Fraunces, serif' : 'DM Sans, sans-serif'}`;
+      const label = n.label.length > 42 ? n.label.slice(0, 40) + '…' : n.label;
+      const tw = ctx.measureText(label).width;
+      ctx.globalAlpha = on ? 0.96 : 0.3;
+      ctx.fillStyle = n.type === 'subject' ? '#F5F4EF' : (n.type === 'facet' ? FACET_COLOR : '#D9D7CE');
+      const lx = p.x + r + 5;
+      // subtle plate behind for readability
+      if (n.type === 'subject' || (labelSet && labelSet.has(n.id))) {
+        ctx.globalAlpha = on ? 0.55 : 0.18;
+        ctx.fillStyle = 'rgba(10,10,9,0.7)';
+        ctx.fillRect(lx - 3, p.y - fz / 2 - 2, tw + 6, fz + 4);
+        ctx.globalAlpha = on ? 0.96 : 0.3;
+        ctx.fillStyle = n.type === 'subject' ? '#F5F4EF' : '#E7E5DC';
+      }
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, lx, p.y);
+      ctx.globalAlpha = 1;
+    }
+  });
+}
+
+function loop() {
+  draw();
+  raf = requestAnimationFrame(loop);
+}
+
+/* ----------------------------------------------------------------------------
+   INTERACTION
+---------------------------------------------------------------------------- */
+function pickNode(px, py) {
+  let best = null, bestD = Infinity;
+  for (const n of graph.nodes) {
+    const p = worldToScreen(n.x, n.y);
+    const r = baseRadius(n) * (0.85 + 0.15 * view.scale) + 6;
+    const d = (p.x - px) ** 2 + (p.y - py) ** 2;
+    if (d < r * r && d < bestD) { best = n; bestD = d; }
+  }
+  return best;
+}
+
+const pointers = new Map();
+let dragNode = null, panning = false, last = null, downAt = null, pinchDist = 0;
+
+canvas.addEventListener('pointerdown', (e) => {
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  downAt = { x: e.clientX, y: e.clientY, t: performance.now() };
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinchDist = Math.hypot(a.x - b.x, a.y - b.y); return; }
+  const n = pickNode(e.clientX, e.clientY);
+  if (n) { dragNode = n; n.fx = n.x; n.fy = n.y; sim.alphaTarget(0.2).restart(); }
+  else { panning = true; }
+  last = { x: e.clientX, y: e.clientY };
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if (pointers.size === 2) { // pinch zoom
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (pinchDist) { const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2; zoomAt(cx, cy, d / pinchDist); }
+    pinchDist = d; return;
+  }
+
+  if (dragNode) {
+    dragNode.fx = (e.clientX - view.tx) / view.scale;
+    dragNode.fy = (e.clientY - view.ty) / view.scale;
+    return;
+  }
+  if (panning && last) {
+    view.tx += e.clientX - last.x; view.ty += e.clientY - last.y;
+    last = { x: e.clientX, y: e.clientY };
+    return;
+  }
+  // hover
+  const n = pickNode(e.clientX, e.clientY);
+  state.hover = n ? n.id : null;
+  canvas.style.cursor = n ? 'pointer' : 'grab';
+});
+
+function endPointer(e) {
+  const moved = downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 5;
+  const quick = downAt && performance.now() - downAt.t < 350;
+  if (dragNode) { if (!state.drift) { dragNode.fx = null; dragNode.fy = null; } sim.alphaTarget(state.drift ? 0.02 : 0); }
+  if (!moved && quick && pointers.size <= 1) {
+    const n = pickNode(e.clientX, e.clientY);
+    if (n) onNodeClick(n, e); else clearSelection();
+  }
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchDist = 0;
+  dragNode = null; panning = false; last = null;
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+
+let lastClickT = 0, lastClickId = null;
+function onNodeClick(n, e) {
+  const now = performance.now();
+  if (lastClickId === n.id && now - lastClickT < 380) { setFocus(n.id); lastClickT = 0; return; } // double
+  lastClickT = now; lastClickId = n.id;
+
+  if (n.type === 'facet') { setActiveFacet(state.activeFacet === n.label ? null : n.label); hideDetail(); return; }
+  state.selected = n.id; state.activeFacet = null; syncFacetChips();
+  if (n.type === 'subject') { hideDetail(); }
+  else showDetail(n, e);
+}
+
+function setFocus(id) {
+  state.focus = id; state.selected = id;
+  // gently zoom toward the node
+  const n = graph.byId.get(id); if (!n) return;
+  view.scale = Math.min(view.scale * 1.35, 2.4);
+  view.tx = W / 2 - n.x * view.scale; view.ty = H / 2 - n.y * view.scale;
+  document.getElementById('hint').textContent = 'focus mode · click empty space to release';
+}
+function clearSelection() {
+  state.selected = null; state.activeFacet = null; state.focus = null;
+  syncFacetChips(); hideDetail();
+  document.getElementById('hint').textContent = 'drag to pan · scroll to zoom · click a node · double-click to focus';
+}
+function setActiveFacet(f) { state.activeFacet = f; state.selected = null; state.focus = null; syncFacetChips(); }
+
+function zoomAt(cx, cy, factor) {
+  const ns = Math.max(0.25, Math.min(view.scale * factor, 4));
+  const wx = (cx - view.tx) / view.scale, wy = (cy - view.ty) / view.scale;
+  view.scale = ns; view.tx = cx - wx * ns; view.ty = cy - wy * ns;
+}
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0012)); }, { passive: false });
+
+/* ---- Detail popover ---- */
+const detail = document.getElementById('detail');
+function showDetail(n, e) {
+  document.getElementById('dKicker').textContent =
+    (n.type === 'subtopic' ? 'Sub-topic' : n.isGroup ? 'Topic group' : 'Topic') + ' · ' + PACK[n.si].s;
+  document.getElementById('dSwatch').style.background = n.color;
+  document.getElementById('dTitle').textContent = n.label;
+  const fc = document.getElementById('dFacets'); fc.innerHTML = '';
+  (n.facets || []).forEach((f) => { const el = document.createElement('span'); el.className = 'f'; el.textContent = f; fc.appendChild(el); });
+  const x = Math.min(e.clientX + 16, window.innerWidth - 306);
+  const y = Math.min(e.clientY + 12, window.innerHeight - 180);
+  detail.style.left = Math.max(12, x) + 'px'; detail.style.top = Math.max(12, y) + 'px';
+  detail.classList.add('show');
+}
+function hideDetail() { detail.classList.remove('show'); }
+document.getElementById('detailClose').onclick = hideDetail;
+document.getElementById('dOpen').onclick = () => { document.getElementById('hint').textContent = 'in the app this opens the topic page (Maggie · Brief · Challenge · Questions · Convo)'; };
+
+/* ----------------------------------------------------------------------------
+   CONTROLS
+---------------------------------------------------------------------------- */
+document.querySelectorAll('#facetMode button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('#facetMode button').forEach((x) => x.classList.remove('on'));
+  b.classList.add('on'); state.facetMode = b.dataset.mode; buildAndStart(false);
+});
+function bindToggle(id, key, after) {
+  const el = document.getElementById(id);
+  el.onclick = () => { state[key] = !state[key]; el.classList.toggle('on', state[key]); if (after) after(); };
+}
+bindToggle('tResonance', 'resonance', () => buildAndStart(false));
+bindToggle('tLabels', 'labels');
+bindToggle('tDrift', 'drift', () => { sim.alphaTarget(state.drift ? 0.02 : 0); if (state.drift) sim.restart(); });
+
+const sRepel = document.getElementById('sRepel'), sLink = document.getElementById('sLink');
+function syncSliderLabels() { document.getElementById('vRepel').textContent = state.repel; document.getElementById('vLink').textContent = state.linkLen; }
+sRepel.oninput = () => { state.repel = +sRepel.value; syncSliderLabels(); sim.force('charge').strength((n) => n.type === 'subject' ? -state.repel * 3 : -state.repel); sim.alpha(0.4).restart(); };
+sLink.oninput = () => { state.linkLen = +sLink.value; syncSliderLabels(); buildAndStart(false); };
+
+document.getElementById('reset').onclick = () => { clearSelection(); fitView(); };
+
+document.getElementById('panelToggle').onclick = () => {
+  const p = document.getElementById('panel'); p.classList.toggle('collapsed');
+  document.getElementById('chev').textContent = p.classList.contains('collapsed') ? 'show' : 'hide';
+};
+
+// subject legend
+const legend = document.getElementById('legend');
+PACK.forEach((s, i) => {
+  const el = document.createElement('div'); el.className = 'item';
+  el.innerHTML = `<span class="swatch" style="background:${subjectColor(i)}"></span><span>${s.s}</span>`;
+  el.onclick = () => { state.selected = 's:' + s.s; state.activeFacet = null; state.focus = null; syncFacetChips(); hideDetail(); };
+  legend.appendChild(el);
+});
+
+// facet chips (light up across subjects)
+const ALL_FACETS = [...new Set(PACK.flatMap((s) => s.t.flatMap((t) => t[1])))].sort();
+const facetChips = document.getElementById('facetChips');
+ALL_FACETS.forEach((f) => {
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = f; b.dataset.f = f;
+  b.onclick = () => setActiveFacet(state.activeFacet === f ? null : f);
+  facetChips.appendChild(b);
+});
+function syncFacetChips() {
+  document.querySelectorAll('#facetChips .chip').forEach((c) => c.classList.toggle('on', c.dataset.f === state.activeFacet));
+}
+
+/* ----------------------------------------------------------------------------
+   BOOT
+---------------------------------------------------------------------------- */
+window.addEventListener('resize', () => { resize(); fitView(); });
+resize();
+buildAndStart(true);
+fitView();
+syncSliderLabels();
+loop();
+
+// Debug hook for tuning / inspection (prototype only).
+window.__nest = {
+  get graph() { return graph; }, get sim() { return sim; }, view, state, setFocus,
+  focusByLabel: (q) => { const n = graph.nodes.find((n) => n.label.toLowerCase().includes(q.toLowerCase())); if (n) setFocus(n.id); return n ? n.label : null; },
+};
+</script>
+</body>
+</html>

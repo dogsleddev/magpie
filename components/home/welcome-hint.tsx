@@ -9,7 +9,8 @@ export default function WelcomeHint() {
 
   return (
     <div className="relative rounded-lg border border-border bg-bg-card-2 py-3 pl-4 pr-10 text-sm text-text-muted">
-      Tap a subject to dive in. Click Add a Topic and connect to the community.
+      You&apos;re in the shared community, everyone&apos;s curiosities in one nest. Tap a subject to
+      dive in, or add your own.
       <button
         type="button"
         onClick={() => setDismissed(true)}

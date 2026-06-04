@@ -19,6 +19,10 @@ export type SeedFacet = string;
 export type SeedTopic = {
   title: string;
   facets: SeedFacet[];
+  /** When true, this topic is a group anchor (Subject -> Topic group -> Sub-topics). */
+  isGroup?: boolean;
+  /** When set, this topic is a sub-topic whose parent is the group with this title (same subject). */
+  parentTitle?: string;
 };
 
 export type SeedSubject = {
@@ -44,11 +48,14 @@ export const STARTER_PACK: SeedSubject[] = [
   {
     name: 'Books',
     topics: [
-      // RED RISING ENTITY: in v1 we use the `red rising` facet to simulate Option 2 grouping.
-      // In Phase 4.5, these become children of a single "Red Rising" group topic.
-      { title: 'Red Rising: the color caste as social commentary', facets: ['red rising', 'philosophy', 'ethics', 'dystopia'] }, // future child of Red Rising group
-      { title: 'Red Rising: how the Society actually governs', facets: ['red rising', 'thought experiment', 'dystopia'] }, // future child of Red Rising group
-      { title: 'Red Rising: the Howler initiation as the moral pivot', facets: ['red rising', 'ethics', 'thought experiment'] }, // future child of Red Rising group
+      // RED RISING ENTITY: the `red rising` facet plus a real group anchor. The Nest
+      // mind map renders the third tier (Subject -> Red Rising group -> sub-topics)
+      // from is_group / parent_topic_id. The facet is kept so the cross-subject
+      // constellation still lights up.
+      { title: 'Red Rising', facets: ['red rising'], isGroup: true },
+      { title: 'Red Rising: the color caste as social commentary', facets: ['red rising', 'philosophy', 'ethics', 'dystopia'], parentTitle: 'Red Rising' },
+      { title: 'Red Rising: how the Society actually governs', facets: ['red rising', 'thought experiment', 'dystopia'], parentTitle: 'Red Rising' },
+      { title: 'Red Rising: the Howler initiation as the moral pivot', facets: ['red rising', 'ethics', 'thought experiment'], parentTitle: 'Red Rising' },
 
       // Wider dystopia constellation
       { title: 'How every dystopia rhymes: a study across Red Rising, 1984, Brave New World, Hunger Games, Divergent', facets: ['philosophy', 'convergent', 'dystopia', 'thought experiment'] },

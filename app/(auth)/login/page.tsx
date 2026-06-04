@@ -32,16 +32,19 @@ export default async function LoginPage({
           Collect curiosities. Talk them through.
         </h1>
         <p className="mt-3 text-center text-sm leading-relaxed text-text-muted">
-          A personal wiki for the things you find shiny, with a conversation partner who remembers.
+          A shared wiki for the things we find shiny, with a conversation partner who remembers.
         </p>
         <form action={demoLogin} className="mt-8">
           <Button type="submit" variant="primary" size="lg" className="w-full">
             Enter Magpie
           </Button>
         </form>
+        <p className="mt-3 text-center text-xs leading-relaxed text-text-dim">
+          One shared community space, for now. See what everyone is collecting, and add your own.
+        </p>
         {error === 'demo' && (
           <p className="mt-3 text-center text-sm text-danger">
-            Could not open the demo. Tap again, or check the login config.
+            Could not open the community space. Tap to try again.
           </p>
         )}
       </div>

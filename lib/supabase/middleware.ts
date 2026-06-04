@@ -41,7 +41,7 @@ export async function updateSession(request: NextRequest) {
     '/facet',
     '/facets',
     '/discover',
-    '/journal',
+    '/nest',
     '/settings',
   ];
   const isProtected = protectedPaths.some(

@@ -55,23 +55,55 @@ export async function seedStarterTopics(): Promise<SeedResult> {
   if (facetErr) throw facetErr;
   const facetIdByName = new Map(facets.map((f) => [f.name, f.id]));
 
-  // 3. Topics (positioned within each subject).
+  // 3. Topics. Two passes so sub-topics can reference their group's id:
+  //    3a. group anchors (is_group), then 3b. everyone else with parent_topic_id resolved.
+  const topicIdByKey = new Map<string, string>();
+
+  const groupRows = STARTER_PACK.flatMap((subject) => {
+    const subjectId = subjectIdByName.get(subject.name);
+    if (!subjectId) return [];
+    return subject.topics
+      .map((topic, index) => ({ topic, index }))
+      .filter(({ topic }) => topic.isGroup)
+      .map(({ topic, index }) => ({
+        title: topic.title,
+        subject_id: subjectId,
+        user_id: user.id,
+        position: index,
+        is_group: true,
+      }));
+  });
+  if (groupRows.length > 0) {
+    const { data: groups, error: groupErr } = await supabase
+      .from('topics')
+      .insert(groupRows)
+      .select('id, title, subject_id');
+    if (groupErr) throw groupErr;
+    for (const g of groups) topicIdByKey.set(`${g.subject_id}|${g.title}`, g.id);
+  }
+
   const topicRows = STARTER_PACK.flatMap((subject) => {
     const subjectId = subjectIdByName.get(subject.name);
     if (!subjectId) return [];
-    return subject.topics.map((topic, index) => ({
-      title: topic.title,
-      subject_id: subjectId,
-      user_id: user.id,
-      position: index,
-    }));
+    return subject.topics
+      .map((topic, index) => ({ topic, index }))
+      .filter(({ topic }) => !topic.isGroup)
+      .map(({ topic, index }) => ({
+        title: topic.title,
+        subject_id: subjectId,
+        user_id: user.id,
+        position: index,
+        parent_topic_id: topic.parentTitle
+          ? topicIdByKey.get(`${subjectId}|${topic.parentTitle}`) ?? null
+          : null,
+      }));
   });
   const { data: topics, error: topicErr } = await supabase
     .from('topics')
     .insert(topicRows)
     .select('id, title, subject_id');
   if (topicErr) throw topicErr;
-  const topicIdByKey = new Map(topics.map((t) => [`${t.subject_id}|${t.title}`, t.id]));
+  for (const t of topics) topicIdByKey.set(`${t.subject_id}|${t.title}`, t.id);
 
   // 4. topic_facets links.
   const linkRows: { topic_id: string; facet_id: string }[] = [];
@@ -95,7 +127,7 @@ export async function seedStarterTopics(): Promise<SeedResult> {
   return {
     subjects: subjects.length,
     facets: facets.length,
-    topics: topics.length,
+    topics: groupRows.length + topics.length,
     alreadySeeded: false,
   };
 }
