@@ -1,6 +1,6 @@
 # Magpie · Progress
 
-**Last updated:** 2026-06-04 (the Nest + community launch + a full iteration pass, all committed and deployed to prod)
+**Last updated:** 2026-06-05 (LinkedIn launch prep: the landing now leads with the community Nest, an inline waitlist + social proof, the iOS mic switched to keyboard dictation, contact points to Chris's LinkedIn, and the announcement post is drafted)
 **Status:** **LIVE at https://magpie.wiki** with the Nest mind map, the community shared-account model, and this session's iteration (desktop Nest, Rediscover, landing polish, Sports, facet links, Maggie's AI opener, delete-topic, an iOS mic fix, a two-pass QC pass). Won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**. Nest detail: **`docs/NEST.md`**.
 **Branch:** `master` (Vercel auto-deploys the latest `master` to magpie.wiki).
 
@@ -10,21 +10,23 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 
 ## START HERE next session
 
-The landing page, the **Nest**, and the **community shared-account** launch all shipped and are live. Read **`CLAUDE.md` (Current status)** then **`docs/NEST.md`**.
+The **LinkedIn launch is prepped and the launch landing is live.** The landing now leads with the community Nest, the waitlist works end-to-end on prod, and contact points to Chris's LinkedIn. Read **`CLAUDE.md` (Current status)**, then this block.
 
-**First, the one open bug: speech-to-text on iPhone.** The mic pulses but text was not arriving. The continuous-mode fix shipped (`components/mic/use-speech-to-text.ts`, now `continuous = false` + auto-restart), and the mic now shows its error on-screen. If it is still broken, the prime suspects are **iOS Dictation off** (Settings > General > Keyboard > Enable Dictation) and **Safari mic permission**. Get the on-screen error text from Chris's phone to pinpoint it. Next code lever if needed: a user-gesture-aware restart, or guiding iOS users to the keyboard's own dictation mic.
+**Immediate launch tasks (the post is ready to go):**
 
-**QC backlog (from the two-pass review, none blocking):**
+- **Post the LinkedIn announcement.** The draft (privacy-led hook, runner-up, honest framing) plus a reusable reviewer prompt were written this session (in the transcript and the handoff prompt). It needs: the **people to tag** (Krava folks, Linq folks, the judges, with @handles) and a **constellation image**. Format that travels on LinkedIn: upload native constellation media (a 6 to 10s screen-recording beats a still), and put the magpie.wiki link in the **first comment** (LinkedIn throttles in-body links).
+- **Create `public/brand/og-nest.png`** (a 1200x630 constellation screenshot) for the link-preview card. The og + twitter metadata is already wired to that path (`app/page.tsx`); the file is missing, so the card has no image yet. Alternative: generate a branded card in code (`app/opengraph-image.tsx`).
+- **Test the iOS mic on Chris's iPhone.** The new approach is live: the in-app mic is hidden on iOS and a "tap the mic on your keyboard" hint shows instead (`components/mic/is-ios.ts`). The old continuous-restart fix did not work (WebKit Web Speech is a dead stub on iOS). Decision is locked, just confirm it looks right on-device.
 
-- Cache the Convo opener server-side (ai_cache + TTL) instead of the current in-memory cache, to kill the per-open Haiku call across reloads.
-- Reconcile the `default_mode` enum: the DB allows `convo`, the UI uses `thoughts` (`mode-tabs.tsx` vs `0001_init.sql`). Align before any settings UI writes it.
-- The node-detail popover does not re-clamp on window resize (`nest-desktop-view.tsx`).
-- Decide whether the AI opener should persist into the saved transcript (today it is display-only).
-- Remove the dev backfill routes (`/api/dev/backfill-sports`, `/api/dev/backfill-red-rising`) now that they have run (they 403 in prod but ship in the bundle).
+**Privacy (do not overclaim).** Krava is wired **Level-1 only**: AI inference routes through Krava's TEEs, app-key based (`KRAVA_APP_KEY`), so users need no key. But the **stored wiki data is plaintext in Supabase**, identity-decoupling (PasskeyID) was skipped, it **falls back to Anthropic on any error**, and **prod routing is unverified**. So privacy is **kept off the site**; the post frames it only as the hackathon theme. Verify prod routing in the Vercel runtime logs before any present-tense "runs through Krava" claim.
 
-**Bigger product backlog (`docs/BRD.md`):** per-user private accounts (post-waitlist), Glints, Draw Out, the real Linq inbound loop, verify Krava routes on prod, screenshot-and-converse capture, iPhone app.
-**Security (still deferred):** repo is public; migrate the Supabase `service_role` value to an `sb_secret_` key before end of 2026.
-**Get in:** magpie.wiki has a one-click **"Enter Magpie"** community login. Localhost: `npm run dev` (clear `.next` first; OneDrive corrupts stale `.next`).
+**Waitlist** works end-to-end on prod (Chris's live-form test landed). Reads are **dashboard / service-role only** (the table has an INSERT policy but no SELECT, by design). `scripts/community-stats.mjs` pulls the counts; a service-role query lists signups. Current rows are 2 of Chris's own test emails (offered to clear, pending his OK).
+
+**Carryover QC backlog (none blocking):** cache the Convo opener server-side; reconcile the `default_mode` enum (`mode-tabs.tsx` vs `0001_init.sql`); the Nest node-popover does not re-clamp on resize (`nest-desktop-view.tsx`); decide if the opener persists; remove the dev backfill routes (`/api/dev/backfill-*`). New: the "Yours to keep" card now promises **export is coming** (not built), so build a basic export or soften.
+
+**Bigger product backlog (`docs/BRD.md`):** individual accounts plus a **community mode** where communities build their own nest (Chris's stated direction, TBD), subtopics, new-user onboarding, custom tone/personality + guardrails, the real Linq inbound loop, the iPhone app.
+**Security (deferred):** repo is public; migrate the Supabase `service_role` value to an `sb_secret_` key before end of 2026.
+**Get in:** magpie.wiki one-click **"Enter Magpie"** community login. Localhost: `npm run dev` (clear `.next` first; OneDrive corrupts stale `.next`).
 
 ---
 
@@ -42,6 +44,32 @@ The landing page, the **Nest**, and the **community shared-account** launch all 
 | Krava                   | Wrapped in `lib/ai/client.ts`, falls back to Anthropic on any error. Local probe confirmed it works; **prod routing unverified.**                                                                                                                                              |
 | Linq                    | Tier 0 webhook live (`/api/linq/webhook`, HMAC). Sandbox is outbound-only, so the **inbound loop is not real**; the demo used a staged thread. `0002_hackathon.sql` applied; phone linked.                                                                                     |
 | Demo pages              | `/krava` (deck embed + download), `/linq` (iMessage screenshot)                                                                                                                                                                                                                |
+
+---
+
+## Session 10 (2026-06-04 to 06-05): LinkedIn launch prep + landing relaunch
+
+A launch-focused pass to get magpie.wiki ready for the LinkedIn announcement.
+
+**Landing relaunch (all live on `master`):**
+
+- **Community Nest leads the page.** Moved the constellation showcase directly under the hero (first thing on scroll). Positioning locked: **community is the hook, the personal/memory/privacy moat stays** (the hero sub stayed "a personal wiki..."; only the Nest section and the new hero CTA went community). Eyebrow "The Community Nest", title "See the community's curiosities as a living constellation".
+- **Inline waitlist capture** plus a social-proof line ("150+ curiosities across 15 subjects, and growing", hardcoded from a real count of 157/15 via `scripts/community-stats.mjs`) directly under the constellation, so the email is caught at the visual peak, not only at the page bottom.
+- **Hero CTA** "Join the waitlist and build your own community nest" (teal-accented subhead above the buttons). Wordmark dot bumped 10% again.
+- **"Coming soon" badges** on Glints and Draw Out (both featured but unbuilt). Trust card "Yours, exportable" -> **"Yours to keep"** / "Export is coming" (export is not built).
+- **og:image + twitter card metadata** wired (`app/page.tsx`) pointing at `/brand/og-nest.png`. **That image file does not exist yet** (the agent cannot write a binary), so the card has no image until Chris drops a 1200x630 constellation screenshot there.
+- **In-app header CTA:** a right-aligned "Join the waitlist" button added to the AppBar (`components/nav/app-bar.tsx`), shown on every in-app page, linking to `/#join`, so nest explorers can convert.
+- **Contact -> LinkedIn:** the two footer contact links (`hello@magpie.wiki`) now point to `linkedin.com/in/dougherty4` as "ask Chris" / "Chris".
+
+**iOS mic, resolved differently.** The session-9 continuous-restart fix did not work on iPhone (Chris's test: iOS Chrome captured one word, Dictation was ON, so it is a WebKit stub, not a permission/Dictation problem). New approach, **live**: `components/mic/is-ios.ts` exports `isIOS()` (+ a hydration-safe `useIsIOS()`); the hook reports `supported: false` on iOS; `persona-mode` + `convo-mode` hide the mic on iOS and show a "tap the mic on your keyboard" hint. Desktop/Android Web Speech untouched. **Locked decision, do not re-diagnose** (project memory written). Still needs an on-device look.
+
+**Waitlist verified.** Table + action + form work end-to-end on prod (a live-form test email landed). Reads are dashboard/service-role only by RLS design. Cleaned the `verify+%` probe rows. Added `scripts/community-stats.mjs`.
+
+**Krava privacy, analyzed from the code** (for the post): app-key based (no user key needed) but **Level-1 only** (inference TEE routing). Stored data is plaintext Supabase, PasskeyID/identity-decoupling was skipped, and it falls back to Anthropic on any error; prod routing unverified. Conclusion: **privacy stays off the site**; the post mentions it as the hackathon theme only.
+
+**LinkedIn post drafted** (privacy-led hook, runner-up, honest privacy framing, placeholders for the people to tag) plus a reusable reviewer prompt. Carried forward in the next-session prompt.
+
+**Commits:** `cb6c602` (iOS mic), `2deaa43` (landing launch pass), `e75f15c` (in-app waitlist CTA + contact -> LinkedIn).
 
 ---
 

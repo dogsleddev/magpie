@@ -1,6 +1,6 @@
 # Magpie · Handoff to a New Session
 
-_Updated 2026-06-04. The Nest + the community launch + a full iteration pass are all live. Read top to bottom before doing anything._
+_Updated 2026-06-05. The LinkedIn launch is prepped: the landing leads with the community Nest, the waitlist works, the iOS mic switched to keyboard dictation, and the announcement post is drafted. Read top to bottom before doing anything._
 
 ---
 
@@ -54,9 +54,10 @@ A **conversation gym**. Hero line: _Collect curiosities. Talk them through._ You
 
 - **https://magpie.wiki**, a **shared-account community**: everyone enters via one-click **"Enter Magpie"** (`dogsled@dogsled.dev`) and grows one shared grid + Nest. Per-user private accounts are deferred to post-waitlist.
 - **Shipped:** the home grid by Subject, the **Nest** mind map (`/nest`, with a Desktop overlay toggle), Add Topic (talk to the persona, auto-files subject + facets), **Rediscover** (random topic), search (`/search`), Recent Ideas + inline editing (`/recent`), Facets nav (`/facets`, with topic chips that link in), the five modes, Maggie's per-topic AI **opener**, a quiet **delete-topic**, mic-to-text, Organize, the Krava privacy wrap, the Linq Tier 0 webhook. The landing has the Nest showcase + waitlist. `magpie.wiki/krava` + `/linq` still up.
+- **Launch prep (2026-06-05, live):** the landing now leads with the community **Nest**, with an inline waitlist + social-proof count, a "build your own community nest" hero CTA, "Coming soon" badges on Glints/Draw Out, a "Join the waitlist" button in the in-app header, and the footer contact pointing to Chris's LinkedIn. The waitlist works end-to-end on prod (reads are dashboard/service-role only). The **LinkedIn post is drafted** (needs the people to tag + a `og-nest.png` constellation image).
 - **Open / caveats:**
-  - **Speech-to-text on iPhone is still flaky** (the active bug; see `PROGRESS.md` START HERE). The mic now shows its error on-screen for diagnosis.
-  - **Krava prod routing is unverified** (it may be silently falling back to Anthropic). The local probe confirmed Krava works.
+  - **iOS mic switched to keyboard dictation** (live, unverified on-device): WebKit Web Speech is a dead stub on iOS, so the in-app mic is hidden there and a "tap the mic on your keyboard" hint shows (`components/mic/is-ios.ts`). Test on Chris's iPhone.
+  - **Privacy stays off the site.** Krava is Level-1 only (inference TEE, app-key based, no user key), but storage is plaintext, identity-decoupling (PasskeyID) was skipped, it falls back to Anthropic on any error, and prod routing is unverified.
   - **Linq inbound loop is not real yet** (the sandbox is outbound-only). Tier 0 webhook code exists.
   - Repo is **public**; migrate the Supabase `service_role` value to the new `sb_secret_` format before end of 2026.
 
@@ -73,7 +74,7 @@ Full detail in `docs/BRD.md`. Sequence and headline items:
 
 **Positioning (use this in pitches):** the moat is **behavior** (spoken practice) + **memory** (Maggie remembers across topics) + **trust** (privacy). The graph and screenshot-capture are table-stakes. **Pitch the gym, not the map.**
 
-**Time-sensitive GTM:** LinkedIn post in ~2 days (the win), Gemini presentation, Loom demo. See BRD §8.
+**Time-sensitive GTM:** the **LinkedIn launch post is drafted and ready** (needs the people to tag + a constellation image; see `PROGRESS.md` START HERE), then the Gemini presentation and Loom demo. See BRD §8.
 
 ---
 
