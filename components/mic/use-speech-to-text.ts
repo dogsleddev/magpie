@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { isIOS } from './is-ios';
 
 type Options = {
   /** Fired continuously while recording with the final-plus-interim text so far. */
@@ -21,12 +22,12 @@ export type SpeechToText = {
 };
 
 // Map raw Web Speech error codes to a short, user-facing reason. The mic chip
-// shows this so a silent failure (very common on iOS) explains itself.
+// shows this so a silent failure explains itself.
 function micErrorMessage(code: string): string {
   switch (code) {
     case 'not-allowed':
     case 'service-not-allowed':
-      return 'voice input is blocked. allow microphone access, and on iPhone turn on Dictation in Settings > General > Keyboard.';
+      return 'voice input is blocked. allow microphone access in your browser settings.';
     case 'audio-capture':
       return 'no microphone was found.';
     case 'network':
@@ -39,15 +40,15 @@ function micErrorMessage(code: string): string {
 }
 
 /**
- * Web Speech API wrapper. Feature-detected: `supported` stays false on browsers
- * without the API (Firefox).
+ * Web Speech API wrapper for Android Chrome and desktop. Feature-detected:
+ * `supported` stays false on browsers without the API (Firefox) and on iOS,
+ * where every browser is WebKit and the API is a stub that reports as available,
+ * starts the mic, but never returns results. iOS users dictate with the
+ * keyboard's own mic key instead (the components show a hint), so this hook
+ * deliberately reports `supported: false` there.
  *
  * Runs in single-utterance mode (continuous = false) and auto-restarts while the
- * user is still recording. iOS Safari/WebKit keeps a `continuous = true` session
- * "live" but never delivers results (the mic looks like it is listening, yet no
- * text ever arrives) so single utterances plus restart give reliable capture on
- * iOS, Android, and desktop alike. If a platform blocks the restart outside a
- * user gesture, capture still works one utterance per tap, which beats nothing.
+ * user is still recording, which gives reliable capture on Android and desktop.
  * Callbacks are read through refs so updating them never tears down the session.
  */
 export function useSpeechToText(options: Options = {}): SpeechToText {
@@ -72,7 +73,9 @@ export function useSpeechToText(options: Options = {}): SpeechToText {
 
   useEffect(() => {
     const Ctor = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!Ctor) return;
+    // iOS exposes webkitSpeechRecognition but never fires results (WebKit stub),
+    // so treat it as unsupported and let the keyboard dictation mic handle iOS.
+    if (!Ctor || isIOS()) return;
     setSupported(true);
 
     const recognition = new Ctor();

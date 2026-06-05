@@ -6,6 +6,7 @@ import { saveConvoTurn } from '@/lib/actions/conversations';
 import { CONVO_STREAM_ERROR_MARK } from '@/lib/ai/stream-markers';
 import type { ConversationMessage } from '@/lib/queries/types';
 import { useSpeechToText } from '@/components/mic/use-speech-to-text';
+import { useIsIOS } from '@/components/mic/is-ios';
 import MicButton from '@/components/mic/mic-button';
 import { cn } from '@/lib/utils';
 
@@ -53,6 +54,10 @@ export default function ConvoMode({
       setInput(micBaseRef.current ? `${micBaseRef.current} ${spoken}` : spoken);
     },
   });
+
+  // On iOS our Web Speech mic is a dead stub, so we hide it and point the user at
+  // the keyboard's own dictation mic instead.
+  const iosKeyboard = useIsIOS() && !micSupported;
 
   const handleMic = () => {
     if (!micRecording) micBaseRef.current = input.trim();
@@ -207,7 +212,9 @@ export default function ConvoMode({
           aria-label={`Message ${personaName}`}
           className="flex max-h-[120px] w-full resize-none rounded border border-border bg-bg-input px-3.5 py-2.5 text-sm text-text transition-colors placeholder:text-text-dim focus-visible:border-border-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-teal"
         />
-        <MicButton supported={micSupported} recording={micRecording} onClick={handleMic} />
+        {!iosKeyboard && (
+          <MicButton supported={micSupported} recording={micRecording} onClick={handleMic} />
+        )}
         <button
           type="button"
           onClick={() => void send()}
@@ -219,7 +226,11 @@ export default function ConvoMode({
         </button>
       </div>
 
-      {micError && <p className="text-[11px] text-text-dim">{micError}</p>}
+      {iosKeyboard ? (
+        <p className="text-[11px] text-text-dim">tap the mic on your keyboard to talk.</p>
+      ) : (
+        micError && <p className="text-[11px] text-text-dim">{micError}</p>
+      )}
     </div>
   );
 }

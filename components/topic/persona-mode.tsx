@@ -6,6 +6,7 @@ import { addThought, editThought, removeThought } from '@/lib/actions/thoughts';
 import type { Thought } from '@/lib/queries/types';
 import type { OrganizeOutput } from '@/lib/ai/prompts';
 import { useSpeechToText } from '@/components/mic/use-speech-to-text';
+import { useIsIOS } from '@/components/mic/is-ios';
 import MicButton from '@/components/mic/mic-button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -109,6 +110,10 @@ export default function PersonaMode({
       if (text) void commit(text);
     },
   });
+
+  // On iOS our Web Speech mic is a dead stub, so we hide it and point the user at
+  // the keyboard's own dictation mic instead.
+  const iosKeyboard = useIsIOS() && !supported;
 
   const handleMic = () => {
     if (!recording) {
@@ -251,7 +256,9 @@ export default function PersonaMode({
           autoComplete="off"
           aria-label="Capture a thought"
         />
-        <MicButton supported={supported} recording={recording} onClick={handleMic} />
+        {!iosKeyboard && (
+          <MicButton supported={supported} recording={recording} onClick={handleMic} />
+        )}
         <button
           type="button"
           onClick={() => void commit(input)}
@@ -262,7 +269,11 @@ export default function PersonaMode({
         </button>
       </div>
 
-      {micError && <p className="text-[11px] text-text-dim">{micError}</p>}
+      {iosKeyboard ? (
+        <p className="text-[11px] text-text-dim">tap the mic on your keyboard to talk.</p>
+      ) : (
+        micError && <p className="text-[11px] text-text-dim">{micError}</p>
+      )}
 
       {error && <p className="text-xs text-danger">{error}</p>}
 
