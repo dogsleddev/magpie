@@ -416,7 +416,10 @@ export default function LandingPage() {
                 dogsled.dev
               </a>
               <br />
-              Questions? <a href="mailto:hello@magpie.wiki">hello@magpie.wiki</a>
+              Questions?{' '}
+              <a href="https://www.linkedin.com/in/dougherty4/" target="_blank" rel="noreferrer">
+                ask Chris
+              </a>
             </p>
           </div>
           <div className="footcol">
@@ -431,7 +434,9 @@ export default function LandingPage() {
             <a href="https://dogsled.dev" target="_blank" rel="noreferrer">
               dogsled.dev
             </a>
-            <a href="mailto:hello@magpie.wiki">Contact</a>
+            <a href="https://www.linkedin.com/in/dougherty4/" target="_blank" rel="noreferrer">
+              Chris
+            </a>
           </div>
         </div>
         <div className="footbottom">

@@ -11,6 +11,12 @@ export default function AppBar() {
       >
         <Wordmark />
       </Link>
+      <Link
+        href="/#join"
+        className="shrink-0 rounded-md bg-[var(--text)] px-3.5 py-1.5 text-sm font-medium text-[var(--bg)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-teal"
+      >
+        Join the waitlist
+      </Link>
     </header>
   );
 }
