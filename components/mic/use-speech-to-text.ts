@@ -13,10 +13,30 @@ type Options = {
 export type SpeechToText = {
   supported: boolean;
   recording: boolean;
+  /** A short, user-facing reason for the last failure, or null. Clears on the next start. */
+  error: string | null;
   start: () => void;
   stop: () => void;
   toggle: () => void;
 };
+
+// Map raw Web Speech error codes to a short, user-facing reason. The mic chip
+// shows this so a silent failure (very common on iOS) explains itself.
+function micErrorMessage(code: string): string {
+  switch (code) {
+    case 'not-allowed':
+    case 'service-not-allowed':
+      return 'voice input is blocked. allow microphone access, and on iPhone turn on Dictation in Settings > General > Keyboard.';
+    case 'audio-capture':
+      return 'no microphone was found.';
+    case 'network':
+      return 'voice input needs an internet connection.';
+    case 'no-speech':
+      return "didn't catch anything. give it another go.";
+    default:
+      return `voice input error: ${code}`;
+  }
+}
 
 /**
  * Web Speech API wrapper. Feature-detected: `supported` stays false on browsers
@@ -34,6 +54,7 @@ export function useSpeechToText(options: Options = {}): SpeechToText {
   const { onTranscript, onStop, lang = 'en-US' } = options;
   const [supported, setSupported] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalRef = useRef('');
@@ -60,6 +81,7 @@ export function useSpeechToText(options: Options = {}): SpeechToText {
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
+      setError(null); // a result means it is working; clear any stale notice
       let interim = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
@@ -75,6 +97,7 @@ export function useSpeechToText(options: Options = {}): SpeechToText {
     };
 
     recognition.onerror = (event) => {
+      setError(micErrorMessage(event.error));
       // Permission / hardware failures are fatal: stop and do not restart.
       // Transient ones (no-speech, aborted, network) just let onend restart us.
       if (
@@ -125,6 +148,7 @@ export function useSpeechToText(options: Options = {}): SpeechToText {
   const start = useCallback(() => {
     const recognition = recognitionRef.current;
     if (!recognition || wantRef.current) return;
+    setError(null);
     finalRef.current = '';
     fatalRef.current = false;
     wantRef.current = true;
@@ -157,5 +181,5 @@ export function useSpeechToText(options: Options = {}): SpeechToText {
     else start();
   }, [start, stop]);
 
-  return { supported, recording, start, stop, toggle };
+  return { supported, recording, error, start, stop, toggle };
 }

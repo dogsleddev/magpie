@@ -59,7 +59,14 @@ export default function PersonaMode({
       const tempId = `temp-${crypto.randomUUID()}`;
       setThoughts((prev) => [
         ...prev,
-        { id: tempId, content, topic_id: topicId, user_id: '', position: prev.length, created_at: null },
+        {
+          id: tempId,
+          content,
+          topic_id: topicId,
+          user_id: '',
+          position: prev.length,
+          created_at: null,
+        },
       ]);
 
       try {
@@ -84,7 +91,12 @@ export default function PersonaMode({
   // and commits the full field value, not just the spoken part.
   const baseRef = useRef('');
   const liveRef = useRef('');
-  const { supported, recording, toggle } = useSpeechToText({
+  const {
+    supported,
+    recording,
+    toggle,
+    error: micError,
+  } = useSpeechToText({
     onTranscript: (spoken) => {
       const next = baseRef.current ? `${baseRef.current} ${spoken}` : spoken;
       liveRef.current = next;
@@ -130,7 +142,9 @@ export default function PersonaMode({
     try {
       await editThought(id, trimmed);
     } catch {
-      setThoughts((prev) => prev.map((t) => (t.id === id ? { ...t, content: original.content } : t)));
+      setThoughts((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, content: original.content } : t)),
+      );
       setError('Could not save your edit. Try again.');
     }
   };
@@ -248,6 +262,8 @@ export default function PersonaMode({
         </button>
       </div>
 
+      {micError && <p className="text-[11px] text-text-dim">{micError}</p>}
+
       {error && <p className="text-xs text-danger">{error}</p>}
 
       {count === 0 ? (
@@ -334,7 +350,9 @@ function OrganizeSection({ title, items }: { title: string; items: string[] }) {
   if (!items || items.length === 0) return null;
   return (
     <div className="mb-2.5 last:mb-0">
-      <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-purple">{title}</h4>
+      <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-purple">
+        {title}
+      </h4>
       <ul className="flex flex-col gap-1">
         {items.map((item, i) => (
           <li

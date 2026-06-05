@@ -22,10 +22,12 @@ Magpie is a mobile-first web app for people who love to talk and think out loud.
 
 ## Current status (read first)
 
-- **The Nest mind map is built and shipped.** It replaced the Journal tab: a force-directed constellation of the whole wiki with three dimensions (Subject to Topic to Sub-topic containment, the cross-subject Facet web, and emergent Resonance). Full details in `docs/NEST.md`. Live in-app at the `/nest` tab, embedded on the landing page, plus a self-contained `docs/nest-portable.html` you can open offline.
+- **It is all committed and LIVE at magpie.wiki.** Master auto-deploys to production; the whole Nest + community + this session's iteration shipped and is verified in prod. (Full build log: `PROGRESS.md`.)
+- **The Nest mind map is built and shipped.** It replaced the Journal tab: a force-directed constellation of the whole wiki with three dimensions (Subject to Topic to Sub-topic containment, the cross-subject Facet web, and emergent Resonance). Full details in `docs/NEST.md`. Live at the `/nest` tab and embedded on the landing. It has a **Desktop** toggle (full-screen overlay + docked control panel, modeled on `nest-portable.html`, now at the repo root) and a `subjectsOutside` option that pushes subjects to the rim so the interior weaves like a nest.
+- **Also shipped this iteration (all live):** **Rediscover** (the bottom-bar tab spins to a random topic), the landing Nest **showcase moved up** above "How it works" with a reordered hero (Add a Curiosity / See the community nest / Join the waitlist), a **Sports** subject (added to the live community account via a dev backfill), topic facet chips that **link to `/facets/[id]`**, Maggie's Convo **opener is now a short personal per-topic AI question** (`/api/ai/convo-opener`, in-memory cached), a quiet **delete-topic** control, wordmark dot fixes, an **iOS speech-to-text fix**, and a two-pass **QC hardening pass** (abort the convo stream on leave, release dragged Nest nodes, requireUser guards, revalidation).
 - **Launch mode: shared-account community.** Everyone enters the same `dogsled@dogsled.dev` account ("Enter Magpie") and grows one shared grid + Nest. Per-user private accounts are deferred to post-waitlist (RLS + seed-on-first-login already support them).
-- **Local login** needs `SUPABASE_SERVICE_ROLE_KEY` (or `DEMO_LOGIN_PASSWORD`) in `.env.local` (it reads the file, not Vercel). Heads up: Supabase legacy `anon`/`service_role` keys are deprecated **end of 2026**; migrate the service-role value to a new `sb_secret_` key before then (the anon key is already on the new publishable format).
-- **Not yet committed or deployed** as of this writing.
+- **Open right now:** **speech-to-text is still flaky on iPhone** (the continuous-mode fix shipped; the mic now surfaces its error on-screen, and the leading suspects are iOS Dictation being off and/or mic permission). See `PROGRESS.md` for the QC backlog (opener server-side caching, the `default_mode` DB-vs-UI enum, removing the dev backfill routes) and the Supabase `service_role` -> `sb_secret_` key migration (legacy keys deprecated **end of 2026**).
+- **Local login** needs `SUPABASE_SERVICE_ROLE_KEY` (or `DEMO_LOGIN_PASSWORD`) in `.env.local` (it reads the file, not Vercel).
 
 ---
 
@@ -67,9 +69,9 @@ Every database operation lives in a typed query function under `lib/queries/`. T
 
 ```ts
 // lib/queries/topics.ts
-export async function getTopicsBySubject(subjectId: string): Promise<Topic[]>
-export async function getTopicsByFacet(facetId: string): Promise<TopicWithSubject[]>
-export async function createTopic(input: CreateTopicInput): Promise<Topic>
+export async function getTopicsBySubject(subjectId: string): Promise<Topic[]>;
+export async function getTopicsByFacet(facetId: string): Promise<TopicWithSubject[]>;
+export async function createTopic(input: CreateTopicInput): Promise<Topic>;
 ```
 
 This is the same pattern Chris uses across his other dogsled.dev projects. Stick to it.
@@ -103,16 +105,16 @@ Brief and Challenge content is cached in the `ai_cache` table per topic, so revi
 
 ## Vocabulary (matters)
 
-| Term | Meaning |
-|---|---|
-| **Subject** | Parent category (History, Music, AI). Topics live inside subjects. |
-| **Topic** | The conversation prompt. The thing the user actually riffs on. The entity. |
-| **Facet** | Cross-cutting tag (paradox, fun facts, future, evolution). One topic can have multiple facets, and facets cross subjects. Browsing by Facet gives a different lens on the same data. |
-| **Thought** | One captured bullet inside a topic. User's words. |
-| **Maggie** | Default persona name. Renameable. The persona-named mode is the bullet capture mode. The Convo mode is the chat with the persona. |
-| **Mode** | One of the five tabs inside a topic: {persona}, Brief, Challenge, Questions, Convo. |
-| **Grid** | The home view, organized by Subject. |
-| **Riff** | The act of talking out loud about a topic for 3 to 5 minutes. Used as a verb. Not the name of the mode anymore (mode is named after the persona).|
+| Term        | Meaning                                                                                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Subject** | Parent category (History, Music, AI). Topics live inside subjects.                                                                                                                   |
+| **Topic**   | The conversation prompt. The thing the user actually riffs on. The entity.                                                                                                           |
+| **Facet**   | Cross-cutting tag (paradox, fun facts, future, evolution). One topic can have multiple facets, and facets cross subjects. Browsing by Facet gives a different lens on the same data. |
+| **Thought** | One captured bullet inside a topic. User's words.                                                                                                                                    |
+| **Maggie**  | Default persona name. Renameable. The persona-named mode is the bullet capture mode. The Convo mode is the chat with the persona.                                                    |
+| **Mode**    | One of the five tabs inside a topic: {persona}, Brief, Challenge, Questions, Convo.                                                                                                  |
+| **Grid**    | The home view, organized by Subject.                                                                                                                                                 |
+| **Riff**    | The act of talking out loud about a topic for 3 to 5 minutes. Used as a verb. Not the name of the mode anymore (mode is named after the persona).                                    |
 
 **Important rename from the v1 reference:** the v1 artifact uses `angles` in the data model. In production, this is renamed to `facets`. Carry the rename through schema, queries, UI, and copy.
 
@@ -125,6 +127,7 @@ Brief and Challenge content is cached in the `ai_cache` table per topic, so revi
 The reference uses `window.storage` for persistence and inline JS state. The production app uses Supabase and Server Actions. Same UX, different plumbing.
 
 **What ports as-is from the reference:**
+
 - The plumage palette (black, off-white, teal, blue, purple)
 - Font choices (Fraunces + DM Sans)
 - The home screen layout (two-button row + subject list)
@@ -137,6 +140,7 @@ The reference uses `window.storage` for persistence and inline JS state. The pro
 - The Settings modal layout
 
 **What changes from the reference:**
+
 - `angles` → `facets` (rename everywhere)
 - `notes` string was already deprecated to `thoughts` array in the v1.5 iteration: port the array version
 - The "Riff" mode tab is renamed to the persona name (default "Maggie"). When persona is renamed, the tab label updates.
@@ -165,6 +169,7 @@ Full prompts: `docs/PROMPTS.md`. Typed factory functions ready to use: `lib/ai/p
 Every text input in the app has a mic button. Uses the **Web Speech API** (`window.SpeechRecognition || window.webkitSpeechRecognition`). Implementation lives in `components/mic/use-speech-to-text.ts` as a reusable hook and `components/mic/mic-button.tsx` as the UI primitive.
 
 Behavior:
+
 - Tap mic to start recording. Mic pulses. Live transcription appears in the input field.
 - Tap again to stop. Final transcript is committed.
 - If the browser doesn't support the API (Firefox, older browsers), the mic button shows as disabled with a tooltip.

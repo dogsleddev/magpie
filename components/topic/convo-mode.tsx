@@ -47,6 +47,7 @@ export default function ConvoMode({
     supported: micSupported,
     recording: micRecording,
     toggle: micToggle,
+    error: micError,
   } = useSpeechToText({
     onTranscript: (spoken) => {
       setInput(micBaseRef.current ? `${micBaseRef.current} ${spoken}` : spoken);
@@ -217,6 +218,8 @@ export default function ConvoMode({
           <Send className="h-5 w-5" />
         </button>
       </div>
+
+      {micError && <p className="text-[11px] text-text-dim">{micError}</p>}
     </div>
   );
 }

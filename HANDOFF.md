@@ -1,6 +1,6 @@
 # Magpie · Handoff to a New Session
 
-*Updated 2026-05-31, the morning after the hackathon. Read top to bottom before doing anything.*
+_Updated 2026-06-04. The Nest + the community launch + a full iteration pass are all live. Read top to bottom before doing anything._
 
 ---
 
@@ -8,15 +8,14 @@
 
 You are picking up **Magpie**, a personal conversation gym at **magpie.wiki**. Founder: **Chris Dougherty** (dogsled.dev, GitHub `dogsleddev`). Windows 11 + PowerShell.
 
-**The app is BUILT and LIVE.** It just **won runner-up and $250** at the Krava × Linq hackathon (Frontier Tower SF, May 30, 2026), with positive judge feedback (a real product, not an LLM wrapper). The hackathon is over. This is now the **product phase**.
+**The app is BUILT and LIVE.** It won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Since then the landing page, the **Nest** mind map, and a **shared-account community** launch all shipped and are in prod. We are deep in the **product phase** (UI + features), with one open bug (iPhone mic).
 
-**Agreed next-phase sequence:** **BRD → landing page → UI → the rest.**
+**Read in this order:**
 
-**Read in this order** (for the fastest orientation, skim `docs/STATUS.md` then `docs/SOP.md` first):
-1. **`docs/BRD.md`** (the business + product requirements, the new direction, the backlog) ← start here
-2. **`docs/COMPETITORS.md`** (positioning: "pitch the gym, not the map")
-3. **`PROGRESS.md`** (build state + known issues)
-4. **`CLAUDE.md`** (conventions, the North Star)
+1. **`CLAUDE.md`** (the North Star, and its "Current status" section: what is live right now) ← start here
+2. **`PROGRESS.md`** (build log; the START HERE block has the one open bug + the backlog)
+3. **`docs/NEST.md`** (the flagship Nest mind map)
+4. **`docs/BRD.md`** (product requirements + direction) + **`docs/COMPETITORS.md`** (positioning: "pitch the gym, not the map")
 5. Skim `docs/MESSAGING.md` + `docs/MICROCOPY.md` (locked copy), `docs/BRAND.md` (voice), `docs/PRODUCT.md`, `docs/FUTURE_FEATURES.md`
 
 ---
@@ -26,6 +25,7 @@ You are picking up **Magpie**, a personal conversation gym at **magpie.wiki**. F
 **Voice in working sessions:** high-energy surfer-bro casual ("brudha," "stoked," "rad"). Match it for technical work and banter. Shift to a refined editorial register for finished copy, anything client-facing, or anything touching his co-founder Jessica / fastinsights.io.
 
 **AI tells Chris hates:**
+
 - **Em dashes. Zero, ever.** Use periods, commas, parentheses, colons. Even one in a deliverable gets noticed.
 - **"actually"** as a defensive qualifier. Cut it.
 - Marketing-shaped words: "unlock," "amazing," "discover insights," "supercharge," "AI-powered," "next-level."
@@ -41,7 +41,7 @@ You are picking up **Magpie**, a personal conversation gym at **magpie.wiki**. F
 
 ## What Magpie is (current)
 
-A **conversation gym**. Hero line: *Collect curiosities. Talk them through.* You build a wiki of what you find shiny and talk it out loud in 3-to-5-minute reps with a persona who remembers.
+A **conversation gym**. Hero line: _Collect curiosities. Talk them through._ You build a wiki of what you find shiny and talk it out loud in 3-to-5-minute reps with a persona who remembers.
 
 - **Three dimensions:** Subject × Topic × Facet.
 - **Five modes per topic:** **Maggie** (voice-first capture, default tab), Brief, Challenge, Questions, Convo.
@@ -52,14 +52,13 @@ A **conversation gym**. Hero line: *Collect curiosities. Talk them through.* You
 
 ## Current state (live)
 
-- **https://magpie.wiki** with a one-click **"Enter Magpie"** demo login (judges) plus a password path. Magic link still pending SMTP.
-- **magpie.wiki/krava** (the pitch deck, Office-viewer embed) and **magpie.wiki/linq** (the iMessage demo screenshot).
-- **Shipped:** home grid by Subject, Add Topic (talk to the persona, auto-files subject + facets), search (`/search`), Recent Ideas + inline subject/facet editing (`/recent`), Facets navigation (`/facets`), the five modes, mic-to-text, Organize, the Krava privacy wrap (fallback-gated), the Linq Tier 0 webhook.
-- **Caveats to know:**
-  - Persona name **shows "Magpie" in code** from this session; the decision is to **revert to "Maggie"** (below).
-  - **Krava prod routing is unverified** (it may be silently falling back to Anthropic if the Vercel `KRAVA_APP_KEY` is off). The local probe confirmed Krava works.
-  - **Linq inbound loop is not real yet** (the sandbox is outbound-only, so the demo used a staged thread). Tier 0 webhook code exists.
-  - Repo is **public**; Chris declined secret rotation for the event. Revisit before any wider launch.
+- **https://magpie.wiki**, a **shared-account community**: everyone enters via one-click **"Enter Magpie"** (`dogsled@dogsled.dev`) and grows one shared grid + Nest. Per-user private accounts are deferred to post-waitlist.
+- **Shipped:** the home grid by Subject, the **Nest** mind map (`/nest`, with a Desktop overlay toggle), Add Topic (talk to the persona, auto-files subject + facets), **Rediscover** (random topic), search (`/search`), Recent Ideas + inline editing (`/recent`), Facets nav (`/facets`, with topic chips that link in), the five modes, Maggie's per-topic AI **opener**, a quiet **delete-topic**, mic-to-text, Organize, the Krava privacy wrap, the Linq Tier 0 webhook. The landing has the Nest showcase + waitlist. `magpie.wiki/krava` + `/linq` still up.
+- **Open / caveats:**
+  - **Speech-to-text on iPhone is still flaky** (the active bug; see `PROGRESS.md` START HERE). The mic now shows its error on-screen for diagnosis.
+  - **Krava prod routing is unverified** (it may be silently falling back to Anthropic). The local probe confirmed Krava works.
+  - **Linq inbound loop is not real yet** (the sandbox is outbound-only). Tier 0 webhook code exists.
+  - Repo is **public**; migrate the Supabase `service_role` value to the new `sb_secret_` format before end of 2026.
 
 ---
 
@@ -80,7 +79,7 @@ Full detail in `docs/BRD.md`. Sequence and headline items:
 
 ## Naming decision (locked)
 
-**Product = Magpie. Persona = Maggie.** This session's code renamed the persona to "Magpie"; that gets **reverted** to Maggie (migration default, the live `user_settings.persona_name`, threaded `personaName`). The capture tab is named after the persona ("Maggie"), distinct from the "Convo" chat mode. `CLAUDE.md` already says Maggie, so the code is what drifted.
+**Product = Magpie. Persona = Maggie.** Settled and live: the persona is **Maggie** across the app (the default `user_settings.persona_name`, the threaded `personaName`, the capture/chat tab). Renameable in settings.
 
 ---
 
