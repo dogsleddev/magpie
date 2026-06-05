@@ -513,10 +513,10 @@ export default function NestCanvas({
       const moved = downAt && Math.hypot(p.x - downAt.x, p.y - downAt.y) > 5;
       const quick = downAt && performance.now() - downAt.t < 350;
       if (dragNode) {
-        if (!ambient) {
-          dragNode.fx = null;
-          dragNode.fy = null;
-        }
+        // Always release a dragged node back to the sim (even with drift on) so
+        // it never stays pinned where it was dropped.
+        dragNode.fx = null;
+        dragNode.fy = null;
         sim.alphaTarget(ambient ? 0.015 : 0);
       }
       if (!moved && quick && pointers.size <= 1) {

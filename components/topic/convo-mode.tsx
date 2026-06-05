@@ -12,6 +12,10 @@ import { cn } from '@/lib/utils';
 // Shown only if the AI opener call fails; the live opener is fetched per topic.
 const FALLBACK_OPENER = "what's your honest take on this one?";
 
+// In-memory opener cache: toggling tabs or reopening a topic in the same session
+// reuses the generated opener instead of re-calling the model each time.
+const openerCache = new Map<string, string>();
+
 function replaceLast(list: ConversationMessage[], content: string): ConversationMessage[] {
   const next = [...list];
   next[next.length - 1] = { role: 'assistant', content };
@@ -36,6 +40,7 @@ export default function ConvoMode({
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const micBaseRef = useRef('');
+  const abortRef = useRef<AbortController | null>(null);
 
   // Speech-to-text fills the input; it does not auto-send (you review, then send).
   const {
@@ -58,9 +63,18 @@ export default function ConvoMode({
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
+  // Abort an in-flight reply if the user leaves this view (tab switch / topic change),
+  // so the stream stops and a half-finished answer is never persisted.
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   // Fetch the persona's short, personal opener once, only for a fresh (empty) chat.
   useEffect(() => {
     if (initialMessages.length > 0) return;
+    const cached = openerCache.get(topicId);
+    if (cached) {
+      setOpener(cached);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -70,7 +84,9 @@ export default function ConvoMode({
           body: JSON.stringify({ topicId }),
         });
         const data = (await res.json().catch(() => ({}))) as { opener?: string };
-        if (!cancelled) setOpener(data.opener?.trim() || FALLBACK_OPENER);
+        const value = data.opener?.trim() || FALLBACK_OPENER;
+        if (data.opener?.trim()) openerCache.set(topicId, value);
+        if (!cancelled) setOpener(value);
       } catch {
         if (!cancelled) setOpener(FALLBACK_OPENER);
       }
@@ -92,11 +108,14 @@ export default function ConvoMode({
     ]);
     setStreaming(true);
 
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       const res = await fetch('/api/ai/convo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topicId, message: text }),
+        signal: controller.signal,
       });
       if (!res.ok || !res.body) {
         setMessages((prev) =>
@@ -126,11 +145,13 @@ export default function ConvoMode({
       setMessages((prev) => replaceLast(prev, full));
       if (full) await saveConvoTurn(topicId, text, full);
     } catch {
+      // Aborted because the user left this view: drop it silently, persist nothing.
+      if (controller.signal.aborted) return;
       setMessages((prev) =>
         replaceLast(prev, `${personaName.toLowerCase()} hit a snag. try again.`),
       );
     } finally {
-      setStreaming(false);
+      if (!controller.signal.aborted) setStreaming(false);
     }
   };
 

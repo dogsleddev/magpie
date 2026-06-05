@@ -127,18 +127,24 @@ export async function addTopicViaMagpie(
 }
 
 export async function moveTopicToSubject(topicId: string, subjectId: string): Promise<void> {
+  await requireUser();
   await updateTopicSubject(topicId, subjectId);
   revalidatePath('/recent');
   revalidatePath('/app');
   revalidatePath('/facets');
+  revalidatePath('/nest');
   revalidatePath(`/subject/${subjectId}`);
+  revalidatePath(`/topic/${topicId}`);
 }
 
 export async function updateTopicFacetsByName(topicId: string, names: string[]): Promise<void> {
+  await requireUser();
   const ids = await resolveFacetIds(names);
   await setTopicFacets(topicId, ids);
   revalidatePath('/recent');
   revalidatePath('/facets');
+  revalidatePath('/nest');
+  revalidatePath(`/topic/${topicId}`);
 }
 
 /**
@@ -152,6 +158,7 @@ export async function rediscover(): Promise<void> {
 
 /** Delete a topic. Backs the quiet delete control on the topic page. */
 export async function deleteTopicById(topicId: string): Promise<void> {
+  await requireUser();
   await deleteTopic(topicId);
   revalidatePath('/app');
   revalidatePath('/recent');
