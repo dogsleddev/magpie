@@ -20,8 +20,15 @@ export type SpeechToText = {
 
 /**
  * Web Speech API wrapper. Feature-detected: `supported` stays false on browsers
- * without the API (Firefox). The recognition instance is created once; callbacks
- * are read through refs so updating them never tears down the session.
+ * without the API (Firefox).
+ *
+ * Runs in single-utterance mode (continuous = false) and auto-restarts while the
+ * user is still recording. iOS Safari/WebKit keeps a `continuous = true` session
+ * "live" but never delivers results (the mic looks like it is listening, yet no
+ * text ever arrives) so single utterances plus restart give reliable capture on
+ * iOS, Android, and desktop alike. If a platform blocks the restart outside a
+ * user gesture, capture still works one utterance per tap, which beats nothing.
+ * Callbacks are read through refs so updating them never tears down the session.
  */
 export function useSpeechToText(options: Options = {}): SpeechToText {
   const { onTranscript, onStop, lang = 'en-US' } = options;
@@ -30,7 +37,10 @@ export function useSpeechToText(options: Options = {}): SpeechToText {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalRef = useRef('');
-  const erroredRef = useRef(false);
+  // The user's intent to keep capturing. Stays true across the auto-restarts
+  // that span each utterance; cleared only by stop() or a fatal error.
+  const wantRef = useRef(false);
+  const fatalRef = useRef(false);
   const onTranscriptRef = useRef(onTranscript);
   const onStopRef = useRef(onStop);
 
@@ -46,7 +56,7 @@ export function useSpeechToText(options: Options = {}): SpeechToText {
 
     const recognition = new Ctor();
     recognition.lang = lang;
-    recognition.continuous = true;
+    recognition.continuous = false;
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
@@ -64,23 +74,42 @@ export function useSpeechToText(options: Options = {}): SpeechToText {
       onTranscriptRef.current?.(live);
     };
 
-    recognition.onerror = () => {
-      erroredRef.current = true;
+    recognition.onerror = (event) => {
+      // Permission / hardware failures are fatal: stop and do not restart.
+      // Transient ones (no-speech, aborted, network) just let onend restart us.
+      if (
+        event.error === 'not-allowed' ||
+        event.error === 'service-not-allowed' ||
+        event.error === 'audio-capture'
+      ) {
+        fatalRef.current = true;
+        wantRef.current = false;
+      }
     };
 
-    // onend is the single exit point: it fires for an explicit stop and for an
-    // automatic end (silence). Commit the captured text unless an error tripped.
+    // onend fires after every utterance (continuous = false) and on stop. Keep
+    // listening by restarting unless the user stopped or something fatal hit.
     recognition.onend = () => {
+      if (wantRef.current && !fatalRef.current) {
+        try {
+          recognition.start();
+          return;
+        } catch {
+          // fall through to finish if the engine refuses to restart
+        }
+      }
       setRecording(false);
+      wantRef.current = false;
       const finalText = finalRef.current.trim();
-      const errored = erroredRef.current;
+      const fatal = fatalRef.current;
       finalRef.current = '';
-      erroredRef.current = false;
-      if (!errored && finalText) onStopRef.current?.(finalText);
+      fatalRef.current = false;
+      if (!fatal && finalText) onStopRef.current?.(finalText);
     };
 
     recognitionRef.current = recognition;
     return () => {
+      wantRef.current = false;
       recognition.onresult = null;
       recognition.onerror = null;
       recognition.onend = null;
@@ -95,33 +124,38 @@ export function useSpeechToText(options: Options = {}): SpeechToText {
 
   const start = useCallback(() => {
     const recognition = recognitionRef.current;
-    if (!recognition || recording) return;
+    if (!recognition || wantRef.current) return;
     finalRef.current = '';
-    erroredRef.current = false;
+    fatalRef.current = false;
+    wantRef.current = true;
     try {
       recognition.start();
-      setRecording(true);
     } catch {
-      // start() throws if already running; ignore.
+      // start() throws if a prior session is still tearing down; the pending
+      // onend restarts it. Either way we are recording from here.
     }
-  }, [recording]);
+    setRecording(true);
+  }, []);
 
   const stop = useCallback(() => {
+    wantRef.current = false; // prevents the onend auto-restart
     const recognition = recognitionRef.current;
-    if (!recognition) return;
+    if (!recognition) {
+      setRecording(false);
+      return;
+    }
     try {
       recognition.stop();
     } catch {
-      // stop() throws if not running; the onend handler may not fire, so fall
-      // back to clearing local state.
+      // stop() throws if not running; clear local state so the UI recovers.
       setRecording(false);
     }
   }, []);
 
   const toggle = useCallback(() => {
-    if (recording) stop();
+    if (wantRef.current) stop();
     else start();
-  }, [recording, start, stop]);
+  }, [start, stop]);
 
   return { supported, recording, start, stop, toggle };
 }
