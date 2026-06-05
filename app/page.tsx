@@ -9,6 +9,28 @@ export const metadata = {
   title: { absolute: 'Magpie · Collect curiosities. Talk them through.' },
   description:
     'A personal wiki for the things you find shiny, with a conversation partner who remembers. Collect curiosities and talk them through.',
+  openGraph: {
+    title: 'Magpie · Collect curiosities. Talk them through.',
+    description:
+      'See the community of curiosities as a living constellation. A personal wiki for the things you find shiny, with a conversation partner who remembers.',
+    url: 'https://magpie.wiki',
+    siteName: 'Magpie',
+    type: 'website',
+    images: [
+      {
+        url: '/brand/og-nest.png',
+        width: 1200,
+        height: 630,
+        alt: 'The Magpie community nest: a constellation of curiosities across subjects.',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Magpie · Collect curiosities. Talk them through.',
+    description: 'See the community of curiosities as a living constellation.',
+    images: ['/brand/og-nest.png'],
+  },
 };
 
 export default function LandingPage() {
@@ -46,6 +68,9 @@ export default function LandingPage() {
         <p className="herosub">
           A personal wiki for the things you find shiny, with a conversation partner who remembers.
         </p>
+        <p className="herojoin">
+          Join the waitlist and build your own <span className="accent">community nest</span>.
+        </p>
         <div className="herobtns">
           {demoOpen ? (
             <form action={demoLogin} style={{ display: 'contents' }}>
@@ -74,6 +99,27 @@ export default function LandingPage() {
         <p className="scrollcue">scroll to explore</p>
       </header>
 
+      <section id="nest-showcase">
+        <div className="wrap">
+          <p className="eyebrow">The Community Nest</p>
+          <h2 className="section-title">See the community&apos;s curiosities as a living constellation.</h2>
+          <p className="section-lede">
+            Every dot is a real curiosity someone wanted to talk through, every thread a connection
+            between them. Add yours and watch the nest grow.
+          </p>
+          <div className="nest-stage">
+            <NestEmbed />
+          </div>
+        </div>
+      </section>
+
+      <section className="nest-cta-band">
+        <div className="wrap">
+          <p className="nest-count">150+ curiosities across 15 subjects, and growing.</p>
+          <WaitlistForm />
+        </div>
+      </section>
+
       <section className="problem">
         <div className="wrap">
           <p className="big-quote">
@@ -84,20 +130,6 @@ export default function LandingPage() {
             Magpie is where the half-formed stuff goes to become something. A collection of your
             curiosities, with a conversation partner who remembers.
           </p>
-        </div>
-      </section>
-
-      <section id="nest-showcase">
-        <div className="wrap">
-          <p className="eyebrow">Nest View</p>
-          <h2 className="section-title">See your nest of curiosities as a constellation.</h2>
-          <p className="section-lede">
-            Every topic is a node, every cross-subject connection a thread. Your whole wiki, woven
-            into one living map.
-          </p>
-          <div className="nest-stage">
-            <NestEmbed />
-          </div>
         </div>
       </section>
 
@@ -227,6 +259,7 @@ export default function LandingPage() {
           <div className="feature-row">
             <div className="feature-text">
               <span className="feature-tag">Glints</span>
+              <span className="soon">Coming soon</span>
               <h3>The connections you didn't notice.</h3>
               <p>
                 As your wiki grows, Maggie surfaces things you've already written about that connect
@@ -261,6 +294,7 @@ export default function LandingPage() {
           <div className="feature-row reverse">
             <div className="feature-text">
               <span className="feature-tag purple">Draw Out</span>
+              <span className="soon">Coming soon</span>
               <h3>Practice making someone else brilliant.</h3>
               <p>
                 A role-play mode where you talk with a character who has something interesting to
@@ -345,9 +379,9 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="why-card">
-              <h3>Yours, exportable</h3>
+              <h3>Yours to keep</h3>
               <p>
-                Your wiki is real data. Take it with you. Magpie earns your trust by not locking you
+                Your wiki is your data, not ours. Export is coming, and Magpie will never lock you
                 in.
               </p>
             </div>

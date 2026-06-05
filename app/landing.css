@@ -62,6 +62,7 @@
 }
 .magpie-landing .navlogo .nm .dot {
   color: var(--teal);
+  font-size: 1.1em;
 }
 .magpie-landing .navlinks {
   display: flex;
@@ -126,6 +127,7 @@
 }
 .magpie-landing .wordmark .dot {
   color: var(--teal);
+  font-size: 1.1em;
 }
 .magpie-landing .herotag {
   font-family: var(--font-display);
@@ -146,6 +148,19 @@
   line-height: 1.6;
   opacity: 0;
   animation: mp-rise 1s cubic-bezier(0.2, 0.7, 0.3, 1) 0.36s forwards;
+}
+.magpie-landing .herojoin {
+  margin-top: 26px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(18px, 2.6vw, 24px);
+  letter-spacing: -0.01em;
+  color: var(--text);
+  opacity: 0;
+  animation: mp-rise 1s cubic-bezier(0.2, 0.7, 0.3, 1) 0.42s forwards;
+}
+.magpie-landing .herojoin .accent {
+  color: var(--teal);
 }
 .magpie-landing .herobtns {
   margin-top: 38px;
@@ -433,6 +448,18 @@
   color: var(--blue);
   background: rgba(55, 138, 221, 0.1);
 }
+.magpie-landing .soon {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: 1px solid var(--border-strong);
+  padding: 5px 11px;
+  border-radius: 20px;
+  vertical-align: middle;
+}
 .magpie-landing .feature-text h3 {
   font-family: var(--font-display);
   font-weight: 500;
@@ -650,6 +677,16 @@
   cursor: default;
   transform: none;
 }
+.magpie-landing .nest-cta-band {
+  text-align: center;
+  padding: 4px 32px 60px;
+}
+.magpie-landing .nest-count {
+  color: var(--text-muted);
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  margin-bottom: 20px;
+}
 .magpie-landing .cta-note {
   margin-top: 20px;
   font-size: 13px;
@@ -704,6 +741,7 @@
 }
 .magpie-landing .footbrand .fw .dot {
   color: var(--teal);
+  font-size: 1.1em;
 }
 .magpie-landing .foottag {
   color: var(--text-muted);
