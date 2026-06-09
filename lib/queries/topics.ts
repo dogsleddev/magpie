@@ -73,6 +73,68 @@ export async function getAllTopics(): Promise<TopicWithSubjectAndFacets[]> {
   return (data ?? []).map(toWithSubjectAndFacets);
 }
 
+export type TopicLite = {
+  id: string;
+  title: string;
+  subject_id: string;
+  parent_topic_id: string | null;
+  is_group: boolean;
+};
+
+/** Light list of every topic, for the umbrella (entity-grouping) check. */
+export async function getTopicsLite(): Promise<TopicLite[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('topics')
+    .select('id, title, subject_id, parent_topic_id, is_group')
+    .returns<TopicLite[]>();
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Promote a topic to a group anchor (Subject -> group -> sub-topics). */
+export async function promoteTopicToGroup(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('topics')
+    .update({ is_group: true, parent_topic_id: null })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+/**
+ * Nest topics under a group parent. Children follow the parent's subject
+ * (entity membership decides where a topic lives), appended at the end.
+ */
+export async function adoptTopicsUnderGroup(
+  parentId: string,
+  parentSubjectId: string,
+  childIds: string[],
+): Promise<void> {
+  if (childIds.length === 0) return;
+  const supabase = await createClient();
+  const { data: last } = await supabase
+    .from('topics')
+    .select('position')
+    .eq('subject_id', parentSubjectId)
+    .order('position', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  let position = (last?.position ?? -1) + 1;
+  for (const id of childIds) {
+    const { error } = await supabase
+      .from('topics')
+      .update({
+        parent_topic_id: parentId,
+        is_group: false,
+        subject_id: parentSubjectId,
+        position: position++,
+      })
+      .eq('id', id);
+    if (error) throw error;
+  }
+}
+
 export async function getTopic(id: string): Promise<TopicFull | null> {
   const supabase = await createClient();
   const { data, error } = await supabase

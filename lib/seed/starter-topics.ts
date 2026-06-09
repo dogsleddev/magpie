@@ -3,14 +3,14 @@
  * Seeded for new users on first sign-in, unless they opt for personalized onboarding.
  * Curated to show off the cross-subject facet patterns.
  *
- * Volume: 14 subjects, 18 facets, ~125 topics.
+ * Volume: 14 subjects, 17 facets, ~125 topics.
  * Cross-cutting facets to demo: paradox, counterintuitive, convergent, ethics, dystopia.
  * Tapping any of those five lights up topics across 5+ subjects.
  *
- * LIVE-DEMO ANCHOR: "Red Rising" is implemented as a facet for v1 (Option 3 simulation)
- * so the demo can show a Red Rising sub-wiki of topic threads, mimicking what Phase 4.5
- * (Option 2 topic groups) will deliver post-hackathon. Topics tagged with the `red rising`
- * facet are marked with a comment indicating they become group children under Option 2.
+ * ENTITY GROUPS: "Red Rising" (Books) and "Corvids" (Wildlife) are real topic
+ * groups (is_group anchors + parentTitle children), rendered by the Nest as the
+ * third containment tier (Subject -> group -> sub-topics). Entities live as
+ * groups, not facets; facets stay reserved for cross-cutting lenses.
  * See docs/MEMORY.md for the four-level cross-context model.
  */
 
@@ -69,24 +69,23 @@ export const STARTER_PACK: SeedSubject[] = [
   {
     name: 'Books',
     topics: [
-      // RED RISING ENTITY: the `red rising` facet plus a real group anchor. The Nest
-      // mind map renders the third tier (Subject -> Red Rising group -> sub-topics)
-      // from is_group / parent_topic_id. The facet is kept so the cross-subject
-      // constellation still lights up.
-      { title: 'Red Rising', facets: ['red rising'], isGroup: true },
+      // RED RISING ENTITY: a real group anchor. The Nest renders the third tier
+      // (Subject -> Red Rising group -> sub-topics) from is_group / parent_topic_id.
+      // The children stay woven into the wider web via their lens facets.
+      { title: 'Red Rising', facets: [], isGroup: true },
       {
         title: 'Red Rising: the color caste as social commentary',
-        facets: ['red rising', 'philosophy', 'ethics', 'dystopia'],
+        facets: ['philosophy', 'ethics', 'dystopia'],
         parentTitle: 'Red Rising',
       },
       {
         title: 'Red Rising: how the Society actually governs',
-        facets: ['red rising', 'thought experiment', 'dystopia'],
+        facets: ['thought experiment', 'dystopia'],
         parentTitle: 'Red Rising',
       },
       {
         title: 'Red Rising: the Howler initiation as the moral pivot',
-        facets: ['red rising', 'ethics', 'thought experiment'],
+        facets: ['ethics', 'thought experiment'],
         parentTitle: 'Red Rising',
       },
 
@@ -325,15 +324,18 @@ export const STARTER_PACK: SeedSubject[] = [
     name: 'Wildlife',
     topics: [
       { title: 'Snow leopards: the cat that never roars', facets: ['fun facts', 'extremes'] },
+      // CORVIDS ENTITY: the house birds get their own group (same shape as Red Rising).
+      { title: 'Corvids', facets: [], isGroup: true },
       {
         title: 'Magpies pass the mirror self-recognition test',
         facets: ['fun facts', 'discoveries'],
+        parentTitle: 'Corvids',
       },
       {
         title: 'Octopuses might experience color through their skin',
         facets: ['discoveries', 'paradox', 'fun facts', 'counterintuitive', 'ethics'],
       },
-      { title: 'Ravens hold funerals', facets: ['fun facts', 'discoveries'] },
+      { title: 'Ravens hold funerals', facets: ['fun facts', 'discoveries'], parentTitle: 'Corvids' },
       {
         title: 'Why wolves changed the path of rivers in Yellowstone',
         facets: ['evolution', 'discoveries'],
@@ -349,6 +351,7 @@ export const STARTER_PACK: SeedSubject[] = [
       {
         title: 'Why crows give gifts to humans who feed them',
         facets: ['fun facts', 'discoveries'],
+        parentTitle: 'Corvids',
       },
     ],
   },
@@ -575,15 +578,13 @@ export const STARTER_PACK: SeedSubject[] = [
  * Get the unique list of facets across the starter pack.
  * Use this to bulk-create facets before inserting topics.
  *
- * Should return 18 facets:
+ * Should return 17 facets:
  * paradox, fun facts, future, evolution, philosophy, history, discoveries,
  * thought experiment, trends, challenges, extremes, skills,
- * counterintuitive, forgotten, convergent, ethics, dystopia, red rising
+ * counterintuitive, forgotten, convergent, ethics, dystopia
  *
- * Note: `red rising` is an entity-anchor facet for v1 (Option 3 simulation).
- * In Phase 4.5 (Option 2 topic groups), the topics tagged with this facet
- * become children of a "Red Rising" group topic, and the facet can be removed
- * or kept as a tag depending on whether it still earns its slot.
+ * Entities (Red Rising, Corvids) are topic groups, not facets. Facets stay
+ * reserved for cross-cutting lenses.
  */
 export function uniqueFacets(): string[] {
   const set = new Set<string>();

@@ -115,37 +115,60 @@ export function questionsPrompt(topic: Topic): AIPrompt {
   };
 }
 
+export type CategorizeGroup = {
+  /** Canonical entity name, e.g. "Seattle Seahawks", "Red Rising". */
+  name: string;
+  /** Exact titles of EXISTING topics that belong under the same entity. */
+  members: string[];
+};
+
 export type CategorizeOutput = {
   title: string;
   subject: string;
   facets: string[];
+  group?: CategorizeGroup | null;
 };
 
 /**
  * Turn a raw idea into a filed topic: a riff-ready title, a parent subject,
  * and 1 to 3 facets. Strongly prefers reusing the user's existing subjects and
  * facets so new captures land next to related ones.
+ *
+ * The umbrella check rides along: when the idea is about the same specific
+ * named entity (series, team, show, franchise) as existing topics, the model
+ * names the entity and the exact existing titles, and the add action nests
+ * them under one group parent.
  */
 export function categorizeTopicPrompt(
   idea: string,
   existingSubjects: string[],
   existingFacets: string[],
+  existingTopics: string[],
 ): AIPrompt {
+  const topicList = existingTopics
+    .slice(0, 400)
+    .map((t) => `- ${t}`)
+    .join('\n');
   return {
     system: `The user wants to add a conversation topic to their personal wiki. Turn their idea into a clean topic and file it.
 
 Output ONLY valid JSON with this exact shape, no other text:
-{"title":"a specific conversation topic","subject":"Subject Name","facets":["facet","facet"]}
+{"title":"a specific conversation topic","subject":"Subject Name","facets":["facet","facet"],"group":{"name":"Entity Name","members":["exact existing topic title"]}}
 
 Rules:
 - "title" is a specific conversation prompt someone could riff on for 3 to 5 minutes, written naturally. Keep the user's intent. Do not just echo a bare category.
 - "subject" is the single best parent category. Strongly prefer reusing one of the user's existing subjects when one fits. Invent a new subject only if none fit.
-- "facets" are 1 to 3 lowercase cross-cutting tags. Strongly prefer reusing the user's existing facets when they fit.
+- "facets" are 1 to 3 lowercase cross-cutting tags. Strongly prefer reusing the user's existing facets when they fit. Facets are lenses (paradox, ethics, fun facts), never entity names.
+- "group": ONLY when the idea is about the same specific named entity as one or more topics in the existing-topics list: a book or series, a movie, a TV show, a sports team, a band, a game, a franchise, a person. Then "name" is the entity's canonical name and "members" are the EXACT titles of those existing topics, copied character for character from the list. A shared theme or genre is NOT a group (that is what facets are for). When in doubt, use null.
+- No matching entity: "group" is null.
 ${NO_EM_DASH}`,
     user: `Idea: "${idea}"
 
 Existing subjects: ${existingSubjects.join(', ') || '(none yet)'}
-Existing facets: ${existingFacets.join(', ') || '(none yet)'}`,
+Existing facets: ${existingFacets.join(', ') || '(none yet)'}
+
+Existing topics:
+${topicList || '(none yet)'}`,
   };
 }
 
