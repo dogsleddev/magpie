@@ -69,9 +69,17 @@ export default function LandingPage() {
           A personal wiki for the things you find shiny, with a conversation partner who remembers.
         </p>
         <p className="heroline">
-          Visualize the connections in the <span className="accent">nest</span>.
+          Visualize connections in the <span className="accent">nest</span>.
         </p>
         <div className="herobtns">
+          {demoOpen && (
+            <form action={demoLogin} style={{ display: 'contents' }}>
+              <input type="hidden" name="goNest" value="1" />
+              <button type="submit" className="btn-primary">
+                See the community nest
+              </button>
+            </form>
+          )}
           {demoOpen ? (
             <form action={demoLogin} style={{ display: 'contents' }}>
               <input type="hidden" name="openAdd" value="1" />
@@ -83,14 +91,6 @@ export default function LandingPage() {
             <a href="#how" className="btn-secondary">
               See how it works
             </a>
-          )}
-          {demoOpen && (
-            <form action={demoLogin} style={{ display: 'contents' }}>
-              <input type="hidden" name="goNest" value="1" />
-              <button type="submit" className="btn-secondary">
-                See the community nest
-              </button>
-            </form>
           )}
           {demoOpen && (
             <form action={demoLogin} style={{ display: 'contents' }}>
@@ -194,8 +194,8 @@ export default function LandingPage() {
               </div>
               <h3>Maggie</h3>
               <p>
-                Talk it through with Maggie. She opens with a question made for your topic, riffs
-                back with takes of her own, and never starts with "Great question!"
+                Talk it through with Maggie. She opens with a question made for your topic and
+                riffs back with takes of her own.
               </p>
             </div>
             <div className="mode-card blue">
