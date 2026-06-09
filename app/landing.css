@@ -78,7 +78,8 @@
 .magpie-landing .navlinks a:hover {
   color: var(--text);
 }
-.magpie-landing .navcta {
+/* a.navcta outranks the .navlinks a color, so the pill never renders greyed out */
+.magpie-landing .navlinks a.navcta {
   background: var(--text);
   color: var(--bg);
   padding: 8px 18px;
@@ -87,9 +88,9 @@
   font-size: 14px;
   transition: transform 0.2s ease;
 }
-.magpie-landing .navcta:hover {
+.magpie-landing .navlinks a.navcta:hover {
   transform: translateY(-1px);
-  color: var(--bg) !important;
+  color: var(--bg);
 }
 @media (max-width: 680px) {
   .magpie-landing .navlinks a:not(.navcta) {
@@ -149,7 +150,7 @@
   opacity: 0;
   animation: mp-rise 1s cubic-bezier(0.2, 0.7, 0.3, 1) 0.36s forwards;
 }
-.magpie-landing .herojoin {
+.magpie-landing .heroline {
   margin-top: 26px;
   font-family: var(--font-display);
   font-weight: 500;
@@ -159,7 +160,7 @@
   opacity: 0;
   animation: mp-rise 1s cubic-bezier(0.2, 0.7, 0.3, 1) 0.42s forwards;
 }
-.magpie-landing .herojoin .accent {
+.magpie-landing .heroline .accent {
   color: var(--teal);
 }
 .magpie-landing .herobtns {

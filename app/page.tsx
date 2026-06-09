@@ -68,8 +68,8 @@ export default function LandingPage() {
         <p className="herosub">
           A personal wiki for the things you find shiny, with a conversation partner who remembers.
         </p>
-        <p className="herojoin">
-          Join the waitlist and build your own <span className="accent">community nest</span>.
+        <p className="heroline">
+          Visualize the connections in the <span className="accent">nest</span>.
         </p>
         <div className="herobtns">
           {demoOpen ? (
@@ -101,7 +101,7 @@ export default function LandingPage() {
 
       <section id="nest-showcase">
         <div className="wrap">
-          <p className="eyebrow">The Community Nest</p>
+          <p className="eyebrow">The Nest</p>
           <h2 className="section-title">See the community&apos;s curiosities as a living constellation.</h2>
           <p className="section-lede">
             Every dot is a real curiosity someone wanted to talk through, every thread a connection
@@ -116,7 +116,6 @@ export default function LandingPage() {
       <section className="nest-cta-band">
         <div className="wrap">
           <p className="nest-count">150+ curiosities across 15 subjects, and growing.</p>
-          <WaitlistForm />
         </div>
       </section>
 
@@ -180,19 +179,19 @@ export default function LandingPage() {
           <p className="eyebrow">Five modes</p>
           <h2 className="section-title">Five ways to look at any thought.</h2>
           <p className="section-lede">
-            Every topic opens with the same five tabs. Capture, brief yourself, get challenged, find
-            better questions, or just <em>talk it through</em>.
+            Every topic opens with the same five tabs. <em>Talk it through</em>, brief yourself, get
+            challenged, find better questions, or pile up thoughts as they come.
           </p>
 
           <div className="modes-grid">
             <div className="mode-card">
               <div className="mode-icon">
-                <Mic size={20} />
+                <MessageCircleMore size={20} />
               </div>
               <h3>Maggie</h3>
               <p>
-                Capture bullets as they come. Tap the mic and just talk. Maggie holds the thread
-                until you're ready to do something with it.
+                Talk it through with Maggie. She opens with a question made for your topic, riffs
+                back with takes of her own, and never starts with "Great question!"
               </p>
             </div>
             <div className="mode-card blue">
@@ -227,12 +226,12 @@ export default function LandingPage() {
             </div>
             <div className="mode-card red">
               <div className="mode-icon">
-                <MessageCircleMore size={20} />
+                <Mic size={20} />
               </div>
-              <h3>Convo</h3>
+              <h3>Thoughts</h3>
               <p>
-                Talk it through with Maggie. She remembers what you wrote, riffs back with her own
-                takes, and never opens with "Great question!"
+                Capture bullets as they come. Type or talk, every thought saves itself the moment
+                you add it. When the pile gets interesting, Maggie organizes it.
               </p>
             </div>
           </div>
@@ -346,15 +345,15 @@ export default function LandingPage() {
             <div className="why-card">
               <h3>Voice-first capture</h3>
               <p>
-                Tap the mic. Talk. Bullets appear. The friction between thought and capture goes to
-                zero.
+                Speak your thoughts and bullets appear. The friction between thought and capture
+                goes to zero.
               </p>
             </div>
             <div className="why-card">
               <h3>Maggie remembers</h3>
               <p>
-                Your conversations build on each other. She knows what you've been pulling on and
-                brings it back when it fits.
+                Every topic keeps its conversation. Walk away mid-thought, come back days later,
+                and Maggie picks it up right where you left off.
               </p>
             </div>
             <div className="why-card">
