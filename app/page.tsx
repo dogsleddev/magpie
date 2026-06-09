@@ -92,9 +92,13 @@ export default function LandingPage() {
               </button>
             </form>
           )}
-          <a href="#join" className="btn-primary">
-            Join the waitlist
-          </a>
+          {demoOpen && (
+            <form action={demoLogin} style={{ display: 'contents' }}>
+              <button type="submit" className="btn-secondary">
+                See the community topics
+              </button>
+            </form>
+          )}
         </div>
         <p className="scrollcue">scroll to explore</p>
       </header>
