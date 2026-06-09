@@ -1,7 +1,7 @@
 # Magpie · Progress
 
-**Last updated:** 2026-06-05 (LinkedIn launch prep: the landing now leads with the community Nest, an inline waitlist + social proof, the iOS mic switched to keyboard dictation, contact points to Chris's LinkedIn, and the announcement post is drafted)
-**Status:** **LIVE at https://magpie.wiki** with the Nest mind map, the community shared-account model, and this session's iteration (desktop Nest, Rediscover, landing polish, Sports, facet links, Maggie's AI opener, delete-topic, an iOS mic fix, a two-pass QC pass). Won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**. Nest detail: **`docs/NEST.md`**.
+**Last updated:** 2026-06-09 (session 11: entity groups live, umbrella check feature, homepage QC pass, Nest desktop default)
+**Status:** **LIVE at https://magpie.wiki** with the Nest mind map, entity groups (Red Rising, Corvids), the umbrella auto-group feature on Add Topic, and the full landing/homepage pass. Won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**. Nest detail: **`docs/NEST.md`**.
 **Branch:** `master` (Vercel auto-deploys the latest `master` to magpie.wiki).
 
 This is the living build log. For direction read `docs/BRD.md`; for "what Magpie is," `CLAUDE.md`.
@@ -10,21 +10,21 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 
 ## START HERE next session
 
-The **LinkedIn launch is prepped and the launch landing is live.** The landing now leads with the community Nest, the waitlist works end-to-end on prod, and contact points to Chris's LinkedIn. Read **`CLAUDE.md` (Current status)**, then this block.
+**Session 11 shipped:** entity groups, the umbrella check, Nest desktop default, and the full homepage pass. All on `master`, all in prod. Read **`CLAUDE.md` (Current status)**, then this block.
 
-**Immediate launch tasks (the post is ready to go):**
+**Immediate launch tasks:**
 
-- **Post the LinkedIn announcement.** The draft (privacy-led hook, runner-up, honest framing) plus a reusable reviewer prompt were written this session (in the transcript and the handoff prompt). It needs: the **people to tag** (Krava folks, Linq folks, the judges, with @handles) and a **constellation image**. Format that travels on LinkedIn: upload native constellation media (a 6 to 10s screen-recording beats a still), and put the magpie.wiki link in the **first comment** (LinkedIn throttles in-body links).
-- **Create `public/brand/og-nest.png`** (a 1200x630 constellation screenshot) for the link-preview card. The og + twitter metadata is already wired to that path (`app/page.tsx`); the file is missing, so the card has no image yet. Alternative: generate a branded card in code (`app/opengraph-image.tsx`).
-- **Test the iOS mic on Chris's iPhone.** The new approach is live: the in-app mic is hidden on iOS and a "tap the mic on your keyboard" hint shows instead (`components/mic/is-ios.ts`). The old continuous-restart fix did not work (WebKit Web Speech is a dead stub on iOS). Decision is locked, just confirm it looks right on-device.
+- **Post the LinkedIn announcement.** Draft + reviewer prompt in `docs/LINKEDIN_LAUNCH.md`. Needs: the **people to tag** (@handles for Krava, Linq, the judges) and a **constellation image** (6-to-10s screen-recording beats a still; put the magpie.wiki link in the first comment, LinkedIn throttles in-body links).
+- **Create `public/brand/og-nest.png`** (1200x630 constellation screenshot) for link-preview cards. The og/twitter metadata in `app/page.tsx` is already wired to that path; the file is missing so cards have no image. Alternative: `app/opengraph-image.tsx` code-based generation.
+- **Test the iOS mic on Chris's iPhone.** The in-app mic is hidden on iOS and shows a "tap the mic on your keyboard" hint (`components/mic/is-ios.ts`). Decision locked, just confirm it renders correctly on-device.
 
-**Privacy (do not overclaim).** Krava is wired **Level-1 only**: AI inference routes through Krava's TEEs, app-key based (`KRAVA_APP_KEY`), so users need no key. But the **stored wiki data is plaintext in Supabase**, identity-decoupling (PasskeyID) was skipped, it **falls back to Anthropic on any error**, and **prod routing is unverified**. So privacy is **kept off the site**; the post frames it only as the hackathon theme. Verify prod routing in the Vercel runtime logs before any present-tense "runs through Krava" claim.
+**Privacy (do not overclaim).** Krava is **Level-1 only**: inference TEE routing, app-key based. Stored data is **plaintext Supabase**, identity-decoupling skipped, falls back to Anthropic on any error, prod routing unverified. Privacy stays off the site; the post frames it as hackathon theme only.
 
-**Waitlist** works end-to-end on prod (Chris's live-form test landed). Reads are **dashboard / service-role only** (the table has an INSERT policy but no SELECT, by design). `scripts/community-stats.mjs` pulls the counts; a service-role query lists signups. Current rows are 2 of Chris's own test emails (offered to clear, pending his OK).
+**Umbrella check (shipped, not yet verified on prod).** Every Add Topic now runs `applyUmbrella()` in `lib/actions/topics.ts`. Test: log into the community account, add a new Seahawks-adjacent topic, confirm it lands under the Seattle Seahawks group parent. The check is conservative (never creates a group of one) and failures never block the add.
 
-**Carryover QC backlog (none blocking):** cache the Convo opener server-side; reconcile the `default_mode` enum (`mode-tabs.tsx` vs `0001_init.sql`); the Nest node-popover does not re-clamp on resize (`nest-desktop-view.tsx`); decide if the opener persists; remove the dev backfill routes (`/api/dev/backfill-*`). New: the "Yours to keep" card now promises **export is coming** (not built), so build a basic export or soften.
+**Carryover QC backlog (none blocking):** cache the Convo opener server-side; reconcile the `default_mode` enum (`mode-tabs.tsx` vs `0001_init.sql`); Nest node-popover does not re-clamp on resize (`nest-desktop-view.tsx`); decide if the opener persists; remove the dev backfill routes (`/api/dev/backfill-*`). The "Yours to keep" card promises **export is coming** (not built), so build or soften.
 
-**Bigger product backlog (`docs/BRD.md`):** individual accounts plus a **community mode** where communities build their own nest (Chris's stated direction, TBD), subtopics, new-user onboarding, custom tone/personality + guardrails, the real Linq inbound loop, the iPhone app.
+**Bigger product backlog (`docs/BRD.md`):** individual accounts + community mode, new-user onboarding, custom tone/personality + guardrails, the real Linq inbound loop, the iPhone app.
 **Security (deferred):** repo is public; migrate the Supabase `service_role` value to an `sb_secret_` key before end of 2026.
 **Get in:** magpie.wiki one-click **"Enter Magpie"** community login. Localhost: `npm run dev` (clear `.next` first; OneDrive corrupts stale `.next`).
 
@@ -44,6 +44,30 @@ The **LinkedIn launch is prepped and the launch landing is live.** The landing n
 | Krava                   | Wrapped in `lib/ai/client.ts`, falls back to Anthropic on any error. Local probe confirmed it works; **prod routing unverified.**                                                                                                                                              |
 | Linq                    | Tier 0 webhook live (`/api/linq/webhook`, HMAC). Sandbox is outbound-only, so the **inbound loop is not real**; the demo used a staged thread. `0002_hackathon.sql` applied; phone linked.                                                                                     |
 | Demo pages              | `/krava` (deck embed + download), `/linq` (iMessage screenshot)                                                                                                                                                                                                                |
+
+---
+
+## Session 11 (2026-06-09): entity groups, umbrella check, homepage QC, Nest desktop default
+
+**Entity groups on prod (live).** Red Rising and Corvids are now proper group topics on the community DB. A one-time `scripts/group-backfill.mjs` script ran against prod (service-role, idempotent, `--write` flag): created the Red Rising group anchor, reparented three child topics (Ender's Game comparison, political structure, golds/reds caste), created the Corvids group, reparented three children (mirror test, raven funerals, crows give gifts), and deleted the now-redundant `red rising` facet. Result: 159 topics, 17 facets, 2 `is_group` anchors. Probe scripts retained at `scripts/group-backfill.mjs`, `scripts/red-rising-probe.mjs`, `scripts/topic-dump.mjs`.
+
+**Umbrella check (shipped, `34ac109`).** Every `addTopicViaMagpie()` call now runs an entity-grouping pass after topic creation:
+- `categorizeTopicPrompt` in `lib/ai/prompts.ts` receives the full existing topic list (up to 400) and returns an optional `group: { name, members }` when the new topic shares a named entity (series, team, show, franchise) with existing topics. Themes and genres are explicitly excluded (those are facets).
+- `applyUmbrella()` in `lib/actions/topics.ts` handles the full resolve: finds an existing group parent by entity name (preferring an `is_group` anchor), or promotes an existing topic to group, or creates a new group topic. Children are adopted under the parent with their `subject_id` following the parent. Conservative: if there is no existing parent AND no sibling matches, it returns null and skips grouping. Failures are caught and logged; they never block the add.
+- `getTopicsLite()`, `promoteTopicToGroup()`, `adoptTopicsUnderGroup()` added to `lib/queries/topics.ts`.
+- `lib/seed/starter-topics.ts` updated: Corvids group + its three children added with `parentTitle`, `red rising` facet removed from all Red Rising seed topics.
+
+**Homepage QC pass (`28329f6`, `92d3450`, `78de38d`, all live):**
+- Nav CTA was greyed out from a CSS specificity collision (`.navlinks a` overrode `.navcta`). Fixed by narrowing to `.navlinks a.navcta`, removed `!important` on hover.
+- Hero sub-line changed to "Visualize connections in the nest." (no "the"). Hero CTA button order: **See the community nest** (btn-primary, first/highlighted) -> Add a Curiosity -> See the community topics.
+- "See the community topics" replaced the old "Join the waitlist" third button (now a `demoLogin` form action routing to `/app`, not an anchor).
+- Five-modes section fully rewritten to match the real app tabs (Maggie = AI opener + riff partner; Thoughts = bullet capture; Brief, Challenge, Questions accurate).
+- Maggie card trimmed (removed the "never starts with 'Great question!'" clause).
+- Nest section eyebrow: "The Community Nest" -> "The Nest". Waitlist form removed from the nest-cta-band.
+
+**Nest desktop default (`6d0ea53`, live).** On viewports >=1024px, the Nest page now opens in Desktop overlay mode automatically. SSR-safe: implemented as a `useEffect` mount check on `window.matchMedia('(min-width: 1024px)').matches` in `components/nest/nest-view.tsx`, so the initial render matches the server and hydration is clean.
+
+**Commits:** `6d0ea53` (Nest desktop default), `28329f6` (nav CTA + homepage), `92d3450` (hero waitlist->community topics), `78de38d` (hero polish + Maggie card), `34ac109` (umbrella check + entity groups).
 
 ---
 

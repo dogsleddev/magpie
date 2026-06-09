@@ -1,6 +1,6 @@
 # Magpie · Handoff to a New Session
 
-_Updated 2026-06-05. The LinkedIn launch is prepped: the landing leads with the community Nest, the waitlist works, the iOS mic switched to keyboard dictation, and the announcement post is drafted. Read top to bottom before doing anything._
+_Updated 2026-06-09. Entity groups shipped (Red Rising, Corvids on prod). The umbrella check now auto-nests new topics under entity parents on every Add Topic. Homepage QC pass done. Nest opens in Desktop mode on desktop viewports. Read top to bottom before doing anything._
 
 ---
 
@@ -8,7 +8,7 @@ _Updated 2026-06-05. The LinkedIn launch is prepped: the landing leads with the 
 
 You are picking up **Magpie**, a personal conversation gym at **magpie.wiki**. Founder: **Chris Dougherty** (dogsled.dev, GitHub `dogsleddev`). Windows 11 + PowerShell.
 
-**The app is BUILT and LIVE.** It won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Since then the landing page, the **Nest** mind map, and a **shared-account community** launch all shipped and are in prod. We are deep in the **product phase** (UI + features), with one open bug (iPhone mic).
+**The app is BUILT and LIVE.** It won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). The Nest mind map, community launch, entity groups, and the umbrella auto-group feature are all live. One open bug: iPhone mic (WebKit stub, decision locked to keyboard dictation hint).
 
 **Read in this order:**
 
@@ -53,13 +53,15 @@ A **conversation gym**. Hero line: _Collect curiosities. Talk them through._ You
 ## Current state (live)
 
 - **https://magpie.wiki**, a **shared-account community**: everyone enters via one-click **"Enter Magpie"** (`dogsled@dogsled.dev`) and grows one shared grid + Nest. Per-user private accounts are deferred to post-waitlist.
-- **Shipped:** the home grid by Subject, the **Nest** mind map (`/nest`, with a Desktop overlay toggle), Add Topic (talk to the persona, auto-files subject + facets), **Rediscover** (random topic), search (`/search`), Recent Ideas + inline editing (`/recent`), Facets nav (`/facets`, with topic chips that link in), the five modes, Maggie's per-topic AI **opener**, a quiet **delete-topic**, mic-to-text, Organize, the Krava privacy wrap, the Linq Tier 0 webhook. The landing has the Nest showcase + waitlist. `magpie.wiki/krava` + `/linq` still up.
-- **Launch prep (2026-06-05, live):** the landing now leads with the community **Nest**, with an inline waitlist + social-proof count, a "build your own community nest" hero CTA, "Coming soon" badges on Glints/Draw Out, a "Join the waitlist" button in the in-app header, and the footer contact pointing to Chris's LinkedIn. The waitlist works end-to-end on prod (reads are dashboard/service-role only). The **LinkedIn post is drafted** (needs the people to tag + a `og-nest.png` constellation image).
+- **Shipped:** the home grid by Subject, the **Nest** mind map (`/nest`, Desktop overlay auto-opens on >=1024px viewports), **entity groups** (Red Rising, Corvids on prod; umbrella check on every Add Topic), Add Topic with auto-filed subject + facets + grouping, **Rediscover** (random topic), search (`/search`), Recent Ideas + inline editing (`/recent`), Facets nav (`/facets`, chips link in), the five modes, Maggie's per-topic AI **opener**, a quiet **delete-topic**, mic-to-text, Organize, the Krava privacy wrap, the Linq Tier 0 webhook. Landing leads with the Nest + waitlist. `magpie.wiki/krava` + `/linq` still up.
+- **Homepage pass (2026-06-09, live):** nav CTA contrast fixed, "See the community nest" is the first highlighted button, "See the community topics" replaces the old waitlist button, five-modes section matches the real tabs, Maggie card trimmed.
+- **LinkedIn post drafted** (needs the people to tag + `og-nest.png`). See `docs/LINKEDIN_LAUNCH.md`.
 - **Open / caveats:**
-  - **iOS mic switched to keyboard dictation** (live, unverified on-device): WebKit Web Speech is a dead stub on iOS, so the in-app mic is hidden there and a "tap the mic on your keyboard" hint shows (`components/mic/is-ios.ts`). Test on Chris's iPhone.
-  - **Privacy stays off the site.** Krava is Level-1 only (inference TEE, app-key based, no user key), but storage is plaintext, identity-decoupling (PasskeyID) was skipped, it falls back to Anthropic on any error, and prod routing is unverified.
-  - **Linq inbound loop is not real yet** (the sandbox is outbound-only). Tier 0 webhook code exists.
-  - Repo is **public**; migrate the Supabase `service_role` value to the new `sb_secret_` format before end of 2026.
+  - **iOS mic switched to keyboard dictation** (live, unverified on-device): WebKit Web Speech is a dead stub on iOS (`components/mic/is-ios.ts`). Test on Chris's iPhone.
+  - **Umbrella check not yet prod-verified.** Shipped, but the flow (add a Seahawks topic -> lands under the group parent) has not been exercised on the live community account.
+  - **Privacy stays off the site.** Krava is Level-1 only (inference TEE, app-key based), storage is plaintext, falls back to Anthropic on any error, prod routing unverified.
+  - **Linq inbound loop is not real yet** (sandbox is outbound-only). Tier 0 webhook code exists.
+  - Repo is **public**; migrate the Supabase `service_role` value to `sb_secret_` before end of 2026.
 
 ---
 
@@ -68,13 +70,13 @@ A **conversation gym**. Hero line: _Collect curiosities. Talk them through._ You
 Full detail in `docs/BRD.md`. Sequence and headline items:
 
 1. **BRD** (done: `docs/BRD.md`).
-2. **Landing page** + waitlist (scroll-through functionality; `docs/homepage.html` is the reference, build it for real).
-3. **UI:** home nav in the upper right, **persona revert to Maggie**, edit/delete topics, subtopics, new-user subject/facet onboarding, custom tone/personality, guardrails, and the **3D curiosity graph** ("the shape of your curiosity," not a generated diagram, per COMPETITORS §3).
-4. **The rest:** iPhone app, finish the real Linq inbound loop, verify Krava, screenshot-and-converse capture, "where did you hear it" provenance, social.
+2. **LinkedIn post** (draft ready in `docs/LINKEDIN_LAUNCH.md`, needs @handles + `og-nest.png`). Time-sensitive.
+3. **UI:** home nav in the upper right, **persona revert to Maggie**, edit/delete topics, new-user subject/facet onboarding, custom tone/personality, guardrails, and the **3D curiosity graph** ("the shape of your curiosity," per COMPETITORS §3).
+4. **The rest:** individual accounts, iPhone app, finish the real Linq inbound loop, verify Krava on prod, screenshot-and-converse capture, "where did you hear it" provenance, social.
 
 **Positioning (use this in pitches):** the moat is **behavior** (spoken practice) + **memory** (Maggie remembers across topics) + **trust** (privacy). The graph and screenshot-capture are table-stakes. **Pitch the gym, not the map.**
 
-**Time-sensitive GTM:** the **LinkedIn launch post is drafted and ready** (needs the people to tag + a constellation image; see `PROGRESS.md` START HERE), then the Gemini presentation and Loom demo. See BRD §8.
+**Time-sensitive GTM:** the **LinkedIn launch post is drafted** (needs the people to tag + a constellation image; see `PROGRESS.md` START HERE), then the Gemini presentation and Loom demo. See BRD §8.
 
 ---
 
