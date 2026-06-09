@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Monitor } from 'lucide-react';
 import { buildNestGraph } from '@/lib/nest/build-graph';
@@ -16,6 +16,13 @@ export default function NestView({ source }: { source: NestSource }) {
   const [labels, setLabels] = useState(true);
   const [tapped, setTapped] = useState<NestTapInfo | null>(null);
   const [desktop, setDesktop] = useState(false);
+
+  // Desktop-size viewports land straight in the full-bleed desktop view.
+  // Set in an effect (not initial state) so SSR and hydration match; exiting
+  // back to the compact view sticks because this only runs on mount.
+  useEffect(() => {
+    if (window.matchMedia('(min-width: 1024px)').matches) setDesktop(true);
+  }, []);
 
   const graph = useMemo(
     () => buildNestGraph(source, { facetMode, resonance }),
