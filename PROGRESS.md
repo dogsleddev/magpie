@@ -1,7 +1,7 @@
 # Magpie · Progress
 
-**Last updated:** 2026-06-09 (session 11: entity groups live, umbrella check feature, homepage QC pass, Nest desktop default)
-**Status:** **LIVE at https://magpie.wiki** with the Nest mind map, entity groups (Red Rising, Corvids), the umbrella auto-group feature on Add Topic, and the full landing/homepage pass. Won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**. Nest detail: **`docs/NEST.md`**.
+**Last updated:** 2026-06-09 (session 12: group drilldown UI, Nest full-bleed on mobile, full UX review, launch polish, og-nest.png shipped)
+**Status:** **LIVE at https://magpie.wiki** with the Nest mind map, entity groups with a real drilldown UI, the umbrella auto-group feature on Add Topic, the post-UX-review landing, and a working LinkedIn link-preview card. Won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**. Nest detail: **`docs/NEST.md`**.
 **Branch:** `master` (Vercel auto-deploys the latest `master` to magpie.wiki).
 
 This is the living build log. For direction read `docs/BRD.md`; for "what Magpie is," `CLAUDE.md`.
@@ -10,17 +10,17 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 
 ## START HERE next session
 
-**Session 11 shipped:** entity groups, the umbrella check, Nest desktop default, and the full homepage pass. All on `master`, all in prod. Read **`CLAUDE.md` (Current status)**, then this block.
+**Session 12 shipped:** the group drilldown UI (Red Rising behaves like a folder now), the Nest opening full-bleed on every viewport, a full UX review of every screen, the launch polish that came out of it, and the missing `og-nest.png`. All on `master`, all verified in prod. Read **`CLAUDE.md` (Current status)**, then this block.
 
 **Immediate launch tasks:**
 
-- **Post the LinkedIn announcement.** Draft + reviewer prompt in `docs/LINKEDIN_LAUNCH.md`. Needs: the **people to tag** (@handles for Krava, Linq, the judges) and a **constellation image** (6-to-10s screen-recording beats a still; put the magpie.wiki link in the first comment, LinkedIn throttles in-body links).
-- **Create `public/brand/og-nest.png`** (1200x630 constellation screenshot) for link-preview cards. The og/twitter metadata in `app/page.tsx` is already wired to that path; the file is missing so cards have no image. Alternative: `app/opengraph-image.tsx` code-based generation.
-- **Test the iOS mic on Chris's iPhone.** The in-app mic is hidden on iOS and shows a "tap the mic on your keyboard" hint (`components/mic/is-ios.ts`). Decision locked, just confirm it renders correctly on-device.
+- **Post the LinkedIn announcement.** Draft + reviewer prompt in `docs/LINKEDIN_LAUNCH.md`. The og image is DONE and serving on prod, so the link card works. Still needs: the **people to tag** (@handles for Krava, Linq, the judges). A 6-to-10s screen-recording of the Nest beats a still in the post body; put the magpie.wiki link in the first comment, LinkedIn throttles in-body links.
+- **Test on Chris's iPhone:** the keyboard-dictation mic hint (`components/mic/is-ios.ts`) AND the new mobile Nest default (full-bleed view, collapsed panel, exit button). Both live, neither verified on-device.
+- **Curate the duplicate community topics.** Confirmed pair: "How did the reintroduction of wolves change Yellowstone's entire ecosystem?" and "Why wolves changed the path of rivers in Yellowstone" (both Wildlife). Audit all titles, propose a merge list to Chris BEFORE deleting (topics carry thoughts/conversations/facets; deletes cascade). Pattern reference: `scripts/group-backfill.mjs`.
 
 **Privacy (do not overclaim).** Krava is **Level-1 only**: inference TEE routing, app-key based. Stored data is **plaintext Supabase**, identity-decoupling skipped, falls back to Anthropic on any error, prod routing unverified. Privacy stays off the site; the post frames it as hackathon theme only.
 
-**Umbrella check (shipped, not yet verified on prod).** Every Add Topic now runs `applyUmbrella()` in `lib/actions/topics.ts`. Test: log into the community account, add a new Seahawks-adjacent topic, confirm it lands under the Seattle Seahawks group parent. The check is conservative (never creates a group of one) and failures never block the add.
+**Umbrella check (shipped, not yet verified on prod).** Every Add Topic now runs `applyUmbrella()` in `lib/actions/topics.ts`. Test: log into the community account, add a new Seahawks-adjacent topic, confirm it lands under the Seattle Seahawks group parent. The check is conservative (never creates a group of one) and failures never block the add. **Session 12 guard:** an add made from a group page (explicit `parentTopicId`) skips the umbrella entirely; the user's placement wins.
 
 **Carryover QC backlog (none blocking):** cache the Convo opener server-side; reconcile the `default_mode` enum (`mode-tabs.tsx` vs `0001_init.sql`); Nest node-popover does not re-clamp on resize (`nest-desktop-view.tsx`); decide if the opener persists; remove the dev backfill routes (`/api/dev/backfill-*`). The "Yours to keep" card promises **export is coming** (not built), so build or soften.
 
@@ -44,6 +44,33 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 | Krava                   | Wrapped in `lib/ai/client.ts`, falls back to Anthropic on any error. Local probe confirmed it works; **prod routing unverified.**                                                                                                                                              |
 | Linq                    | Tier 0 webhook live (`/api/linq/webhook`, HMAC). Sandbox is outbound-only, so the **inbound loop is not real**; the demo used a staged thread. `0002_hackathon.sql` applied; phone linked.                                                                                     |
 | Demo pages              | `/krava` (deck embed + download), `/linq` (iMessage screenshot)                                                                                                                                                                                                                |
+
+---
+
+## Session 12 (2026-06-09): group drilldown, Nest on mobile, UX review, launch polish, og image
+
+**Group drilldown UI (`c54d084`, live).** Chris's report: clicking Red Rising in Books opened it like a normal topic with the sub-topics flat in the same list. Assessment first: **zero schema/architecture change needed**, `is_group` + `parent_topic_id` were already live and populated. The fix was presentation only:
+- `components/subject/subject-topics.tsx`: a sub-topic hides behind its group's row only when that group is in the rendered list (so the same component renders a group's children on the group page). Group rows get a teal Layers icon + "N sub-topics inside"; facet chips count only visible rows.
+- `app/(main)/topic/[id]/page.tsx`: branches on `is_group`. A group renders as a collection page (meta editor, "a collection · N sub-topics", Add a sub-topic, the children list, delete-collection) instead of mode tabs. Child topics back-link to their parent group (new `parent:parent_topic_id(id,title)` self-embed on `getTopic`).
+- `getChildTopics()` added to `lib/queries/topics.ts`. `AddTopicDialog` takes `parentTopicId` + `triggerLabel`; `addTopicViaMagpie` threads `parentTopicId` to `createTopic`. `DeleteTopic` warns "delete this collection and every sub-topic in it?" for groups (FK cascades).
+
+**Umbrella guard (`1a528e1`).** Found while rebasing onto session 11's umbrella check: `applyUmbrella` could re-parent a sub-topic the user had just explicitly filed into a group (it unshifts the new topic into the adoption list unconditionally). Now an explicit `parentTopicId` skips the umbrella; the user's placement wins.
+
+**Nest full-bleed everywhere (`ba01399`, live).** The Nest tab opens straight into the desktop overlay on every viewport, phones included (supersedes session 11's >=1024px-only default). On small screens the control panel starts collapsed so the constellation fills the 375px frame, and the hint copy covers touch ("pinch or scroll... tap a node"). Exit still drops to the compact view and sticks for the visit.
+
+**Full UX review (no-code pass, then fixes).** Drove every screen at 375px + 1280px against live data: Rediscover, the AI opener, Brief, Thoughts, Facets + detail, search, the drilldown loop, the Nest, the landing, both demo CTAs, the waitlist form states. Verdict: the landing balance is GOOD (~870 words), do not re-grow it. Findings that did NOT get fixed this session: near-duplicate community topics (see START HERE), the in-app waitlist link exits to the landing (modal idea, post-launch), no settings surface (correct for shared mode), `/krava` + `/linq` are public-but-unlinked (fine).
+
+**Launch polish from the review (`77381fb`, all live):**
+- Hero trimmed to **two CTAs**: "See the community nest" (primary) + "Add a curiosity" (secondary). The redundant "See the community topics" button is gone (a cold visitor cannot distinguish nest vs topics).
+- **Inline waitlist form restored** under the "150+ curiosities" count band (the visual peak), alongside the bottom `#join` block.
+- **Why-grid cut 6 -> 3** to the trust trio (Pull never push / No ads. Ever. / Yours to keep); the cut cards repeated the modes section.
+- **"Add a curiosity" everywhere:** the dialog title + aria, the home/subject triggers, and the hero all share the landing language (the group page keeps "Add a sub-topic").
+- **Welcome hint dismissal persists** for a year via the `magpie_hint_dismissed` cookie. Gotcha fixed along the way: the cookie-name constant exported from the `'use client'` module became a client-reference proxy when the server page imported it (lookup silently never matched). It lives in `components/home/welcome-hint-cookie.ts` (plain module) now.
+- **`public/brand/og-nest.png` exists** (172 KB, 1200x630): a deterministic generated constellation in the plumage palette (subjects on the rim, woven interior, wordmark + tagline + "The community nest is growing at magpie.wiki"). Generator checked in at `scripts/generate-og-nest.mjs` (seeded, re-run anytime). Verified 200 on prod; the LinkedIn card is unblocked.
+
+**Ops notes:** local git needed `git config windows.appendAtomically false` to commit (OneDrive append quirk; set in repo config). PowerShell 5.1 mangles embedded double quotes in `git commit -m` here-strings; avoid quotes in commit messages.
+
+**Commits:** `c54d084` (group drilldown), `ba01399` (Nest full-bleed), `1a528e1` (umbrella guard), `77381fb` (launch polish + og image).
 
 ---
 
