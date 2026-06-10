@@ -227,7 +227,7 @@ export default function ConvoMode({
       </div>
 
       {iosKeyboard ? (
-        <p className="text-[11px] text-text-dim">tap the mic on your keyboard to talk.</p>
+        <p className="text-[11px] text-text-dim">voice on mobile coming soon. type for now.</p>
       ) : (
         micError && <p className="text-[11px] text-text-dim">{micError}</p>
       )}

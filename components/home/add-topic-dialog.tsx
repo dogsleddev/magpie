@@ -124,7 +124,7 @@ export default function AddTopicDialog({
                 }
               }}
               rows={3}
-              placeholder="e.g. high agency"
+              placeholder="e.g. high agency, why ravens hold funerals, the Fermi paradox"
               className="w-full resize-none rounded border border-border bg-bg-input px-3.5 py-2.5 text-sm text-text placeholder:text-text-dim focus-visible:border-border-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-teal"
             />
 
