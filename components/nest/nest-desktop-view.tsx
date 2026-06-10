@@ -43,7 +43,11 @@ export default function NestDesktopView({
   const [activeFacet, setActiveFacet] = useState<string | null>(null);
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [tapped, setTapped] = useState<NestTapInfo | null>(null);
-  const [panelOpen, setPanelOpen] = useState(true);
+  // Only mounts client-side (opened from the compact view), so window is safe
+  // here. Phones start with the panel tucked away so the nest fills the screen.
+  const [panelOpen, setPanelOpen] = useState(
+    () => typeof window === 'undefined' || window.matchMedia('(min-width: 768px)').matches,
+  );
   const [resetKey, setResetKey] = useState(0);
 
   const graph = useMemo(
@@ -307,7 +311,7 @@ export default function NestDesktopView({
 
       {/* hint */}
       <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-bg/50 px-3.5 py-1.5 text-center text-xs text-text-dim backdrop-blur">
-        drag to pan · scroll to zoom · click a node · double-click to focus
+        drag to pan · pinch or scroll to zoom · tap a node · double-tap to focus
       </p>
     </div>
   );

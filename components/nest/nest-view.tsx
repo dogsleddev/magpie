@@ -17,11 +17,11 @@ export default function NestView({ source }: { source: NestSource }) {
   const [tapped, setTapped] = useState<NestTapInfo | null>(null);
   const [desktop, setDesktop] = useState(false);
 
-  // Desktop-size viewports land straight in the full-bleed desktop view.
+  // Everyone lands straight in the full-bleed desktop view, phones included.
   // Set in an effect (not initial state) so SSR and hydration match; exiting
   // back to the compact view sticks because this only runs on mount.
   useEffect(() => {
-    if (window.matchMedia('(min-width: 1024px)').matches) setDesktop(true);
+    setDesktop(true);
   }, []);
 
   const graph = useMemo(
