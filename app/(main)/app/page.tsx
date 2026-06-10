@@ -1,10 +1,12 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { ChevronRight, Waypoints } from 'lucide-react';
 import { getSubjectsWithCounts } from '@/lib/queries/subjects';
 import { getRecentTopics } from '@/lib/queries/topics';
 import { getSettings } from '@/lib/queries/settings';
 import SubjectList from '@/components/home/subject-list';
 import WelcomeHint from '@/components/home/welcome-hint';
+import { WELCOME_HINT_COOKIE } from '@/components/home/welcome-hint-cookie';
 import EmptyOnboarding from '@/components/home/empty-onboarding';
 import AddTopicDialog from '@/components/home/add-topic-dialog';
 import TopicSearch from '@/components/home/topic-search';
@@ -14,12 +16,14 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{ add?: string }>;
 }) {
-  const [{ add }, subjects, recent, settings] = await Promise.all([
+  const [{ add }, cookieStore, subjects, recent, settings] = await Promise.all([
     searchParams,
+    cookies(),
     getSubjectsWithCounts(),
     getRecentTopics(6),
     getSettings(),
   ]);
+  const hintDismissed = cookieStore.get(WELCOME_HINT_COOKIE)?.value === '1';
 
   if (subjects.length === 0) {
     return <EmptyOnboarding />;
@@ -28,7 +32,7 @@ export default async function HomePage({
   return (
     <div className="flex flex-col gap-6 py-2">
       <div className="flex flex-col gap-3">
-        <WelcomeHint />
+        {!hintDismissed && <WelcomeHint />}
         <AddTopicDialog personaName={settings.persona_name} defaultOpen={add === '1'} />
         <TopicSearch />
       </div>

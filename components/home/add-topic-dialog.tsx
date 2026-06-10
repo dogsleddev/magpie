@@ -11,7 +11,7 @@ export default function AddTopicDialog({
   parentTopicId,
   personaName = 'Maggie',
   triggerClassName,
-  triggerLabel = 'Add topic',
+  triggerLabel = 'Add a curiosity',
   defaultOpen = false,
 }: {
   subjectId?: string;
@@ -88,13 +88,13 @@ export default function AddTopicDialog({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Add topic"
+            aria-label="Add a curiosity"
             className="w-full max-w-md rounded-2xl border border-border bg-bg-card p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-start justify-between">
               <div>
-                <h2 className="font-display text-lg font-medium text-text">Add topic</h2>
+                <h2 className="font-display text-lg font-medium text-text">Add a curiosity</h2>
                 <p className="text-xs italic text-text-dim">catch it before it&apos;s gone</p>
               </div>
               <button

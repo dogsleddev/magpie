@@ -84,20 +84,13 @@ export default function LandingPage() {
             <form action={demoLogin} style={{ display: 'contents' }}>
               <input type="hidden" name="openAdd" value="1" />
               <button type="submit" className="btn-secondary">
-                Add a Curiosity to the Community
+                Add a curiosity
               </button>
             </form>
           ) : (
             <a href="#how" className="btn-secondary">
               See how it works
             </a>
-          )}
-          {demoOpen && (
-            <form action={demoLogin} style={{ display: 'contents' }}>
-              <button type="submit" className="btn-secondary">
-                See the community topics
-              </button>
-            </form>
           )}
         </div>
         <p className="scrollcue">scroll to explore</p>
@@ -106,7 +99,9 @@ export default function LandingPage() {
       <section id="nest-showcase">
         <div className="wrap">
           <p className="eyebrow">The Nest</p>
-          <h2 className="section-title">See the community&apos;s curiosities as a living constellation.</h2>
+          <h2 className="section-title">
+            See the community&apos;s curiosities as a living constellation.
+          </h2>
           <p className="section-lede">
             Every dot is a real curiosity someone wanted to talk through, every thread a connection
             between them. Add yours and watch the nest grow.
@@ -120,6 +115,7 @@ export default function LandingPage() {
       <section className="nest-cta-band">
         <div className="wrap">
           <p className="nest-count">150+ curiosities across 15 subjects, and growing.</p>
+          <WaitlistForm />
         </div>
       </section>
 
@@ -194,8 +190,8 @@ export default function LandingPage() {
               </div>
               <h3>Maggie</h3>
               <p>
-                Talk it through with Maggie. She opens with a question made for your topic and
-                riffs back with takes of her own.
+                Talk it through with Maggie. She opens with a question made for your topic and riffs
+                back with takes of her own.
               </p>
             </div>
             <div className="mode-card blue">
@@ -347,20 +343,6 @@ export default function LandingPage() {
 
           <div className="why-grid">
             <div className="why-card">
-              <h3>Voice-first capture</h3>
-              <p>
-                Speak your thoughts and bullets appear. The friction between thought and capture
-                goes to zero.
-              </p>
-            </div>
-            <div className="why-card">
-              <h3>Maggie remembers</h3>
-              <p>
-                Every topic keeps its conversation. Walk away mid-thought, come back days later,
-                and Maggie picks it up right where you left off.
-              </p>
-            </div>
-            <div className="why-card">
               <h3>Pull, never push</h3>
               <p>
                 No notifications. No alerts. Magpie shows up when you do. The shiny things wait for
@@ -372,13 +354,6 @@ export default function LandingPage() {
               <p>
                 What you collect is yours. The connections Maggie surfaces serve you, not
                 advertisers. Period.
-              </p>
-            </div>
-            <div className="why-card">
-              <h3>Built for conversation</h3>
-              <p>
-                Every feature is designed to make you sharper in real conversation. Not just
-                better-informed. Better company.
               </p>
             </div>
             <div className="why-card">
