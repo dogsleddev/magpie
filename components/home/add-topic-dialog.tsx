@@ -8,13 +8,17 @@ import { addTopicViaMagpie } from '@/lib/actions/topics';
 
 export default function AddTopicDialog({
   subjectId,
+  parentTopicId,
   personaName = 'Maggie',
   triggerClassName,
+  triggerLabel = 'Add topic',
   defaultOpen = false,
 }: {
   subjectId?: string;
+  parentTopicId?: string;
   personaName?: string;
   triggerClassName?: string;
+  triggerLabel?: string;
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -49,7 +53,10 @@ export default function AddTopicDialog({
     setError(null);
     startTransition(async () => {
       try {
-        const result = await addTopicViaMagpie(value, subjectId ? { subjectId } : undefined);
+        const result = await addTopicViaMagpie(
+          value,
+          subjectId ? { subjectId, parentTopicId } : undefined,
+        );
         setOpen(false);
         setIdea('');
         router.push(`/topic/${result.topicId}`);
@@ -70,7 +77,7 @@ export default function AddTopicDialog({
         onClick={() => setOpen(true)}
       >
         <Plus className="h-4 w-4" strokeWidth={2.5} />
-        Add topic
+        {triggerLabel}
       </Button>
 
       {open && (
@@ -101,8 +108,9 @@ export default function AddTopicDialog({
             </div>
 
             <p className="mb-2 text-sm text-text-muted">
-              tell {personaName.toLowerCase()} an idea. it files it under the right subject and tags
-              it.
+              {parentTopicId
+                ? `tell ${personaName.toLowerCase()} an idea. it adds it to this collection and tags it.`
+                : `tell ${personaName.toLowerCase()} an idea. it files it under the right subject and tags it.`}
             </p>
 
             <textarea

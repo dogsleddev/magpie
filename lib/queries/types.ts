@@ -20,6 +20,7 @@ export type TopicFull = Topic & {
   subject: Subject;
   facets: Facet[];
   thoughts: Thought[];
+  parent: Pick<Topic, 'id' | 'title'> | null;
 };
 export type TopicWithThoughts = Topic & { thoughts: Thought[] };
 

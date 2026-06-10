@@ -139,18 +139,43 @@ export async function getTopic(id: string): Promise<TopicFull | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('topics')
-    .select('*, subject:subjects(*), topic_facets(facets(*)), thoughts(*)')
+    .select(
+      '*, subject:subjects(*), parent:parent_topic_id(id, title), topic_facets(facets(*)), thoughts(*)',
+    )
     .eq('id', id)
-    .maybeSingle<TopicWithSubjectFacetEmbed & { thoughts: Thought[] }>();
+    .maybeSingle<
+      TopicWithSubjectFacetEmbed & {
+        thoughts: Thought[];
+        parent: Pick<Topic, 'id' | 'title'> | null;
+      }
+    >();
   if (error) throw error;
   if (!data) return null;
-  const { topic_facets, subject, thoughts, ...topic } = data;
+  const { topic_facets, subject, thoughts, parent, ...topic } = data;
   return {
     ...topic,
     subject: subject as Subject,
+    parent,
     facets: flattenFacets(topic_facets),
     thoughts: (thoughts ?? []).slice().sort((a, b) => a.position - b.position),
   };
+}
+
+/** Sub-topics of a group, in the same shape and order as a subject's topic list. */
+export async function getChildTopics(parentTopicId: string): Promise<TopicWithFacets[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('topics')
+    .select('*, topic_facets(facets(*))')
+    .eq('parent_topic_id', parentTopicId)
+    .order('position', { ascending: true })
+    .order('created_at', { ascending: true })
+    .returns<TopicWithFacetEmbed[]>();
+  if (error) throw error;
+  return (data ?? []).map(({ topic_facets, ...topic }) => ({
+    ...topic,
+    facets: flattenFacets(topic_facets),
+  }));
 }
 
 export async function createTopic(input: CreateTopicInput): Promise<Topic> {

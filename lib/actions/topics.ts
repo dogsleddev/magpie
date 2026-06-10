@@ -192,11 +192,12 @@ export type AddTopicResult = {
  * "Talk to Magpie to add a topic." Sends the idea through Claude to pick a
  * subject and facets, then creates the topic. Falls back to a raw create if
  * the model is unavailable. "High Agency" is forced for a reliable demo.
- * Pass a subjectId to pin the topic to a known subject (subject-page add).
+ * Pass a subjectId to pin the topic to a known subject (subject-page add), and
+ * a parentTopicId to file it as a sub-topic inside a group (group-page add).
  */
 export async function addTopicViaMagpie(
   idea: string,
-  options?: { subjectId?: string },
+  options?: { subjectId?: string; parentTopicId?: string },
 ): Promise<AddTopicResult> {
   const { id: userId } = await requireUser();
   const trimmed = idea.trim();
@@ -206,7 +207,12 @@ export async function addTopicViaMagpie(
 
   let subjectId = options?.subjectId ?? (await resolveSubjectId(plan.subject));
   const facetIds = await resolveFacetIds(plan.facets);
-  const topic = await createTopic({ title: plan.title, subjectId, facetIds });
+  const topic = await createTopic({
+    title: plan.title,
+    subjectId,
+    facetIds,
+    parentTopicId: options?.parentTopicId ?? null,
+  });
 
   // Seed the first Thought with exactly what the user typed.
   try {
@@ -231,6 +237,7 @@ export async function addTopicViaMagpie(
   revalidatePath('/facets');
   revalidatePath('/nest');
   revalidatePath(`/subject/${subjectId}`);
+  if (options?.parentTopicId) revalidatePath(`/topic/${options.parentTopicId}`);
   return { topicId: topic.id, title: topic.title, subjectId, subjectName, facets: plan.facets };
 }
 

@@ -12,9 +12,11 @@ import { deleteTopicById } from '@/lib/actions/topics';
 export default function DeleteTopic({
   topicId,
   subjectId,
+  isGroup = false,
 }: {
   topicId: string;
   subjectId: string;
+  isGroup?: boolean;
 }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
@@ -41,14 +43,14 @@ export default function DeleteTopic({
         onClick={() => setConfirming(true)}
         className="text-[11px] text-text-dim/50 transition-colors hover:text-danger"
       >
-        {error ? "couldn't delete, try again" : 'delete topic'}
+        {error ? "couldn't delete, try again" : isGroup ? 'delete collection' : 'delete topic'}
       </button>
     );
   }
 
   return (
     <span className="inline-flex items-center gap-2.5 text-[11px] text-text-dim">
-      delete this topic?
+      {isGroup ? 'delete this collection and every sub-topic in it?' : 'delete this topic?'}
       <button
         type="button"
         onClick={remove}
