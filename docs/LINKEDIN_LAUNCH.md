@@ -2,12 +2,19 @@
 
 Drafted 2026-06-05 (session 10). The announcement for the Krava x Linq hackathon win plus the magpie.wiki waitlist.
 
-## Status: ready to post once two things are filled in
+## Status: one thing remaining
 
-1. **The people to tag** (Krava folks, Linq folks, the judges) with their LinkedIn @handles, plus the Krava and Linq company pages.
-2. **The constellation image.** There is no pre-made file. Capture it from the live `/nest` (a 6 to 10 second screen-recording beats a still for LinkedIn). Optionally also save a 1200x630 still as `public/brand/og-nest.png` for the link-preview card (the og + twitter metadata is already wired to that path; the file is missing).
+1. **The people to tag.** @handles for the Krava contacts, Linq contacts, and the judges. That is the only blocker.
 
-**Format that travels on LinkedIn:** upload native constellation media directly to the post, put the magpie.wiki link in the **first comment** (LinkedIn throttles in-body links), and make the first two lines hook before the "see more" cut.
+**Everything else is done:**
+- `public/brand/og-nest.png` EXISTS on prod (generated session 12, 1200x630 constellation, plumage palette). Link-preview cards now have an image.
+- **Screenshots captured live from magpie.wiki (session 12):**
+  - **Nest constellation (clean, controls hidden):** full colored cluster view, all subjects labelled. **Lead image for the post.** Also a strong carousel slide 1.
+  - **Topic page with Maggie's opener:** "Can a model have intuition, or just very fast pattern matching?" + Maggie: "what made you start wondering about where the line is between those two?" Shows the product actually working. Best as carousel slide 2.
+  - **App grid:** subjects list (History 9, Books 20, AI & Tech 18...). Secondary. Skip as a standalone.
+  - **Landing page hero:** magpie mark + wordmark + tagline. Good for brand context.
+
+**Recommended format:** upload the **Nest constellation** as the native image (or a 6-10s screen-recording of it drifting - video gets more reach). Carousel: constellation first, topic-with-Maggie second. Put magpie.wiki in the **first comment** (LinkedIn throttles in-body links). The first two lines must hook before the "see more" cut.
 
 ## The draft
 
