@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { RotateCcw, X } from 'lucide-react';
 import { buildNestGraph, subjectColor } from '@/lib/nest/build-graph';
 import type { NestFacetMode, NestSource } from '@/lib/nest/types';
 import NestCanvas, { type NestTapInfo } from './nest-canvas';
+import NestTopicCard from './nest-topic-card';
 import BottomTabBar from '@/components/nav/bottom-tab-bar';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +34,6 @@ export default function NestDesktopView({
   initial: Initial;
   onClose: () => void;
 }) {
-  const router = useRouter();
   const [facetMode, setFacetMode] = useState<NestFacetMode>(initial.facetMode);
   const [resonance, setResonance] = useState(initial.resonance);
   const [labels, setLabels] = useState(initial.labels);
@@ -263,51 +262,19 @@ export default function NestDesktopView({
         )}
       </div>
 
-      {/* node detail popover, near the tap point */}
+      {/* node detail card, near the tap point */}
       {tappedTopic && tapped && (
-        <div
-          className="absolute z-20 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border-strong bg-bg-card-2/95 p-4 shadow-2xl backdrop-blur"
+        <NestTopicCard
+          topic={tappedTopic}
+          subjectName={subjectName.get(tappedTopic.subjectId)}
+          facetName={(id) => facetName.get(id)}
+          onClose={() => setTapped(null)}
+          className="absolute z-20 w-72 max-w-[calc(100vw-2rem)]"
           style={{
             left: Math.max(12, Math.min(tapped.x + 16, vw - 300)),
             top: Math.max(12, Math.min(tapped.y + 12, vh - 300)),
           }}
-        >
-          <button
-            type="button"
-            onClick={() => setTapped(null)}
-            className="absolute right-3 top-3 text-text-dim hover:text-text"
-            aria-label="Close"
-          >
-            ×
-          </button>
-          <p className="mb-1 text-[11px] uppercase tracking-wide text-text-dim">
-            {tappedTopic.parentId ? 'Sub-topic' : tappedTopic.isGroup ? 'Topic group' : 'Topic'}
-            {' · '}
-            {subjectName.get(tappedTopic.subjectId)}
-          </p>
-          <h3 className="mb-3 pr-6 font-display text-lg font-medium leading-tight text-text">
-            {tappedTopic.title}
-          </h3>
-          {tappedTopic.facetIds.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-1.5">
-              {tappedTopic.facetIds.map((fid) => (
-                <span
-                  key={fid}
-                  className="rounded-full bg-bg-card px-2 py-0.5 text-[10.5px] text-text-muted"
-                >
-                  {facetName.get(fid)}
-                </span>
-              ))}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => router.push(`/topic/${tappedTopic.id}`)}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal hover:underline"
-          >
-            Open topic →
-          </button>
-        </div>
+        />
       )}
 
       {/* hint, parked above the tab bar */}

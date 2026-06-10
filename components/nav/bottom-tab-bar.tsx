@@ -1,5 +1,6 @@
 'use client';
 
+import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutGrid, Tags, Shuffle, Waypoints } from 'lucide-react';
@@ -10,13 +11,14 @@ type Tab = {
   key: 'grid' | 'facets' | 'nest' | 'rediscover';
   label: string;
   icon: typeof LayoutGrid;
+  href?: Route;
 };
 
 // Grid, Facets, and Nest route. Rediscover spins to a random topic (server action).
 const TABS: Tab[] = [
-  { key: 'grid', label: 'Grid', icon: LayoutGrid },
-  { key: 'facets', label: 'Facets', icon: Tags },
-  { key: 'nest', label: 'Nest', icon: Waypoints },
+  { key: 'grid', label: 'Grid', icon: LayoutGrid, href: '/app' },
+  { key: 'facets', label: 'Facets', icon: Tags, href: '/facets' },
+  { key: 'nest', label: 'Nest', icon: Waypoints, href: '/nest' },
   { key: 'rediscover', label: 'Rediscover', icon: Shuffle },
 ];
 
@@ -54,25 +56,9 @@ export default function BottomTabBar({ variant = 'app' }: { variant?: 'app' | 'o
           </span>
         );
 
-        if (tab.key === 'grid') {
+        if (tab.href) {
           return (
-            <Link key={tab.key} href="/app" className="flex flex-1">
-              {inner}
-            </Link>
-          );
-        }
-
-        if (tab.key === 'facets') {
-          return (
-            <Link key={tab.key} href="/facets" className="flex flex-1">
-              {inner}
-            </Link>
-          );
-        }
-
-        if (tab.key === 'nest') {
-          return (
-            <Link key={tab.key} href="/nest" className="flex flex-1">
+            <Link key={tab.key} href={tab.href} className="flex flex-1">
               {inner}
             </Link>
           );
