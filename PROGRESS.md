@@ -1,6 +1,6 @@
 # Magpie · Progress
 
-**Last updated:** 2026-06-10 (session 13: landing copy round 2 + Share-the-nest section, Nest overlay bottom nav, UI sweep, cleanup pass, OneDrive incident, **repo moved to `C:\dev\magpie`**)
+**Last updated:** 2026-06-10 (session 13 + polish: landing round 2, Nest overlay nav, UI sweep, repo moved to `C:\dev\magpie`; LinkedIn screenshots captured, add-dialog examples expanded, iOS voice hint updated to "coming soon")
 **Status:** **LIVE at https://magpie.wiki** with the Nest mind map, entity groups with a real drilldown UI, the umbrella auto-group feature on Add Topic, the post-UX-review landing, and a working LinkedIn link-preview card. Won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**. Nest detail: **`docs/NEST.md`**.
 **Branch:** `master` (Vercel auto-deploys the latest `master` to magpie.wiki).
 **Repo checkout:** **`C:\dev\magpie`** since session 13. Do not work from the old OneDrive path (`OneDrive\02_Projects\Magpie\code`); it is being archived. GitHub is the sync between machines; push WIP branches for unfinished work (master deploys).
@@ -15,7 +15,7 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 
 **Immediate launch tasks:**
 
-- **Post the LinkedIn announcement.** Draft + reviewer prompt in `docs/LINKEDIN_LAUNCH.md`. The og image is DONE and serving on prod, so the link card works. Still needs: the **people to tag** (@handles for Krava, Linq, the judges). A 6-to-10s screen-recording of the Nest beats a still in the post body; put the magpie.wiki link in the first comment, LinkedIn throttles in-body links.
+- **Post the LinkedIn announcement.** Draft in `docs/LINKEDIN_LAUNCH.md`. og image DONE, screenshots captured (Nest constellation = lead image, topic-with-Maggie = slide 2). @handles get added directly in the post at publish time. 6-to-10s screen-recording of the Nest beats a still; put magpie.wiki link in the first comment (LinkedIn throttles in-body links).
 - **Test on Chris's iPhone:** the keyboard-dictation mic hint (`components/mic/is-ios.ts`) AND the new mobile Nest default (full-bleed view, collapsed panel, exit button). Both live, neither verified on-device.
 - **Curate the duplicate community topics.** Confirmed pair: "How did the reintroduction of wolves change Yellowstone's entire ecosystem?" and "Why wolves changed the path of rivers in Yellowstone" (both Wildlife). Audit all titles, propose a merge list to Chris BEFORE deleting (topics carry thoughts/conversations/facets; deletes cascade). Pattern reference: `scripts/group-backfill.mjs`.
 - **Finish the machine migration.** The dogPC needs the same setup: `git clone https://github.com/dogsleddev/magpie.git C:\dev\magpie` + copy `.env.local`. Archive the OneDrive copy on this machine once no session is open in it: `Rename-Item 'C:\Users\dough\OneDrive\02_Projects\Magpie\code' code-archive`.
