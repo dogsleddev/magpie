@@ -1,6 +1,6 @@
 # Magpie · Handoff to a New Session
 
-_Updated 2026-06-09 (session 12). Groups are a real drilldown in the UI. The Nest opens full-bleed on every viewport, phones included. Full UX review done and the launch polish shipped (two hero CTAs, mid-page waitlist, trust trio). `og-nest.png` exists, so the LinkedIn post is unblocked except for the people to tag. Read top to bottom before doing anything._
+_Updated 2026-06-10 (session 13). **The repo lives at `C:\dev\magpie` now** (OneDrive corrupted `.git` mid-session and rolled master back a commit, recovered from origin; GitHub syncs the machines, WIP branches carry unfinished work). Landing got copy round 2 (Share-the-nest section, Glints explained via Rediscover, "interesting" sweep), the full-bleed Nest has the bottom tab bar, and a UI sweep + cleanup pass shipped. The LinkedIn post still needs only the people to tag. Read top to bottom before doing anything._
 
 ---
 
@@ -92,7 +92,7 @@ Full detail in `docs/BRD.md`. Sequence and headline items:
 - Next.js 15 (App Router, TS strict), Supabase (Postgres + RLS), Anthropic (Sonnet 4.5 `claude-sonnet-4-5-20250929`, Haiku 4.5 `claude-haiku-4-5-20251001`), **Krava** (`@kravalabs/api-client`, TEE wrap, fallback-gated on `KRAVA_APP_KEY`), **Linq** (iMessage), Vercel, Tailwind.
 - `lib/queries/` is the single source of truth (UI + AI + webhook share it).
 - **Connectors:** `vercel-chris` (Vercel MCP) is connected to the `dogsled` team and used to drive/verify deploys. `.mcp.json` is gitignored. `gh-chris` did not connect; use plain `git`.
-- **Repo:** `github.com/dogsleddev/magpie` (public). Push to `master` auto-deploys to magpie.wiki.
+- **Repo:** `github.com/dogsleddev/magpie` (public). Push to `master` auto-deploys to magpie.wiki. **Local checkout: `C:\dev\magpie`** (moved out of OneDrive in session 13; never work from the old OneDrive path). Unfinished work travels between machines on WIP branches, not file sync.
 
 ---
 

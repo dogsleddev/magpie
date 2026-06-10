@@ -1,8 +1,9 @@
 # Magpie · Progress
 
-**Last updated:** 2026-06-09 (session 12: group drilldown UI, Nest full-bleed on mobile, full UX review, launch polish, og-nest.png shipped)
+**Last updated:** 2026-06-10 (session 13: landing copy round 2 + Share-the-nest section, Nest overlay bottom nav, UI sweep, cleanup pass, OneDrive incident, **repo moved to `C:\dev\magpie`**)
 **Status:** **LIVE at https://magpie.wiki** with the Nest mind map, entity groups with a real drilldown UI, the umbrella auto-group feature on Add Topic, the post-UX-review landing, and a working LinkedIn link-preview card. Won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**. Nest detail: **`docs/NEST.md`**.
 **Branch:** `master` (Vercel auto-deploys the latest `master` to magpie.wiki).
+**Repo checkout:** **`C:\dev\magpie`** since session 13. Do not work from the old OneDrive path (`OneDrive\02_Projects\Magpie\code`); it is being archived. GitHub is the sync between machines; push WIP branches for unfinished work (master deploys).
 
 This is the living build log. For direction read `docs/BRD.md`; for "what Magpie is," `CLAUDE.md`.
 
@@ -10,23 +11,24 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 
 ## START HERE next session
 
-**Session 12 shipped:** the group drilldown UI (Red Rising behaves like a folder now), the Nest opening full-bleed on every viewport, a full UX review of every screen, the launch polish that came out of it, and the missing `og-nest.png`. All on `master`, all verified in prod. Read **`CLAUDE.md` (Current status)**, then this block.
+**Session 13 shipped:** landing copy round 2 (Share-the-nest section under the constellation, Glints finally explained and tied to Rediscover, the community/shiny sweep, "Notes that come back to you."), the bottom tab bar inside the full-bleed Nest, a pre-public UI sweep, a behavior-preserving cleanup pass, and **the repo moved out of OneDrive to `C:\dev\magpie`** after a sync incident corrupted `.git` mid-session (rolled master back a commit; fully recovered from origin). All on `master`, deployed. Read **`CLAUDE.md` (Current status)**, then this block.
 
 **Immediate launch tasks:**
 
 - **Post the LinkedIn announcement.** Draft + reviewer prompt in `docs/LINKEDIN_LAUNCH.md`. The og image is DONE and serving on prod, so the link card works. Still needs: the **people to tag** (@handles for Krava, Linq, the judges). A 6-to-10s screen-recording of the Nest beats a still in the post body; put the magpie.wiki link in the first comment, LinkedIn throttles in-body links.
 - **Test on Chris's iPhone:** the keyboard-dictation mic hint (`components/mic/is-ios.ts`) AND the new mobile Nest default (full-bleed view, collapsed panel, exit button). Both live, neither verified on-device.
 - **Curate the duplicate community topics.** Confirmed pair: "How did the reintroduction of wolves change Yellowstone's entire ecosystem?" and "Why wolves changed the path of rivers in Yellowstone" (both Wildlife). Audit all titles, propose a merge list to Chris BEFORE deleting (topics carry thoughts/conversations/facets; deletes cascade). Pattern reference: `scripts/group-backfill.mjs`.
+- **Finish the machine migration.** The dogPC needs the same setup: `git clone https://github.com/dogsleddev/magpie.git C:\dev\magpie` + copy `.env.local`. Archive the OneDrive copy on this machine once no session is open in it: `Rename-Item 'C:\Users\dough\OneDrive\02_Projects\Magpie\code' code-archive`.
 
 **Privacy (do not overclaim).** Krava is **Level-1 only**: inference TEE routing, app-key based. Stored data is **plaintext Supabase**, identity-decoupling skipped, falls back to Anthropic on any error, prod routing unverified. Privacy stays off the site; the post frames it as hackathon theme only.
 
 **Umbrella check (shipped, not yet verified on prod).** Every Add Topic now runs `applyUmbrella()` in `lib/actions/topics.ts`. Test: log into the community account, add a new Seahawks-adjacent topic, confirm it lands under the Seattle Seahawks group parent. The check is conservative (never creates a group of one) and failures never block the add. **Session 12 guard:** an add made from a group page (explicit `parentTopicId`) skips the umbrella entirely; the user's placement wins.
 
-**Carryover QC backlog (none blocking):** cache the Convo opener server-side; reconcile the `default_mode` enum (`mode-tabs.tsx` vs `0001_init.sql`); Nest node-popover does not re-clamp on resize (`nest-desktop-view.tsx`); decide if the opener persists; remove the dev backfill routes (`/api/dev/backfill-*`). The "Yours to keep" card promises **export is coming** (not built), so build or soften.
+**Carryover QC backlog (none blocking):** cache the Convo opener server-side; reconcile the `default_mode` enum (`mode-tabs.tsx` vs `0001_init.sql`); Nest node-popover does not re-clamp on resize (`nest-desktop-view.tsx`); decide if the opener persists; remove the dev backfill routes (`/api/dev/backfill-*`); dedupe the get-last-position+1 pattern (5 sites: `lib/queries/topics.ts` x3, `subjects.ts`, `thoughts.ts`; deferred from the session-13 cleanup as a launch-day data-spine risk). The "Yours to keep" card promises **export is coming** (not built), so build or soften.
 
 **Bigger product backlog (`docs/BRD.md`):** individual accounts + community mode, new-user onboarding, custom tone/personality + guardrails, the real Linq inbound loop, the iPhone app.
 **Security (deferred):** repo is public; migrate the Supabase `service_role` value to an `sb_secret_` key before end of 2026.
-**Get in:** magpie.wiki one-click **"Enter Magpie"** community login. Localhost: `npm run dev` (clear `.next` first; OneDrive corrupts stale `.next`).
+**Get in:** magpie.wiki one-click **"Enter Magpie"** community login. Localhost: `npm run dev` from **`C:\dev\magpie`** (clearing `.next` before build/dev stays a good habit).
 
 ---
 
@@ -44,6 +46,22 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 | Krava                   | Wrapped in `lib/ai/client.ts`, falls back to Anthropic on any error. Local probe confirmed it works; **prod routing unverified.**                                                                                                                                              |
 | Linq                    | Tier 0 webhook live (`/api/linq/webhook`, HMAC). Sandbox is outbound-only, so the **inbound loop is not real**; the demo used a staged thread. `0002_hackathon.sql` applied; phone linked.                                                                                     |
 | Demo pages              | `/krava` (deck embed + download), `/linq` (iMessage screenshot)                                                                                                                                                                                                                |
+
+---
+
+## Session 13 (2026-06-10): landing round 2, Nest overlay nav, UI sweep, cleanup, OneDrive incident + repo migration
+
+**Landing copy round 2 (`2ef681d`, live).** The Nest section title went personal ("See your nest of curiosities and topics as a living constellation."), the hero/metadata/why-lede say **interesting** (the word "shiny" now lives only where the metaphor explains itself: the new Glints definition line and the Pull-never-push card), the 02 Topic example is "Why do crows give gifts to the people who feed them?", the why headline is **"Notes that come back to you."**, and a new **Share the nest** section ("Build a nest together.", group accounts teased) sits directly under the constellation, feeding the count band + waitlist. The Glints row now defines the word ("A glint is light catching something shiny you already collected") and anchors it to Rediscover being live today. `docs/MESSAGING.md` hero sub updated with a dated note. Page-level "community" survives in exactly two intentional spots: the hero CTA and the Share section.
+
+**Nest overlay bottom nav (`2ef681d`, live).** The full-bleed view renders `BottomTabBar` as a floating pill (`variant="overlay"`): Grid / Facets / Nest / Rediscover. The hint re-parked above it, the control panel max-height tightened to clear it, the node-card clamp raised. Verified live: navigating out releases the scroll lock, Rediscover spins from inside the overlay.
+
+**UI sweep before going public (`e0baa3f`, live).** A static reviewer agent + a live pass at 375px and desktop. Fixes: the landing wraps in a `main` landmark, `.nest-cta-band` got real top padding (the 4px top was from when it hugged the visual), the login sub says interesting (kept the intentional "shared wiki ... we" framing). Everything else passed: heading order, form a11y, responsive breakpoints, banned-words.
+
+**Cleanup pass (`e6a830a`, live).** Two scanner agents (lib/ and app/+components/) + verification of every claim. Applied: the tab bar's three copy-pasted Link branches collapsed onto a typed `href?: Route` field; the node-detail card duplicated across both Nest views extracted to `components/nest/nest-topic-card.tsx` (verified live by synthetic-tapping nodes in both views; test gotcha: the canvas handlers call `setPointerCapture`, which throws on synthetic pointers, so patch it in page evals). Deferred to backlog: the get-last-position+1 dedup (data spine, launch day). Kept intentionally: the Draw Out prompt scaffolds, `clearCached` (`docs/SOP.md` documents the spine), Maggie named in landing marketing copy.
+
+**OneDrive incident + repo migration.** Mid-session OneDrive dehydrated 9 source files and 25 `.git` files to cloud-only placeholders and refused rehydration ("cloud sync provider failed to validate"), which broke `tsc` and git, spawned `-DESKTOP-PCQJULQ` conflict copies, and **silently rolled `master` back one commit** (`c959202` vanished; the object survived and origin still had it, restored with `git update-ref`; all 11 conflict copies hash-verified redundant and deleted). Recovery: rewrite open edits from session context, restart OneDrive.exe, hydrate via ReadAllBytes, pin with `attrib +P`. **Decision: the repo moved to `C:\dev\magpie`** (fresh clone, `.env.local` + `.claude` local files copied, deps installed, type-check green). GitHub is now the machine-to-machine sync; unfinished work travels on WIP branches because master auto-deploys. The dogPC still needs its clone; the OneDrive copy gets archived.
+
+**Commits:** `2ef681d` (landing round 2 + overlay nav), `e0baa3f` (UI sweep), `e6a830a` (cleanup).
 
 ---
 
