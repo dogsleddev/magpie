@@ -32,7 +32,8 @@ export default async function LoginPage({
           Collect curiosities. Talk them through.
         </h1>
         <p className="mt-3 text-center text-sm leading-relaxed text-text-muted">
-          A shared wiki for the things we find shiny, with a conversation partner who remembers.
+          A shared wiki for the things we find interesting, with a conversation partner who
+          remembers.
         </p>
         <form action={demoLogin} className="mt-8">
           <Button type="submit" variant="primary" size="lg" className="w-full">

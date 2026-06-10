@@ -39,7 +39,7 @@ export default function LandingPage() {
   const demoOpen = process.env.DEMO_OPEN !== 'false';
 
   return (
-    <div className="magpie-landing">
+    <main className="magpie-landing">
       <nav className="topnav">
         <div className="navwrap">
           <a href="#top" className="navlogo">
@@ -441,6 +441,6 @@ export default function LandingPage() {
           </span>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }
