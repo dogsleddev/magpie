@@ -221,12 +221,15 @@ export async function addTopicViaMagpie(
     console.error('[addTopic] failed to seed first thought:', e);
   }
 
-  // The umbrella check. A grouping failure never breaks the add.
-  try {
-    const grouped = await applyUmbrella(plan.group, topic.id, topic.title, subjectId);
-    if (grouped) subjectId = grouped.parentSubjectId;
-  } catch (e) {
-    console.error('[addTopic] umbrella grouping failed:', e);
+  // The umbrella check. A grouping failure never breaks the add. Skipped when
+  // the user filed the topic into a group explicitly: that placement wins.
+  if (!options?.parentTopicId) {
+    try {
+      const grouped = await applyUmbrella(plan.group, topic.id, topic.title, subjectId);
+      if (grouped) subjectId = grouped.parentSubjectId;
+    } catch (e) {
+      console.error('[addTopic] umbrella grouping failed:', e);
+    }
   }
 
   const subjects = await getSubjectsWithCounts();
