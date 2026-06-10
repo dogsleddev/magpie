@@ -8,11 +8,11 @@ import './landing.css';
 export const metadata = {
   title: { absolute: 'Magpie · Collect curiosities. Talk them through.' },
   description:
-    'A personal wiki for the things you find shiny, with a conversation partner who remembers. Collect curiosities and talk them through.',
+    'A personal wiki for the things you find interesting, with a conversation partner who remembers. Collect curiosities and talk them through.',
   openGraph: {
     title: 'Magpie · Collect curiosities. Talk them through.',
     description:
-      'See the community of curiosities as a living constellation. A personal wiki for the things you find shiny, with a conversation partner who remembers.',
+      'See your nest of curiosities and topics as a living constellation. A personal wiki for the things you find interesting, with a conversation partner who remembers.',
     url: 'https://magpie.wiki',
     siteName: 'Magpie',
     type: 'website',
@@ -28,7 +28,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Magpie · Collect curiosities. Talk them through.',
-    description: 'See the community of curiosities as a living constellation.',
+    description: 'See your nest of curiosities and topics as a living constellation.',
     images: ['/brand/og-nest.png'],
   },
 };
@@ -66,7 +66,8 @@ export default function LandingPage() {
         </h1>
         <p className="herotag">Collect curiosities. Talk them through.</p>
         <p className="herosub">
-          A personal wiki for the things you find shiny, with a conversation partner who remembers.
+          A personal wiki for the things you find interesting, with a conversation partner who
+          remembers.
         </p>
         <p className="heroline">
           Visualize connections in the <span className="accent">nest</span>.
@@ -100,7 +101,7 @@ export default function LandingPage() {
         <div className="wrap">
           <p className="eyebrow">The Nest</p>
           <h2 className="section-title">
-            See the community&apos;s curiosities as a living constellation.
+            See your nest of curiosities and topics as a living constellation.
           </h2>
           <p className="section-lede">
             Every dot is a real curiosity someone wanted to talk through, every thread a connection
@@ -109,6 +110,18 @@ export default function LandingPage() {
           <div className="nest-stage">
             <NestEmbed />
           </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="wrap">
+          <p className="eyebrow">Share the nest</p>
+          <h2 className="section-title">Build a nest together.</h2>
+          <p className="section-lede">
+            Curiosity is more fun with company. Group accounts are coming: share a nest with
+            friends, family, or your team, collect together, and watch one constellation grow from
+            everyone's ideas. The community nest above is what that looks like.
+          </p>
         </div>
       </section>
 
@@ -156,8 +169,8 @@ export default function LandingPage() {
               <div className="num">02</div>
               <h3>Topic</h3>
               <p>
-                A specific thread inside a subject. "Why every empire thinks it's the last one."
-                Capture bullets as they come.
+                A specific thread inside a subject. "Why do crows give gifts to the people who feed
+                them?" Capture bullets as they come.
               </p>
               <p className="step-detail">a conversation you'd want to have</p>
             </div>
@@ -261,15 +274,16 @@ export default function LandingPage() {
               <span className="soon">Coming soon</span>
               <h3>The connections you didn't notice.</h3>
               <p>
-                As your wiki grows, Maggie surfaces things you've already written about that connect
-                to whatever you're working on now.
+                A glint is light catching something shiny you already collected. As your wiki
+                grows, Maggie catches them for you: things you wrote months ago that connect to
+                whatever you're thinking about now.
               </p>
               <p>
                 Not "Recommended for you." Not a feed. <em>"You wrote about this when..."</em>
               </p>
               <p>
-                Pull, not push. They live on your home grid and inside topic pages. Tap one, jump
-                back in.
+                It starts with Rediscover, live in the app today: one tap spins you back to a
+                curiosity you'd forgotten. Glints make the trip back smart.
               </p>
             </div>
             <div className="feature-visual">
@@ -335,9 +349,9 @@ export default function LandingPage() {
       <section>
         <div className="wrap">
           <p className="eyebrow">Why Magpie</p>
-          <h2 className="section-title">A different kind of note app.</h2>
+          <h2 className="section-title">Notes that come back to you.</h2>
           <p className="section-lede">
-            No streaks. No engagement metrics. No feed. Just the things you find shiny, and a
+            No streaks. No engagement metrics. No feed. Just the things you find interesting, and a
             partner who helps you turn them into <em>something you can say out loud</em>.
           </p>
 

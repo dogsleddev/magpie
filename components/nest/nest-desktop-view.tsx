@@ -6,6 +6,7 @@ import { RotateCcw, X } from 'lucide-react';
 import { buildNestGraph, subjectColor } from '@/lib/nest/build-graph';
 import type { NestFacetMode, NestSource } from '@/lib/nest/types';
 import NestCanvas, { type NestTapInfo } from './nest-canvas';
+import BottomTabBar from '@/components/nav/bottom-tab-bar';
 import { cn } from '@/lib/utils';
 
 const TEAL = '#1D9E75';
@@ -161,7 +162,7 @@ export default function NestDesktopView({
       </button>
 
       {/* docked control panel */}
-      <div className="absolute left-4 top-16 z-10 max-h-[calc(100vh-5.5rem)] w-64 overflow-y-auto rounded-2xl border border-border bg-bg-card/85 p-3.5 text-[13px] shadow-2xl backdrop-blur">
+      <div className="absolute left-4 top-16 z-10 max-h-[calc(100vh-10rem)] w-64 overflow-y-auto rounded-2xl border border-border bg-bg-card/85 p-3.5 text-[13px] shadow-2xl backdrop-blur">
         <button
           type="button"
           onClick={() => setPanelOpen((v) => !v)}
@@ -268,7 +269,7 @@ export default function NestDesktopView({
           className="absolute z-20 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border-strong bg-bg-card-2/95 p-4 shadow-2xl backdrop-blur"
           style={{
             left: Math.max(12, Math.min(tapped.x + 16, vw - 300)),
-            top: Math.max(12, Math.min(tapped.y + 12, vh - 200)),
+            top: Math.max(12, Math.min(tapped.y + 12, vh - 300)),
           }}
         >
           <button
@@ -309,10 +310,12 @@ export default function NestDesktopView({
         </div>
       )}
 
-      {/* hint */}
-      <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-bg/50 px-3.5 py-1.5 text-center text-xs text-text-dim backdrop-blur">
+      {/* hint, parked above the tab bar */}
+      <p className="pointer-events-none absolute bottom-20 left-1/2 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full bg-bg/50 px-3.5 py-1.5 text-center text-xs text-text-dim backdrop-blur">
         drag to pan · pinch or scroll to zoom · tap a node · double-tap to focus
       </p>
+
+      <BottomTabBar variant="overlay" />
     </div>
   );
 }

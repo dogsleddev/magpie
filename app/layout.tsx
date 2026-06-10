@@ -19,7 +19,7 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: { default: 'Magpie', template: '%s · Magpie' },
   description:
-    'A personal wiki for the things you find shiny, with a conversation partner who remembers.',
+    'A personal wiki for the things you find interesting, with a conversation partner who remembers.',
   icons: { icon: '/favicon.png' },
   metadataBase: new URL('https://magpie.wiki'),
 };

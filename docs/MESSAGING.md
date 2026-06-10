@@ -18,11 +18,13 @@ Where it lives: magpie.wiki hero, logo lockup, in-app, footer, app icon splash. 
 Why it leads: the product is distinctive enough that a clarity headline does not actually clarify. Lean into mechanism plus invitation. The line is unmistakably Magpie. Fraunces italic accent on the period treatment.
 
 ### Hero sub (under the brand line)
-*A personal wiki for the things you find shiny, with a conversation partner who remembers.*
+*A personal wiki for the things you find interesting, with a conversation partner who remembers.*
 
 Where it lives: directly under the brand line on the landing hero. Does the explaining work so the hero can stay poetic.
 
-Why it works: names both halves of the product (wiki + conversation partner) and quietly carries the magpie metaphor ("shiny"). Honest about what makes Magpie different from a chatbot ("who remembers").
+Why it works: names both halves of the product (wiki + conversation partner). Honest about what makes Magpie different from a chatbot ("who remembers").
+
+Note (2026-06-10): the hero sub said "shiny" through launch prep. Swapped to "interesting" for cold-traffic comprehension; "shiny" now lives where the metaphor explains itself (the Glints definition line and the "Pull, never push" card on the landing). Root and og metadata mirror the hero sub.
 
 ### Second beat (the memorable line, screenshot-worthy)
 **What you collect comes out in conversation.**
@@ -74,7 +76,7 @@ Rotation across pages and posts is how you get mileage from the whole set withou
 | Surface | Use |
 |---|---|
 | Landing page hero | Collect curiosities. Talk them through. |
-| Landing page hero sub | A personal wiki for the things you find shiny, with a conversation partner who remembers. |
+| Landing page hero sub | A personal wiki for the things you find interesting, with a conversation partner who remembers. |
 | Landing page second beat | What you collect comes out in conversation. |
 | Manifesto or about page banner | Curiosity is charisma, slowed down. |
 | Pitch deck cover | Curiosity is charisma, slowed down. |

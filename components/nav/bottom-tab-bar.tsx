@@ -20,11 +20,21 @@ const TABS: Tab[] = [
   { key: 'rediscover', label: 'Rediscover', icon: Shuffle },
 ];
 
-export default function BottomTabBar() {
+// 'app' is the standard phone-frame bar. 'overlay' is a floating pill for the
+// full-bleed desktop Nest, matching its docked-panel styling.
+export default function BottomTabBar({ variant = 'app' }: { variant?: 'app' | 'overlay' }) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto flex w-full max-w-md items-stretch justify-around border-t border-border bg-bg/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+    <nav
+      className={cn(
+        'flex items-stretch justify-around',
+        variant === 'app' &&
+          'fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-md border-t border-border bg-bg/90 pb-[env(safe-area-inset-bottom)] backdrop-blur',
+        variant === 'overlay' &&
+          'fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-30 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-2xl border border-border bg-bg-card/85 shadow-2xl backdrop-blur',
+      )}
+    >
       {TABS.map((tab) => {
         const Icon = tab.icon;
         const active =
