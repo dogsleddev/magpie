@@ -587,7 +587,11 @@ export default function NestCanvas({
   }, [graph, ambient, interactive, repel, linkLen, subjectsOutside]);
 
   return (
-    <div ref={wrapRef} className={className} style={{ position: 'relative', touchAction: 'none' }}>
+    <div
+      ref={wrapRef}
+      className={className}
+      style={{ position: 'relative', touchAction: interactive ? 'none' : 'auto' }}
+    >
       <canvas
         ref={canvasRef}
         style={{

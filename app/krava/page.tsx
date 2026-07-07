@@ -1,4 +1,4 @@
-export const metadata = { title: 'Magpie · Krava × Linq' };
+export const metadata = { title: 'Magpie · Krava × Linq', robots: { index: false, follow: false } };
 
 const DECK_URL = 'https://www.magpie.wiki/krava/deck.pptx?v=2';
 const EMBED_URL = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(DECK_URL)}`;

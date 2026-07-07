@@ -6,8 +6,12 @@ import { createClient } from '@supabase/supabase-js';
 
 const url = 'https://tbmdwivhekzfkeidbwia.supabase.co';
 const anon = 'sb_publishable_Q35qD6LW7HYV0qvLt534Lg_D5hUilzr';
-const email = process.argv[2] || 'dogsled@dogsled.dev';
-const pw = process.argv[3] || 'dogsled';
+const email = process.argv[2];
+const pw = process.argv[3];
+if (!email || !pw) {
+  console.error('usage: node scripts/db/smoke-queries.mjs <email> <password>');
+  process.exit(1);
+}
 
 const supabase = createClient(url, anon);
 

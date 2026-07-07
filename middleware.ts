@@ -1,7 +1,26 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
+import { rateLimit } from '@/lib/rate-limit';
+
+// The AI routes call the paid Anthropic API and sit behind a one-click public
+// login, so throttle them by client IP before doing anything else. 30/min is far
+// above any real user's pace (a topic open fires a handful of calls) but stops a
+// script from looping reroll and running up spend.
+const AI_LIMIT = 30;
+const AI_WINDOW_MS = 60_000;
 
 export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith('/api/ai/')) {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { ok, retryAfter } = rateLimit(`ai:${ip}`, AI_LIMIT, AI_WINDOW_MS);
+    if (!ok) {
+      return NextResponse.json(
+        { error: 'Too many requests. Give it a moment.' },
+        { status: 429, headers: { 'Retry-After': String(retryAfter) } },
+      );
+    }
+  }
+
   try {
     return await updateSession(request);
   } catch {
