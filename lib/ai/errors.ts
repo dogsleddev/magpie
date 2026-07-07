@@ -9,7 +9,13 @@ export function aiErrorResponse(err: unknown): NextResponse {
   const message = String((err as { message?: string }).message ?? '');
 
   if (status === 401 || status === 403) {
-    return NextResponse.json({ error: 'Add your Anthropic key to .env.local.' }, { status: 422 });
+    // The .env.local hint is for the developer running locally; production
+    // visitors should never see internal setup instructions.
+    const error =
+      process.env.NODE_ENV === 'production'
+        ? 'Magpie could not answer right now. Try again.'
+        : 'Add your Anthropic key to .env.local.';
+    return NextResponse.json({ error }, { status: 422 });
   }
   if (/credit balance|billing|insufficient|quota/i.test(message)) {
     return NextResponse.json(
