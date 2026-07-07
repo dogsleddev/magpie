@@ -13,6 +13,8 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 
 **Session 15 shipped:** community topic curation, executed from a read-only audit: 5 duplicate pairs merged (the empty copy deleted, facets carried onto the keeper first, zero data loss), the Yellowstone keeper retitled to the punchier seed title, and the Seahawks + basketball topics refiled from Hobbies to Sports. 173 -> 168 topics, verified idempotent. Script: `scripts/merge-dupes.mjs` (dry-run default, `--write`). Session 14 (the Gemini meetup demo) remains staged and verified. Read **`CLAUDE.md` (Current status)**, then this block.
 
+**In flight at session 15 end (pick this up first):** an ultracode multi-agent **QC audit** of the whole codebase plus a fact-checked **user guide** were mid-run when the session closed. All state (banked verified findings, per-agent result journals, workflow scripts, and step-by-step harvest instructions) lives in Claude's project memory under `ultracode-qc-audit-in-flight`; the artifacts are machine-local on the desktop, deliberately NOT in this public repo. Deliverables when finished: a QC report (kept local until the findings are fixed) and `docs/USER_GUIDE.md` (committed).
+
 **Immediate launch tasks:**
 
 - **Gemini meetup:** everything is staged (QR in the landing `#gemini` section, `magpie.wiki/gemini` direct link, nest seeded). Add more items in-app as desired; the seed scripts are idempotent (`scripts/setup-gemini-account.mjs`, `scripts/seed-gemini-content.mjs`, dry-run default, `--write` to execute). After the event, delete the `id="gemini"` section in `app/page.tsx` plus the GEMINI MEETUP block in `app/landing.css`.
