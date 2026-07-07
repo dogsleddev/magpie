@@ -1,6 +1,6 @@
 # Magpie · Progress
 
-**Last updated:** 2026-07-07 (session 14: the Gemini meetup demo: `gemini@dogsled.dev` shared account, `magpie.wiki/gemini` QR direct link, landing section, meetup nest seeded with 6 topics x 3 ideas)
+**Last updated:** 2026-07-07 (session 15: community topic curation: 5 duplicate pairs merged with zero data loss, the Yellowstone keeper retitled, Seahawks + basketball refiled to Sports; 173 -> 168 topics)
 **Status:** **LIVE at https://magpie.wiki** with the Nest mind map, entity groups with a real drilldown UI, the umbrella auto-group feature on Add Topic, the post-UX-review landing, and a working LinkedIn link-preview card. Won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**. Nest detail: **`docs/NEST.md`**.
 **Branch:** `master` (Vercel auto-deploys the latest `master` to magpie.wiki).
 **Repo checkout:** **`C:\dev\magpie`** since session 13. Do not work from the old OneDrive path (`OneDrive\02_Projects\Magpie\code`); it is being archived. GitHub is the sync between machines; push WIP branches for unfinished work (master deploys).
@@ -11,14 +11,13 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 
 ## START HERE next session
 
-**Session 14 shipped:** the Gemini meetup demo, end to end: a second one-click shared account (`gemini@dogsled.dev`), the `magpie.wiki/gemini` QR direct link, a "Join the meetup nest." landing section with the QR, and the meetup nest seeded (6 topics under the "Gemini Meetup" group, 3 ideas each). All on `master`, deployed, verified in prod including a demo-login regression check. Read **`CLAUDE.md` (Current status)**, then this block.
+**Session 15 shipped:** community topic curation, executed from a read-only audit: 5 duplicate pairs merged (the empty copy deleted, facets carried onto the keeper first, zero data loss), the Yellowstone keeper retitled to the punchier seed title, and the Seahawks + basketball topics refiled from Hobbies to Sports. 173 -> 168 topics, verified idempotent. Script: `scripts/merge-dupes.mjs` (dry-run default, `--write`). Session 14 (the Gemini meetup demo) remains staged and verified. Read **`CLAUDE.md` (Current status)**, then this block.
 
 **Immediate launch tasks:**
 
 - **Gemini meetup:** everything is staged (QR in the landing `#gemini` section, `magpie.wiki/gemini` direct link, nest seeded). Add more items in-app as desired; the seed scripts are idempotent (`scripts/setup-gemini-account.mjs`, `scripts/seed-gemini-content.mjs`, dry-run default, `--write` to execute). After the event, delete the `id="gemini"` section in `app/page.tsx` plus the GEMINI MEETUP block in `app/landing.css`.
 - **Post the LinkedIn announcement.** Draft in `docs/LINKEDIN_LAUNCH.md`. og image DONE, screenshots captured (Nest constellation = lead image, topic-with-Maggie = slide 2). @handles get added directly in the post at publish time. 6-to-10s screen-recording of the Nest beats a still; put magpie.wiki link in the first comment (LinkedIn throttles in-body links).
 - **Test on Chris's iPhone:** the keyboard-dictation mic hint (`components/mic/is-ios.ts`) AND the new mobile Nest default (full-bleed view, collapsed panel, exit button). Both live, neither verified on-device.
-- **Curate the duplicate community topics.** Confirmed pair: "How did the reintroduction of wolves change Yellowstone's entire ecosystem?" and "Why wolves changed the path of rivers in Yellowstone" (both Wildlife). Audit all titles, propose a merge list to Chris BEFORE deleting (topics carry thoughts/conversations/facets; deletes cascade). Pattern reference: `scripts/group-backfill.mjs`.
 - **Finish the machine migration.** The dogPC needs the same setup: `git clone https://github.com/dogsleddev/magpie.git C:\dev\magpie` + copy `.env.local`. Archive the OneDrive copy on this machine once no session is open in it: `Rename-Item 'C:\Users\dough\OneDrive\02_Projects\Magpie\code' code-archive`.
 
 **Privacy (do not overclaim).** Krava is **Level-1 only**: inference TEE routing, app-key based. Stored data is **plaintext Supabase**, identity-decoupling skipped, falls back to Anthropic on any error, prod routing unverified. Privacy stays off the site; the post frames it as hackathon theme only.
@@ -47,6 +46,14 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 | Krava                   | Wrapped in `lib/ai/client.ts`, falls back to Anthropic on any error. Local probe confirmed it works; **prod routing unverified.**                                                                                                                                              |
 | Linq                    | Tier 0 webhook live (`/api/linq/webhook`, HMAC). Sandbox is outbound-only, so the **inbound loop is not real**; the demo used a staged thread. `0002_hackathon.sql` applied; phone linked.                                                                                     |
 | Demo pages              | `/krava` (deck embed + download), `/linq` (iMessage screenshot)                                                                                                                                                                                                                |
+
+---
+
+## Session 15 (2026-07-07): community topic curation (duplicate merges, retitle, refiles)
+
+**Audit (read-only).** Dumped all 173 community topics plus the data weight (thoughts, convos, ai_cache) per duplicate candidate via `scripts/topic-dump.mjs` and a throwaway counts probe. Five solid pairs, and in every one the loser was empty: "High Agency" x2 (exact title, Psychology & Behavior), the confirmed Yellowstone wolves pair (Wildlife), "How do new ideas emerge..." (Ideas vs Music, created 34 seconds apart), the two Claude-in-the-terminal topics (AI & Tech), and grasshopper vs apprentice (Philosophy, 2 minutes apart). **Kept intentionally, judged distinct, do not re-flag:** "The smarter the model, the harder it is to evaluate" vs "Models are getting smarter faster than we are getting smarter at testing them" (AI & Tech), and the two AI-generated-music topics (Music).
+
+**Merge script (`scripts/merge-dupes.mjs`, executed + verified 2026-07-07).** Idempotent, dry-run default, `--write` to execute, keyed by topic id since one pair shares an exact title. Per pair: refuses to delete a loser that has picked up thoughts or convos since the audit, carries missing facet links onto the keeper (the Ideas keeper gained `philosophy`), then deletes the empty copy (links + cache cascade via FK). The Yellowstone keeper (2 thoughts, 1 convo) was retitled to the seed title "Why wolves changed the path of rivers in Yellowstone". Refiled "What makes the Seattle Seahawks..." and "What makes basketball..." from Hobbies to Sports (positions appended). Verified: 168 topics / 15 subjects, a re-run is a full no-op, and the landing "150+ curiosities" count line is still true.
 
 ---
 
