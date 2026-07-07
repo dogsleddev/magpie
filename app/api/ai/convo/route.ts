@@ -42,6 +42,18 @@ export async function POST(request: Request) {
   while (history.length > 0 && history[history.length - 1]?.role === 'user') {
     history = history.slice(0, -1);
   }
+  // Window the model input to the most recent turns. On the shared account a
+  // popular topic's thread grows without bound, and once it exceeds the context
+  // window every send would 400 forever. The full thread is still stored and
+  // shown to the user; only what we send the model is capped.
+  const MAX_HISTORY = 30;
+  if (history.length > MAX_HISTORY) {
+    history = history.slice(-MAX_HISTORY);
+    // The API requires the first message to be a user turn, so drop a leading
+    // assistant turn left by the slice.
+    const firstUser = history.findIndex((m) => m.role === 'user');
+    history = firstUser === -1 ? [] : history.slice(firstUser);
+  }
   const messages: ConversationMessage[] = [...history, { role: 'user', content: userMessage }];
 
   const system = convoSystemPrompt({ id: topic.id, title: topic.title }, settings.persona_name);
