@@ -163,14 +163,46 @@
 .magpie-landing .heroline .accent {
   color: var(--teal);
 }
-.magpie-landing .herobtns {
+.magpie-landing .hero-cta {
   margin-top: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px 52px;
+  flex-wrap: wrap;
+}
+.magpie-landing .herobtns {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
   opacity: 0;
   animation: mp-rise 1s cubic-bezier(0.2, 0.7, 0.3, 1) 0.48s forwards;
+}
+.magpie-landing .gemini-cta {
+  border-color: rgba(29, 158, 117, 0.55);
+}
+.magpie-landing .gemini-cta:hover {
+  border-color: var(--teal);
+}
+.magpie-landing .hero-qr {
+  text-decoration: none;
+  opacity: 0;
+  animation: mp-rise 1s cubic-bezier(0.2, 0.7, 0.3, 1) 0.54s forwards;
+}
+.magpie-landing .hero-qr img {
+  width: min(232px, 62vw);
+  height: auto;
+  border-radius: 16px;
+  display: block;
+  margin: 0 auto;
+}
+.magpie-landing .hero-qr p {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
 }
 /* The hero CTAs read as a compact centered stack: see the nest, then add to it. */
 .magpie-landing .herobtns .btn-primary,

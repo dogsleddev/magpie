@@ -72,27 +72,36 @@ export default function LandingPage() {
         <p className="heroline">
           Visualize connections in the <span className="accent">nest</span>.
         </p>
-        <div className="herobtns">
-          {demoOpen && (
-            <form action={demoLogin} style={{ display: 'contents' }}>
-              <input type="hidden" name="goNest" value="1" />
-              <button type="submit" className="btn-primary">
-                See the community nest
-              </button>
-            </form>
-          )}
-          {demoOpen ? (
-            <form action={demoLogin} style={{ display: 'contents' }}>
-              <input type="hidden" name="openAdd" value="1" />
-              <button type="submit" className="btn-secondary">
-                Add a curiosity
-              </button>
-            </form>
-          ) : (
-            <a href="#how" className="btn-secondary">
-              See how it works
+        <div className="hero-cta">
+          <div className="herobtns">
+            {demoOpen && (
+              <form action={demoLogin} style={{ display: 'contents' }}>
+                <input type="hidden" name="goNest" value="1" />
+                <button type="submit" className="btn-primary">
+                  See the community nest
+                </button>
+              </form>
+            )}
+            <a href="/gemini" className="btn-secondary gemini-cta">
+              Enter the Gemini nest
             </a>
-          )}
+            {demoOpen ? (
+              <form action={demoLogin} style={{ display: 'contents' }}>
+                <input type="hidden" name="openAdd" value="1" />
+                <button type="submit" className="btn-secondary">
+                  Add a curiosity
+                </button>
+              </form>
+            ) : (
+              <a href="#how" className="btn-secondary">
+                See how it works
+              </a>
+            )}
+          </div>
+          <a href="/gemini" className="hero-qr" aria-label="Scan or tap to enter the Gemini meetup nest">
+            <img src="/brand/qr-gemini.svg" alt="QR code for magpie.wiki/gemini" />
+            <p>scan for the Gemini meetup nest</p>
+          </a>
         </div>
         <p className="scrollcue">scroll to explore</p>
       </header>
