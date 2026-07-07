@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unescaped-entities, @next/next/no-img-element */
 import { Mic, FileText, Zap, MessageCircleQuestion, MessageCircleMore } from 'lucide-react';
-import { demoLogin } from '@/lib/actions/demo-login';
+import { demoLogin, geminiLogin } from '@/lib/actions/demo-login';
 import WaitlistForm from '@/components/landing/waitlist-form';
 import NestEmbed from '@/components/nest/nest-embed';
 import './landing.css';
@@ -122,6 +122,35 @@ export default function LandingPage() {
             friends, family, or your team, collect together, and watch one constellation grow from
             everyone's ideas. The community nest above is what that looks like.
           </p>
+        </div>
+      </section>
+
+      <section id="gemini">
+        <div className="wrap">
+          <p className="eyebrow">Live at the Gemini meetup</p>
+          <h2 className="section-title">Join the meetup nest.</h2>
+          <p className="section-lede">
+            We're presenting Magpie at the Gemini meetup and building a group nest live. Scan the
+            code or tap the button and you're in: one shared account, one constellation, fed by
+            the whole room.
+          </p>
+          <div className="gemini-row">
+            <div className="gemini-qr">
+              <img src="/brand/qr-gemini.svg" alt="QR code linking to magpie.wiki/gemini" />
+              <p className="gemini-link">magpie.wiki/gemini</p>
+            </div>
+            <div className="gemini-action">
+              <form action={geminiLogin} style={{ display: 'contents' }}>
+                <button type="submit" className="btn-primary">
+                  Enter the Gemini nest
+                </button>
+              </form>
+              <p className="gemini-note">
+                A shared account just for the meetup. Add a curiosity during the talk and watch it
+                land in the constellation on screen.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
