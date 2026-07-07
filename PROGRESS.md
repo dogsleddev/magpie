@@ -1,6 +1,6 @@
 # Magpie · Progress
 
-**Last updated:** 2026-06-10 (session 13 + polish: landing round 2, Nest overlay nav, UI sweep, repo moved to `C:\dev\magpie`; LinkedIn screenshots captured, add-dialog examples expanded, iOS voice hint updated to "coming soon")
+**Last updated:** 2026-07-07 (session 14: the Gemini meetup demo: `gemini@dogsled.dev` shared account, `magpie.wiki/gemini` QR direct link, landing section, meetup nest seeded with 6 topics x 3 ideas)
 **Status:** **LIVE at https://magpie.wiki** with the Nest mind map, entity groups with a real drilldown UI, the umbrella auto-group feature on Add Topic, the post-UX-review landing, and a working LinkedIn link-preview card. Won runner-up + $250 at the Krava × Linq hackathon (May 30, 2026). Direction + backlog: **`docs/BRD.md`**. Positioning: **`docs/COMPETITORS.md`**. New-session brief: **`HANDOFF.md`**. Nest detail: **`docs/NEST.md`**.
 **Branch:** `master` (Vercel auto-deploys the latest `master` to magpie.wiki).
 **Repo checkout:** **`C:\dev\magpie`** since session 13. Do not work from the old OneDrive path (`OneDrive\02_Projects\Magpie\code`); it is being archived. GitHub is the sync between machines; push WIP branches for unfinished work (master deploys).
@@ -11,10 +11,11 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 
 ## START HERE next session
 
-**Session 13 shipped:** landing copy round 2 (Share-the-nest section under the constellation, Glints finally explained and tied to Rediscover, the community/shiny sweep, "Notes that come back to you."), the bottom tab bar inside the full-bleed Nest, a pre-public UI sweep, a behavior-preserving cleanup pass, and **the repo moved out of OneDrive to `C:\dev\magpie`** after a sync incident corrupted `.git` mid-session (rolled master back a commit; fully recovered from origin). All on `master`, deployed. Read **`CLAUDE.md` (Current status)**, then this block.
+**Session 14 shipped:** the Gemini meetup demo, end to end: a second one-click shared account (`gemini@dogsled.dev`), the `magpie.wiki/gemini` QR direct link, a "Join the meetup nest." landing section with the QR, and the meetup nest seeded (6 topics under the "Gemini Meetup" group, 3 ideas each). All on `master`, deployed, verified in prod including a demo-login regression check. Read **`CLAUDE.md` (Current status)**, then this block.
 
 **Immediate launch tasks:**
 
+- **Gemini meetup:** everything is staged (QR in the landing `#gemini` section, `magpie.wiki/gemini` direct link, nest seeded). Add more items in-app as desired; the seed scripts are idempotent (`scripts/setup-gemini-account.mjs`, `scripts/seed-gemini-content.mjs`, dry-run default, `--write` to execute). After the event, delete the `id="gemini"` section in `app/page.tsx` plus the GEMINI MEETUP block in `app/landing.css`.
 - **Post the LinkedIn announcement.** Draft in `docs/LINKEDIN_LAUNCH.md`. og image DONE, screenshots captured (Nest constellation = lead image, topic-with-Maggie = slide 2). @handles get added directly in the post at publish time. 6-to-10s screen-recording of the Nest beats a still; put magpie.wiki link in the first comment (LinkedIn throttles in-body links).
 - **Test on Chris's iPhone:** the keyboard-dictation mic hint (`components/mic/is-ios.ts`) AND the new mobile Nest default (full-bleed view, collapsed panel, exit button). Both live, neither verified on-device.
 - **Curate the duplicate community topics.** Confirmed pair: "How did the reintroduction of wolves change Yellowstone's entire ecosystem?" and "Why wolves changed the path of rivers in Yellowstone" (both Wildlife). Audit all titles, propose a merge list to Chris BEFORE deleting (topics carry thoughts/conversations/facets; deletes cascade). Pattern reference: `scripts/group-backfill.mjs`.
@@ -40,12 +41,26 @@ This is the living build log. For direction read `docs/BRD.md`; for "what Magpie
 | Build model             | Single line: `master` → magpie.wiki, auto-deploy on push. No hackathon branch/subdomain.                                                                                                                                                                                       |
 | Vercel / repo           | team `dogsled` (`team_i1Es1eTRb83TisgbHEU6gcA5`) / project `magpie` (`prj_Ko7a9i0drxCPWMccMT1yFrlj6ahC`), git-linked to `dogsleddev/magpie` (PUBLIC)                                                                                                                           |
 | Vercel env (Production) | `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY`, `ANTHROPIC_API_KEY`, `KRAVA_APP_KEY`, `LINQ_API_TOKEN`, `LINQ_PHONE_NUMBER` (+1 404 384 5892), `LINQ_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` (an `sb_secret_` key). Optional `DEMO_LOGIN_PASSWORD` backstop for the one-click login. |
-| Routes                  | `/`, `/app` (grid), `/subject/[id]`, `/topic/[id]`, `/nest`, `/facets`, `/facets/[id]`, `/recent`, `/search`, `/login`, `/auth/callback`, `/krava`, `/linq`, `/api/ai/*` (incl. `convo-opener`), `/api/dev/backfill-*` (dev-only), `/api/linq/webhook`                         |
-| Sign-in                 | **One-click "Enter Magpie"** (`demoLogin`: passwordless via the service-role key, falls back to `DEMO_LOGIN_PASSWORD`) as `dogsled@dogsled.dev`. Magic link still pending SMTP.                                                                                                |
+| Routes                  | `/`, `/app` (grid), `/subject/[id]`, `/topic/[id]`, `/nest`, `/facets`, `/facets/[id]`, `/recent`, `/search`, `/login`, `/auth/callback`, `/gemini` (QR direct link), `/krava`, `/linq`, `/api/ai/*` (incl. `convo-opener`), `/api/dev/backfill-*` (dev-only), `/api/linq/webhook` |
+| Sign-in                 | **One-click "Enter Magpie"** (`demoLogin`: passwordless via the service-role key, falls back to `DEMO_LOGIN_PASSWORD`) as `dogsled@dogsled.dev`. Second shared account: `gemini@dogsled.dev` via `/gemini` or the landing `#gemini` section (`geminiLogin`, passwordless; optional `GEMINI_LOGIN_PASSWORD` backstop, not set). Magic link still pending SMTP. |
 | Persona                 | **Settled: product = Magpie, persona = Maggie** (live). The default `user_settings.persona_name` plus the threaded `personaName`; renameable in settings.                                                                                                                      |
 | Krava                   | Wrapped in `lib/ai/client.ts`, falls back to Anthropic on any error. Local probe confirmed it works; **prod routing unverified.**                                                                                                                                              |
 | Linq                    | Tier 0 webhook live (`/api/linq/webhook`, HMAC). Sandbox is outbound-only, so the **inbound loop is not real**; the demo used a staged thread. `0002_hackathon.sql` applied; phone linked.                                                                                     |
 | Demo pages              | `/krava` (deck embed + download), `/linq` (iMessage screenshot)                                                                                                                                                                                                                |
+
+---
+
+## Session 14 (2026-07-07): the Gemini meetup demo (account, QR direct link, landing section, seeded nest)
+
+**Shared presentation account (`3962c4d`, live).** `gemini@dogsled.dev` is a second one-click shared account beside the community one. `demoLogin` was refactored into an internal `sharedAccountLogin(label, email, password?)` helper (behavior identical, regression-verified in prod) with a new `geminiLogin` export in `lib/actions/demo-login.ts`. No new env needed: it rides the passwordless service-role path; `GEMINI_LOGIN_PASSWORD` is an optional backstop. `scripts/setup-gemini-account.mjs` (dry-run default, `--write`) created the user, the "AI" subject, and the "Gemini Meetup" group.
+
+**QR direct link (`3962c4d`, live).** `magpie.wiki/gemini` signs the visitor in and 307s to `/app`; the apex redirect preserves the path. It is a route handler (`app/gemini/route.ts`) because a page render cannot set session cookies. The QR asset `public/brand/qr-gemini.svg` is generated by `scripts/generate-qr-gemini.mjs` (plumage ink on off-white, ECC level Q so it scans off a projector); `qrcode` added as a devDependency.
+
+**Landing section (`3962c4d`, live).** "Live at the Gemini meetup / Join the meetup nest." sits between Share-the-nest and the count band: the Enter button, the QR, and the `magpie.wiki/gemini` caption. Remove after the event: delete the `id="gemini"` section in `app/page.tsx` and the GEMINI MEETUP block in `app/landing.css`.
+
+**Seeded meetup nest (data only, no code).** `scripts/seed-gemini-content.mjs` (idempotent: topics matched by title, ideas only inserted into topics that have none) seeded 6 topics under the group, 3 ideas each: the original "AI, ethics, and the future of AI" plus alignment faking, Golden Gate Claude, the Hinton radiology prediction, AI art vs the copyright office, and ELIZA 1966. Facets now: ethics, future, fun facts, paradox, society, history. Content went through a draft-plus-critique pass; zero em dashes.
+
+**Verified in prod (2026-07-07).** Full sweep: the QR chain, the session lands on `gemini@dogsled.dev` with no dogsled leak, authenticated grid/subject/topic pages render the seeded content, assets serve, and a progressive-enhancement POST of the real `demoLogin` server action confirmed the community login still works after the refactor. Gotcha for future checks: groups render as rows on `/subject/[id]`, not on the `/app` grid.
 
 ---
 
