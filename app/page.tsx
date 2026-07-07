@@ -77,12 +77,12 @@ export default function LandingPage() {
             {demoOpen && (
               <form action={demoLogin} style={{ display: 'contents' }}>
                 <input type="hidden" name="goNest" value="1" />
-                <button type="submit" className="btn-primary">
+                <button type="submit" className="btn-secondary">
                   See the community nest
                 </button>
               </form>
             )}
-            <a href="/gemini" className="btn-secondary gemini-cta">
+            <a href="/gemini" className="btn-primary">
               Enter the Gemini nest
             </a>
             {demoOpen ? (

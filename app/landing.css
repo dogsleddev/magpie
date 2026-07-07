@@ -179,12 +179,6 @@
   opacity: 0;
   animation: mp-rise 1s cubic-bezier(0.2, 0.7, 0.3, 1) 0.48s forwards;
 }
-.magpie-landing .gemini-cta {
-  border-color: rgba(29, 158, 117, 0.55);
-}
-.magpie-landing .gemini-cta:hover {
-  border-color: var(--teal);
-}
 .magpie-landing .hero-qr {
   text-decoration: none;
   opacity: 0;
