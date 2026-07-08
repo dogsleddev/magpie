@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       } catch (err) {
         const status = (err as { status?: number }).status;
         const note =
-          status === 401 || status === 403
+          (status === 401 || status === 403) && process.env.NODE_ENV !== 'production'
             ? 'add your anthropic key to keep chatting.'
             : `${settings.persona_name.toLowerCase()} hit a snag. try again in a sec.`;
         // The marker tells the client this is an error note (not model output),

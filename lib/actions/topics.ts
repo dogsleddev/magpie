@@ -174,8 +174,9 @@ async function resolveFacetIds(names: string[]): Promise<string[]> {
     const clean = name.trim().toLowerCase();
     // Dedupe by name (a repeat or case-variant like "AI"/"ai") and again by id
     // (two names collapsing to one existing facet), so a topic never links the
-    // same facet twice and hits the topic_facets primary-key violation.
-    if (!clean || seenNames.has(clean)) continue;
+    // same facet twice and hits the topic_facets primary-key violation. Also skip
+    // absurdly long tags (facets are short lenses, not free text).
+    if (!clean || clean.length > 60 || seenNames.has(clean)) continue;
     seenNames.add(clean);
     const facet = await findOrCreateFacet(clean);
     if (seenIds.has(facet.id)) continue;
@@ -271,7 +272,9 @@ export async function moveTopicToSubject(topicId: string, subjectId: string): Pr
 export async function updateTopicFacetsByName(topicId: string, names: string[]): Promise<void> {
   await requireUser();
   await limitAction('facets', 60);
-  const ids = await resolveFacetIds(names);
+  // Bound the input: a topic has a handful of facets, so cap the list to stop a
+  // direct call from minting thousands of junk facets in one invocation.
+  const ids = await resolveFacetIds(names.slice(0, 24));
   await setTopicFacets(topicId, ids);
   revalidatePath('/recent');
   revalidatePath('/facets');

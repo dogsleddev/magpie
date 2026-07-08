@@ -18,10 +18,12 @@ export function aiErrorResponse(err: unknown): NextResponse {
     return NextResponse.json({ error }, { status: 422 });
   }
   if (/credit balance|billing|insufficient|quota/i.test(message)) {
-    return NextResponse.json(
-      { error: 'Magpie is out of Anthropic credits. Add credits to continue.' },
-      { status: 402 },
-    );
+    // Operator-facing detail only in dev; production visitors get a generic line.
+    const error =
+      process.env.NODE_ENV === 'production'
+        ? 'Magpie could not answer right now. Try again.'
+        : 'Magpie is out of Anthropic credits. Add credits to continue.';
+    return NextResponse.json({ error }, { status: 402 });
   }
   return NextResponse.json({ error: 'Magpie could not answer right now. Try again.' }, { status: 502 });
 }

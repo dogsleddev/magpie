@@ -63,6 +63,9 @@ async function sharedAccountLogin(label: string, email: string, password?: strin
 
 /** The community demo account (dogsled@dogsled.dev). */
 export async function demoLogin(formData?: FormData) {
+  // DEMO_OPEN=false is the operator kill switch. It hides the landing buttons,
+  // but a Server Action stays a live POST endpoint, so enforce it here too.
+  if (process.env.DEMO_OPEN === 'false') redirect('/login?error=closed');
   const openAdd = formData?.get('openAdd') === '1';
   const goNest = formData?.get('goNest') === '1';
 
@@ -77,6 +80,7 @@ export async function demoLogin(formData?: FormData) {
  * the account with scripts/setup-gemini-account.mjs.
  */
 export async function geminiLogin() {
+  if (process.env.DEMO_OPEN === 'false') redirect('/login?error=closed');
   const ok = await sharedAccountLogin(
     'gemini-login',
     GEMINI_EMAIL,
