@@ -207,6 +207,7 @@ export async function addTopicViaMagpie(
   await requireUser();
   const trimmed = idea.trim();
   if (!trimmed) throw new Error('Tell Magpie an idea first.');
+  if (trimmed.length > 2000) throw new Error('That idea is a bit long. Trim it and try again.');
 
   // Server Actions bypass the /api/ai middleware limiter, so cap the mutating
   // ones by client IP here. This one calls Claude (categorize) and writes to the
@@ -294,9 +295,15 @@ export async function deleteTopicById(topicId: string): Promise<void> {
   // topic ids are enumerable, so keep this budget tight: a mass-delete loop is
   // slowed to a crawl and stays visible instead of wiping the grid in seconds.
   await limitAction('delete', 10);
-  await deleteTopic(topicId);
+  const deleted = await deleteTopic(topicId);
   revalidatePath('/app');
   revalidatePath('/recent');
   revalidatePath('/facets');
   revalidatePath('/nest');
+  if (deleted) {
+    // The delete control redirects to the subject page; revalidate it (and the
+    // parent group page for a sub-topic) so the removed topic does not linger there.
+    revalidatePath(`/subject/${deleted.subject_id}`);
+    if (deleted.parent_topic_id) revalidatePath(`/topic/${deleted.parent_topic_id}`);
+  }
 }

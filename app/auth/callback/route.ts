@@ -4,11 +4,15 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  // Only accept a root-relative path (single leading slash) so a crafted `next`
-  // cannot redirect to another origin after login. '//host' and absolute URLs fall
-  // back to /app.
-  const nextParam = searchParams.get('next');
-  const next = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/app';
+  // Only honor a same-origin, root-relative `next`. Reject '//host', backslashes
+  // (browsers treat '\' as '/', so '/\evil.com' becomes protocol-relative), and
+  // anything that resolves to a foreign origin. Otherwise fall back to /app.
+  const raw = searchParams.get('next');
+  let next = '/app';
+  if (raw && raw.startsWith('/') && !raw.startsWith('//') && !raw.includes('\\')) {
+    const candidate = new URL(raw, origin);
+    if (candidate.origin === origin) next = candidate.pathname + candidate.search;
+  }
 
   if (code) {
     const supabase = await createClient();

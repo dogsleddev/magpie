@@ -214,10 +214,18 @@ export async function updateTopicTitle(id: string, title: string): Promise<void>
   if (error) throw error;
 }
 
-export async function deleteTopic(id: string): Promise<void> {
+export async function deleteTopic(
+  id: string,
+): Promise<{ subject_id: string; parent_topic_id: string | null } | null> {
   const supabase = await createClient();
-  const { error } = await supabase.from('topics').delete().eq('id', id);
+  const { data, error } = await supabase
+    .from('topics')
+    .delete()
+    .eq('id', id)
+    .select('subject_id, parent_topic_id')
+    .maybeSingle<{ subject_id: string; parent_topic_id: string | null }>();
   if (error) throw error;
+  return data;
 }
 
 export async function spinRandomTopic(): Promise<Topic | null> {
