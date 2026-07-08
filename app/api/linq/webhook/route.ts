@@ -96,7 +96,7 @@ export async function POST(req: Request) {
     }
 
     const userId: string = settings.user_id;
-    const personaName: string = settings.persona_name ?? 'Magpie';
+    const personaName: string = settings.persona_name ?? 'Maggie';
 
     const convo = await getOrCreateActiveImessageConversation(admin, userId);
     const history: ConversationMessage[] = [...convo.messages, { role: 'user', content: text.trim() }];

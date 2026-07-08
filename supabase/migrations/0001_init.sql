@@ -94,7 +94,7 @@ create index ai_cache_user_id_idx on ai_cache(user_id);
 
 create table user_settings (
   user_id uuid references auth.users(id) on delete cascade primary key,
-  persona_name text not null default 'Magpie',
+  persona_name text not null default 'Maggie',
   ai_suggestions boolean not null default true,
   default_mode text not null default 'persona' check (default_mode in ('persona', 'brief', 'challenge', 'questions', 'convo')),
   created_at timestamptz default now(),
