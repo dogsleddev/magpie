@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   // never writes a turn. We also drop a dangling trailing user turn left by a
   // prior aborted stream, so we never send consecutive user messages (which the
   // Anthropic API rejects with a 400).
-  const [{ id: userId }, topic, settings, convo] = await Promise.all([
+  const [, topic, settings, convo] = await Promise.all([
     requireUser(),
     getTopic(topicId),
     getSettings(),
@@ -72,7 +72,6 @@ export async function POST(request: Request) {
           system,
           messages,
           maxTokens: MAX_TOKENS.convo,
-          userId,
         })) {
           controller.enqueue(encoder.encode(chunk));
         }

@@ -43,7 +43,7 @@ export async function handleTextMode(
   // failed reroll leaves the existing content intact; setCached upserts on success.
   let content = reroll ? null : await getCached(topicId, mode);
   if (!content) {
-    const { id: userId } = await requireUser();
+    await requireUser();
     const p = prompt({ id: topic.id, title: topic.title });
     try {
       content = await callClaude({
@@ -51,7 +51,6 @@ export async function handleTextMode(
         system: p.system,
         user: p.user,
         maxTokens: MAX_TOKENS[task],
-        userId,
       });
     } catch (err) {
       return aiErrorResponse(err);

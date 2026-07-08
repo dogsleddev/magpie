@@ -41,7 +41,7 @@ function isHighAgency(idea: string): boolean {
   return /\bhigh[-\s]?agency\b/.test(normalize(idea));
 }
 
-async function categorize(idea: string, userId: string): Promise<CategorizeOutput> {
+async function categorize(idea: string): Promise<CategorizeOutput> {
   const [subjects, facets, topics] = await Promise.all([
     getSubjectsWithCounts(),
     getFacetsWithCounts(),
@@ -60,7 +60,6 @@ async function categorize(idea: string, userId: string): Promise<CategorizeOutpu
       system: prompt.system,
       user: prompt.user,
       maxTokens: 512,
-      userId,
     });
     parsed = extractJSON<CategorizeOutput>(raw);
   } catch {
@@ -208,7 +207,7 @@ export async function addTopicViaMagpie(
   idea: string,
   options?: { subjectId?: string; parentTopicId?: string },
 ): Promise<AddTopicResult> {
-  const { id: userId } = await requireUser();
+  await requireUser();
   const trimmed = idea.trim();
   if (!trimmed) throw new Error('Tell Magpie an idea first.');
 
@@ -218,7 +217,7 @@ export async function addTopicViaMagpie(
   // generous for humans, tight enough to stop a bot.)
   await limitAction('add', 30);
 
-  const plan = isHighAgency(trimmed) ? { ...HIGH_AGENCY } : await categorize(trimmed, userId);
+  const plan = isHighAgency(trimmed) ? { ...HIGH_AGENCY } : await categorize(trimmed);
 
   let subjectId = options?.subjectId ?? (await resolveSubjectId(plan.subject));
   const facetIds = await resolveFacetIds(plan.facets);

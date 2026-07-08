@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   }
   if (!topicId) return NextResponse.json({ error: 'Missing topicId.' }, { status: 400 });
 
-  const [{ id: userId }, topic, settings] = await Promise.all([
+  const [, topic, settings] = await Promise.all([
     requireUser(),
     getTopic(topicId),
     getSettings(),
@@ -35,7 +35,6 @@ export async function POST(request: Request) {
       system: prompt.system,
       user: prompt.user,
       maxTokens: 64,
-      userId,
     });
     const opener = raw
       .trim()

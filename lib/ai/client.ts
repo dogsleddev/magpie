@@ -4,7 +4,6 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { kravaChat, kravaChatStream, kravaEnabled } from './krava';
 
 const PLACEHOLDER_KEY = 'REPLACE_WITH_YOUR_ANTHROPIC_KEY';
 
@@ -86,27 +85,9 @@ export type CallClaudeArgs = {
   messages?: Array<{ role: 'user' | 'assistant'; content: string }>;
   user?: string;
   maxTokens: number;
-  userId?: string; // carried for per-user privacy routing; Krava reads it on the hackathon branch, direct Anthropic ignores it
 };
 
-/** Collapse a call into a single user message for Krava's platform chat. */
-function flattenToMessage(args: CallClaudeArgs): string {
-  if (args.user) return args.user;
-  return (args.messages ?? [])
-    .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
-    .join('\n\n');
-}
-
 export async function callClaude(args: CallClaudeArgs): Promise<string> {
-  if (kravaEnabled && args.userId) {
-    try {
-      return await kravaChat({ externalUserId: args.userId, system: args.system, message: flattenToMessage(args) });
-    } catch (err) {
-      // Krava failed at runtime (auth, network, rate limit). Fall back to direct
-      // Anthropic so a Krava hiccup never breaks a mode. Logged so we can see why.
-      console.error('[krava] callClaude failed, falling back to Anthropic:', err);
-    }
-  }
   const messages = args.messages ?? (args.user ? [{ role: 'user' as const, content: args.user }] : []);
   if (messages.length === 0) {
     throw new Error('callClaude needs either user or messages');
@@ -129,19 +110,6 @@ export async function callClaude(args: CallClaudeArgs): Promise<string> {
 // ============================================
 
 export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string> {
-  if (kravaEnabled && args.userId) {
-    let yielded = false;
-    try {
-      for await (const chunk of kravaChatStream({ externalUserId: args.userId, system: args.system, message: flattenToMessage(args) })) {
-        yielded = true;
-        yield chunk;
-      }
-      return;
-    } catch (err) {
-      console.error('[krava] streamClaude failed, falling back to Anthropic:', err);
-      if (yielded) throw err; // mid-stream failure: cannot cleanly restart, surface it
-    }
-  }
   const messages = args.messages ?? (args.user ? [{ role: 'user' as const, content: args.user }] : []);
   const stream = await getClient().messages.stream({
     model: args.model,

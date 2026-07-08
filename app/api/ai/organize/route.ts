@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
   const prompt = organizePrompt({ id: topic.id, title: topic.title }, contents);
 
-  const { id: userId } = await requireUser();
+  await requireUser();
 
   let raw: string;
   try {
@@ -40,7 +40,6 @@ export async function POST(request: Request) {
       system: prompt.system,
       user: prompt.user,
       maxTokens: MAX_TOKENS.organize,
-      userId,
     });
   } catch (err) {
     return aiErrorResponse(err);

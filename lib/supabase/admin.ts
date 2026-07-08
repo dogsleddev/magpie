@@ -4,13 +4,9 @@ import { createClient } from '@supabase/supabase-js';
  * Service-role Supabase client. SERVER-ONLY. Bypasses RLS, so it must never be
  * imported into client code and every query must be scoped to a resolved user.
  *
- * Needed for the Linq webhook: an unauthenticated external POST has no
- * auth.uid(), so it cannot use the cookie-based SSR client to find a user by
- * phone number or write that user's conversation.
- *
- * Intentionally untyped (no <Database> generic) so the hackathon columns added
- * in 0002 (conversations.kind, nullable topic_id, user_settings.phone_number)
- * compile before `npm run db:types` is regenerated.
+ * Used by the passwordless one-click login (lib/actions/demo-login.ts): signing
+ * a visitor into the shared community account has no auth.uid() yet, so it cannot
+ * use the cookie-based SSR client.
  */
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
