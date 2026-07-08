@@ -2,9 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { requireUser } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/rate-limit';
+import { limitAction } from '@/lib/rate-limit-server';
 import { callClaude, MODELS } from '@/lib/ai/client';
 import {
   categorizeTopicPrompt,
@@ -173,10 +172,18 @@ async function resolveSubjectId(name: string): Promise<string> {
 
 async function resolveFacetIds(names: string[]): Promise<string[]> {
   const ids: string[] = [];
+  const seenNames = new Set<string>();
+  const seenIds = new Set<string>();
   for (const name of names) {
     const clean = name.trim().toLowerCase();
-    if (!clean) continue;
+    // Dedupe by name (a repeat or case-variant like "AI"/"ai") and again by id
+    // (two names collapsing to one existing facet), so a topic never links the
+    // same facet twice and hits the topic_facets primary-key violation.
+    if (!clean || seenNames.has(clean)) continue;
+    seenNames.add(clean);
     const facet = await findOrCreateFacet(clean);
+    if (seenIds.has(facet.id)) continue;
+    seenIds.add(facet.id);
     ids.push(facet.id);
   }
   return ids;
@@ -205,15 +212,11 @@ export async function addTopicViaMagpie(
   const trimmed = idea.trim();
   if (!trimmed) throw new Error('Tell Magpie an idea first.');
 
-  // This action calls Claude (categorize) and writes to the shared DB, but it is
-  // a Server Action, so the /api/ai middleware rate limiter never sees it. Cap it
-  // by client IP here so the one-click public login cannot be scripted to burn
-  // Anthropic spend or junk-fill the community grid. A shared event NAT may put a
-  // room behind one IP; 30/min is generous for humans, tight enough to stop a bot.
-  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  if (!rateLimit(`add:${ip}`, 30, 60_000).ok) {
-    throw new Error('Adding a lot right now. Give it a moment and try again.');
-  }
+  // Server Actions bypass the /api/ai middleware limiter, so cap the mutating
+  // ones by client IP here. This one calls Claude (categorize) and writes to the
+  // shared DB. (A shared event NAT may put a room behind one IP; 30/min is
+  // generous for humans, tight enough to stop a bot.)
+  await limitAction('add', 30);
 
   const plan = isHighAgency(trimmed) ? { ...HIGH_AGENCY } : await categorize(trimmed, userId);
 
@@ -258,6 +261,7 @@ export async function addTopicViaMagpie(
 
 export async function moveTopicToSubject(topicId: string, subjectId: string): Promise<void> {
   await requireUser();
+  await limitAction('move', 60);
   await updateTopicSubject(topicId, subjectId);
   revalidatePath('/recent');
   revalidatePath('/app');
@@ -269,6 +273,7 @@ export async function moveTopicToSubject(topicId: string, subjectId: string): Pr
 
 export async function updateTopicFacetsByName(topicId: string, names: string[]): Promise<void> {
   await requireUser();
+  await limitAction('facets', 60);
   const ids = await resolveFacetIds(names);
   await setTopicFacets(topicId, ids);
   revalidatePath('/recent');
@@ -289,6 +294,10 @@ export async function rediscover(): Promise<void> {
 /** Delete a topic. Backs the quiet delete control on the topic page. */
 export async function deleteTopicById(topicId: string): Promise<void> {
   await requireUser();
+  // Destructive and cascading (thoughts + conversations). On the shared account
+  // topic ids are enumerable, so keep this budget tight: a mass-delete loop is
+  // slowed to a crawl and stays visible instead of wiping the grid in seconds.
+  await limitAction('delete', 10);
   await deleteTopic(topicId);
   revalidatePath('/app');
   revalidatePath('/recent');

@@ -30,3 +30,20 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateLim
   }
   return { ok: true, retryAfter: 0 };
 }
+
+/**
+ * The trusted client IP for rate-limit keying. On Vercel, `x-real-ip` is the
+ * real peer address; the leftmost `x-forwarded-for` entry is whatever the client
+ * sent (spoofable), so we prefer x-real-ip and otherwise take the LAST forwarded
+ * hop (the one the platform appended), never the first.
+ */
+export function clientIp(h: { get(name: string): string | null }): string {
+  const real = h.get('x-real-ip');
+  if (real?.trim()) return real.trim();
+  const xff = h.get('x-forwarded-for');
+  if (xff) {
+    const parts = xff.split(',').map((s) => s.trim()).filter(Boolean);
+    if (parts.length) return parts[parts.length - 1];
+  }
+  return 'unknown';
+}
