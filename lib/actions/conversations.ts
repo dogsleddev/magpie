@@ -1,7 +1,6 @@
 'use server';
 
 import { appendMessages } from '@/lib/queries/conversations';
-import { limitAction } from '@/lib/rate-limit-server';
 import type { ConversationMessage } from '@/lib/queries/types';
 
 /**
@@ -15,10 +14,9 @@ export async function saveConvoTurn(
   userMessage: string,
   assistantMessage: string,
 ): Promise<void> {
-  // Mutating write to the shared conversations table, directly callable, so
-  // throttle it like the other mutating actions (the stream call is already
-  // limited, this covers a direct save loop).
-  await limitAction('convo-save', 60);
+  // The paid work (the stream) is already limited at the AI route; this is just
+  // the cheap DB write that records the finished turn. Throttling it too would
+  // double-limit a legit chat and, behind a shared meetup IP, drop real replies.
   const user = userMessage.trim();
   const assistant = assistantMessage.trim();
   if (!user || !assistant) return;

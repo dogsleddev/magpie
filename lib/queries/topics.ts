@@ -92,6 +92,28 @@ export async function getTopicsLite(): Promise<TopicLite[]> {
   return data ?? [];
 }
 
+/**
+ * Whether a topic already holds user content (any thought or a conversation).
+ * Used by the umbrella check: a content-bearing topic must not be promoted to a
+ * group anchor, because group pages render no thoughts or chat and the content
+ * would become unreachable.
+ */
+export async function topicHasContent(id: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { count: thoughtCount, error: thoughtErr } = await supabase
+    .from('thoughts')
+    .select('id', { count: 'exact', head: true })
+    .eq('topic_id', id);
+  if (thoughtErr) throw thoughtErr;
+  if ((thoughtCount ?? 0) > 0) return true;
+  const { count: convoCount, error: convoErr } = await supabase
+    .from('conversations')
+    .select('id', { count: 'exact', head: true })
+    .eq('topic_id', id);
+  if (convoErr) throw convoErr;
+  return (convoCount ?? 0) > 0;
+}
+
 /** Promote a topic to a group anchor (Subject -> group -> sub-topics). */
 export async function promoteTopicToGroup(id: string): Promise<void> {
   const supabase = await createClient();

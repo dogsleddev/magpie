@@ -3,10 +3,12 @@ import { updateSession } from '@/lib/supabase/middleware';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 // The AI routes call the paid Anthropic API and sit behind a one-click public
-// login, so throttle them by client IP before doing anything else. 30/min is far
-// above any real user's pace (a topic open fires a handful of calls) but stops a
-// script from looping reroll and running up spend.
-const AI_LIMIT = 30;
+// login, so keep a coarse per-IP backstop against a script looping reroll and
+// running up spend. This is per-instance and counts cached revisits too, so the
+// ceiling sits well above a real room's pace (a whole meetup can share one venue
+// IP): 120/min is ~2 req/sec, which no human browsing sustains but a tight loop
+// blows past instantly. Returns a 429 the clients already handle gracefully.
+const AI_LIMIT = 120;
 const AI_WINDOW_MS = 60_000;
 
 export async function middleware(request: NextRequest) {

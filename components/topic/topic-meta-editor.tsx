@@ -30,22 +30,35 @@ export default function TopicMetaEditor({
   const [pending, startTransition] = useTransition();
   const [facets, setFacets] = useState<string[]>(() => initialFacets.map((f) => f.name));
   const [adding, setAdding] = useState('');
+  const [saveError, setSaveError] = useState(false);
   // name -> id for the facets that exist, so each chip can link to its filtered page.
   const facetId = new Map(initialFacets.map((f) => [f.name, f.id]));
 
   function persistFacets(next: string[]) {
+    const prev = facets;
     setFacets(next);
+    setSaveError(false);
     startTransition(async () => {
-      await updateTopicFacetsByName(topicId, next);
-      router.refresh();
+      try {
+        await updateTopicFacetsByName(topicId, next);
+        router.refresh();
+      } catch {
+        setFacets(prev);
+        setSaveError(true);
+      }
     });
   }
 
   function changeSubject(next: string) {
     if (next === subjectId) return;
+    setSaveError(false);
     startTransition(async () => {
-      await moveTopicToSubject(topicId, next);
-      router.refresh();
+      try {
+        await moveTopicToSubject(topicId, next);
+        router.refresh();
+      } catch {
+        setSaveError(true);
+      }
     });
   }
 
@@ -127,6 +140,9 @@ export default function TopicMetaEditor({
       </datalist>
 
       {pending && <span className="text-[11px] text-text-dim">saving...</span>}
+      {saveError && !pending && (
+        <span className="text-[11px] text-danger">couldn&apos;t save, try again</span>
+      )}
     </div>
   );
 }

@@ -45,20 +45,33 @@ function RecentRow({
   const [pending, startTransition] = useTransition();
   const [facets, setFacets] = useState<string[]>(topic.facets.map((f) => f.name));
   const [adding, setAdding] = useState('');
+  const [saveError, setSaveError] = useState(false);
 
   function persistFacets(next: string[]) {
+    const prev = facets;
     setFacets(next);
+    setSaveError(false);
     startTransition(async () => {
-      await updateTopicFacetsByName(topic.id, next);
-      router.refresh();
+      try {
+        await updateTopicFacetsByName(topic.id, next);
+        router.refresh();
+      } catch {
+        setFacets(prev);
+        setSaveError(true);
+      }
     });
   }
 
   function changeSubject(subjectId: string) {
     if (subjectId === topic.subject_id) return;
+    setSaveError(false);
     startTransition(async () => {
-      await moveTopicToSubject(topic.id, subjectId);
-      router.refresh();
+      try {
+        await moveTopicToSubject(topic.id, subjectId);
+        router.refresh();
+      } catch {
+        setSaveError(true);
+      }
     });
   }
 
@@ -78,6 +91,9 @@ function RecentRow({
           {topic.title}
         </Link>
         {pending && <span className="shrink-0 text-[11px] text-text-dim">saving...</span>}
+        {saveError && !pending && (
+          <span className="shrink-0 text-[11px] text-danger">couldn&apos;t save, try again</span>
+        )}
       </div>
 
       <label className="flex items-center gap-2 text-xs text-text-dim">

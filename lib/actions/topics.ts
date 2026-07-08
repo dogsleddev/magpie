@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/supabase/server';
-import { limitAction } from '@/lib/rate-limit-server';
+import { allowAction, limitAction } from '@/lib/rate-limit-server';
 import { callClaude, MODELS } from '@/lib/ai/client';
 import {
   categorizeTopicPrompt,
@@ -18,6 +18,7 @@ import {
   getTopicsLite,
   promoteTopicToGroup,
   spinRandomTopic,
+  topicHasContent,
   updateTopicSubject,
   type TopicLite,
 } from '@/lib/queries/topics';
@@ -114,7 +115,7 @@ async function applyUmbrella(
   const parentCandidates = (byNorm.get(entityNorm) ?? [])
     .filter((t) => t.id !== newTopicId && !t.parent_topic_id)
     .sort((a, b) => Number(b.is_group) - Number(a.is_group));
-  let parent = parentCandidates[0] ?? null;
+  let parent: TopicLite | null = parentCandidates[0] ?? null;
 
   // Adoptable members: exact-title matches that are parentless non-groups.
   const memberIds = new Set<string>();
@@ -124,6 +125,15 @@ async function applyUmbrella(
       if (t.is_group || t.parent_topic_id) continue;
       memberIds.add(t.id);
     }
+  }
+
+  // Option B: if the entity match is an existing plain topic that already holds
+  // the user's content, promoting it would hide that content (group pages render
+  // no thoughts or chat). Adopt it as a child under a fresh anchor instead by
+  // moving it into the member set and falling through to the "no parent" branch.
+  if (parent && !parent.is_group && (await topicHasContent(parent.id))) {
+    memberIds.add(parent.id);
+    parent = null;
   }
 
   // Never build a group around nothing: need an existing parent to slot into,
@@ -137,11 +147,11 @@ async function applyUmbrella(
     parentId = parent.id;
     parentSubjectId = parent.subject_id;
   } else {
-    // No existing parent (including when the new topic itself is the entity):
-    // create a separate group anchor and adopt the new topic as a child. We do
-    // NOT promote the new topic, because createThought already seeded the user's
-    // idea onto it, and a group anchor renders no thoughts, so promoting it would
-    // hide that idea.
+    // No existing parent to promote (the new topic itself is the entity, or the
+    // only match already held content): create a separate group anchor and adopt
+    // the child(ren). We do NOT promote a content-bearing topic, because
+    // createThought already seeded the user's idea and a group anchor renders no
+    // thoughts, so promoting it would hide that content.
     const created = await createTopic({
       title: group.name,
       subjectId: newSubjectId,
@@ -210,13 +220,20 @@ export async function addTopicViaMagpie(
   if (!trimmed) throw new Error('Tell Magpie an idea first.');
   if (trimmed.length > 2000) throw new Error('That idea is a bit long. Trim it and try again.');
 
-  // Server Actions bypass the /api/ai middleware limiter, so cap the mutating
-  // ones by client IP here. This one calls Claude (categorize) and writes to the
-  // shared DB. (A shared event NAT may put a room behind one IP; 30/min is
-  // generous for humans, tight enough to stop a bot.)
-  await limitAction('add', 30);
-
-  const plan = isHighAgency(trimmed) ? { ...HIGH_AGENCY } : await categorize(trimmed);
+  // Server Actions bypass the /api/ai middleware limiter, so this is the only
+  // guard on the paid categorize call. It must never BLOCK an add (a whole
+  // meetup room can share one venue IP, and "add a curiosity" is the CTA), so
+  // over budget we DEGRADE: skip the model and file into Ideas, exactly as we
+  // already do when the model is unavailable. The topic is always created.
+  const AI_ADD_BUDGET = 60;
+  let plan: CategorizeOutput;
+  if (isHighAgency(trimmed)) {
+    plan = { ...HIGH_AGENCY };
+  } else if (await allowAction('add-ai', AI_ADD_BUDGET)) {
+    plan = await categorize(trimmed);
+  } else {
+    plan = { title: trimmed, subject: 'Ideas', facets: [], group: null };
+  }
 
   let subjectId = options?.subjectId ?? (await resolveSubjectId(plan.subject));
   const facetIds = await resolveFacetIds(plan.facets);
@@ -259,7 +276,6 @@ export async function addTopicViaMagpie(
 
 export async function moveTopicToSubject(topicId: string, subjectId: string): Promise<void> {
   await requireUser();
-  await limitAction('move', 60);
   await updateTopicSubject(topicId, subjectId);
   revalidatePath('/recent');
   revalidatePath('/app');
@@ -271,7 +287,6 @@ export async function moveTopicToSubject(topicId: string, subjectId: string): Pr
 
 export async function updateTopicFacetsByName(topicId: string, names: string[]): Promise<void> {
   await requireUser();
-  await limitAction('facets', 60);
   // Bound the input: a topic has a handful of facets, so cap the list to stop a
   // direct call from minting thousands of junk facets in one invocation.
   const ids = await resolveFacetIds(names.slice(0, 24));
