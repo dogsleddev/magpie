@@ -1,6 +1,8 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 type WaitlistState = { ok: boolean; message: string };
 
@@ -19,8 +21,15 @@ export async function joinWaitlist(
     .trim()
     .toLowerCase();
 
-  if (!EMAIL_RE.test(email)) {
+  if (!EMAIL_RE.test(email) || email.length > 254) {
     return { ok: false, message: 'enter a valid email' };
+  }
+
+  // Unauthenticated public endpoint: throttle by IP so it cannot be scripted into
+  // an unbounded insert sink. A friendly state (not a throw) since this backs a form.
+  const ip = clientIp(await headers());
+  if (!rateLimit(`waitlist:${ip}`, 5, 60_000).ok) {
+    return { ok: false, message: 'slow down a moment, then try again' };
   }
 
   try {

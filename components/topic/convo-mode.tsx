@@ -149,7 +149,16 @@ export default function ConvoMode({
       }
       full = full.trim();
       setMessages((prev) => replaceLast(prev, full));
-      if (full) await saveConvoTurn(topicId, text, full);
+      if (full) {
+        // Persist in an inner try so a save failure (a network blip, or a
+        // concurrent first-turn write) never falls through to the outer catch,
+        // which would overwrite the reply the user is already reading.
+        try {
+          await saveConvoTurn(topicId, text, full);
+        } catch {
+          // Keep the rendered reply; it just was not saved to the shared thread.
+        }
+      }
     } catch {
       // Aborted because the user left this view: drop it silently, persist nothing.
       if (controller.signal.aborted) return;

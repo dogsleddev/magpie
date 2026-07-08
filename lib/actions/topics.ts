@@ -98,7 +98,6 @@ async function categorize(idea: string): Promise<CategorizeOutput> {
 async function applyUmbrella(
   group: CategorizeGroup | null | undefined,
   newTopicId: string,
-  newTopicTitle: string,
   newSubjectId: string,
 ): Promise<{ parentId: string; parentSubjectId: string } | null> {
   if (!group?.name) return null;
@@ -116,9 +115,6 @@ async function applyUmbrella(
     .filter((t) => t.id !== newTopicId && !t.parent_topic_id)
     .sort((a, b) => Number(b.is_group) - Number(a.is_group));
   let parent = parentCandidates[0] ?? null;
-
-  // ...or the new topic itself, when the user added the umbrella as a topic.
-  const newTopicIsEntity = normalize(newTopicTitle) === entityNorm;
 
   // Adoptable members: exact-title matches that are parentless non-groups.
   const memberIds = new Set<string>();
@@ -140,11 +136,12 @@ async function applyUmbrella(
     if (!parent.is_group) await promoteTopicToGroup(parent.id);
     parentId = parent.id;
     parentSubjectId = parent.subject_id;
-  } else if (newTopicIsEntity) {
-    await promoteTopicToGroup(newTopicId);
-    parentId = newTopicId;
-    parentSubjectId = newSubjectId;
   } else {
+    // No existing parent (including when the new topic itself is the entity):
+    // create a separate group anchor and adopt the new topic as a child. We do
+    // NOT promote the new topic, because createThought already seeded the user's
+    // idea onto it, and a group anchor renders no thoughts, so promoting it would
+    // hide that idea.
     const created = await createTopic({
       title: group.name,
       subjectId: newSubjectId,
@@ -239,7 +236,7 @@ export async function addTopicViaMagpie(
   // the user filed the topic into a group explicitly: that placement wins.
   if (!options?.parentTopicId) {
     try {
-      const grouped = await applyUmbrella(plan.group, topic.id, topic.title, subjectId);
+      const grouped = await applyUmbrella(plan.group, topic.id, subjectId);
       if (grouped) subjectId = grouped.parentSubjectId;
     } catch (e) {
       console.error('[addTopic] umbrella grouping failed:', e);

@@ -56,7 +56,20 @@ export async function findOrCreateFacet(name: string): Promise<Facet> {
     .insert({ name: trimmed, user_id: user.id })
     .select()
     .single();
-  if (error) throw error;
+  if (error) {
+    // 23505 = a concurrent add created this facet first (unique(user_id, name)).
+    // Re-read it instead of failing the whole topic add.
+    if ((error as { code?: string }).code === '23505') {
+      const { data: raced } = await supabase
+        .from('facets')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('name', trimmed)
+        .maybeSingle();
+      if (raced) return raced;
+    }
+    throw error;
+  }
   return data;
 }
 

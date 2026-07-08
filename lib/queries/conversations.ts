@@ -37,5 +37,22 @@ export async function appendMessages(
   const { error } = await supabase
     .from('conversations')
     .insert({ topic_id: topicId, user_id: user.id, messages: newMessages });
-  if (error) throw error;
+  if (error) {
+    // 23505 = the unique(user_id, topic_id) row was created by a concurrent
+    // first-turn insert (two tabs or two visitors on the same topic). Re-read and
+    // append instead of throwing, so the just-streamed reply is not lost.
+    if ((error as { code?: string }).code === '23505') {
+      const now = await getConversation(topicId);
+      if (now) {
+        const current = now.messages as unknown as ConversationMessage[];
+        const { error: updateErr } = await supabase
+          .from('conversations')
+          .update({ messages: [...current, ...newMessages] })
+          .eq('id', now.id);
+        if (updateErr) throw updateErr;
+        return;
+      }
+    }
+    throw error;
+  }
 }
