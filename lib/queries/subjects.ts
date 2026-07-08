@@ -26,6 +26,7 @@ export async function getSubject(id: string): Promise<Subject | null> {
 export async function createSubject(name: string): Promise<Subject> {
   const supabase = await createClient();
   const user = await requireUser();
+  const trimmed = name.trim();
   const { data: last } = await supabase
     .from('subjects')
     .select('position')
@@ -35,10 +36,24 @@ export async function createSubject(name: string): Promise<Subject> {
   const position = (last?.position ?? -1) + 1;
   const { data, error } = await supabase
     .from('subjects')
-    .insert({ name: name.trim(), user_id: user.id, position })
+    .insert({ name: trimmed, user_id: user.id, position })
     .select()
     .single();
-  if (error) throw error;
+  if (error) {
+    // 23505 = a concurrent add created this subject first (once the
+    // unique(user_id, name) guard from 0007 is applied). Re-read it instead of
+    // fragmenting the grid with a duplicate row, mirroring findOrCreateFacet.
+    if ((error as { code?: string }).code === '23505') {
+      const { data: raced } = await supabase
+        .from('subjects')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('name', trimmed)
+        .maybeSingle();
+      if (raced) return raced;
+    }
+    throw error;
+  }
   return data;
 }
 
