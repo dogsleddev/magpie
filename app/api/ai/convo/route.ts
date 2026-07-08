@@ -21,6 +21,11 @@ export async function POST(request: Request) {
   if (!topicId || !message?.trim()) {
     return NextResponse.json({ error: 'Missing topicId or message.' }, { status: 400 });
   }
+  // The /api/ai limiter caps request count, not size. Bound the message so one
+  // request cannot send an oversized (expensive) prompt to the model.
+  if (message.length > 4000) {
+    return NextResponse.json({ error: 'Message is too long.' }, { status: 413 });
+  }
   const userMessage = message.trim();
 
   // Reads run in parallel, in request scope (cookies valid). Persistence is

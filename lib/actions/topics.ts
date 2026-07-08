@@ -2,7 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { requireUser } from '@/lib/supabase/server';
+import { rateLimit } from '@/lib/rate-limit';
 import { callClaude, MODELS } from '@/lib/ai/client';
 import {
   categorizeTopicPrompt,
@@ -202,6 +204,16 @@ export async function addTopicViaMagpie(
   const { id: userId } = await requireUser();
   const trimmed = idea.trim();
   if (!trimmed) throw new Error('Tell Magpie an idea first.');
+
+  // This action calls Claude (categorize) and writes to the shared DB, but it is
+  // a Server Action, so the /api/ai middleware rate limiter never sees it. Cap it
+  // by client IP here so the one-click public login cannot be scripted to burn
+  // Anthropic spend or junk-fill the community grid. A shared event NAT may put a
+  // room behind one IP; 30/min is generous for humans, tight enough to stop a bot.
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (!rateLimit(`add:${ip}`, 30, 60_000).ok) {
+    throw new Error('Adding a lot right now. Give it a moment and try again.');
+  }
 
   const plan = isHighAgency(trimmed) ? { ...HIGH_AGENCY } : await categorize(trimmed, userId);
 
