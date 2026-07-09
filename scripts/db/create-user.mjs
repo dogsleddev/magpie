@@ -3,6 +3,7 @@
 // email + password are passed as argv. Idempotent (re-running replaces the user).
 // Usage: SUPABASE_DB_PASSWORD=... node scripts/db/create-user.mjs <email> <password>
 import pg from 'pg';
+import { dbSsl } from './ssl.mjs';
 
 const password = process.env.SUPABASE_DB_PASSWORD;
 if (!password) {
@@ -22,7 +23,7 @@ const client = new pg.Client({
   user: process.env.SUPABASE_DB_USER || 'postgres.tbmdwivhekzfkeidbwia',
   password,
   database: 'postgres',
-  ssl: { rejectUnauthorized: false },
+  ssl: dbSsl(),
 });
 
 try {

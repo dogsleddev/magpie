@@ -3,6 +3,7 @@
 // Usage: SUPABASE_DB_PASSWORD=... node scripts/db/apply-sql.mjs <file.sql>
 import { readFileSync } from 'node:fs';
 import pg from 'pg';
+import { dbSsl } from './ssl.mjs';
 
 const password = process.env.SUPABASE_DB_PASSWORD;
 if (!password) {
@@ -21,7 +22,7 @@ const client = new pg.Client({
   user: process.env.SUPABASE_DB_USER || 'postgres.tbmdwivhekzfkeidbwia',
   password,
   database: 'postgres',
-  ssl: { rejectUnauthorized: false },
+  ssl: dbSsl(),
 });
 
 const sql = readFileSync(file, 'utf8');
