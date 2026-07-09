@@ -46,6 +46,15 @@ From BRD 7.3 + the persona revert. The query spine for most of these already exi
 
 Every item ships behind the same gate: `npm run type-check`, clean `npm run build`, exercise it, coordinate the push.
 
+## 3.5 Last dev step before a wider launch (do NOT skip)
+
+Before opening Magpie past the shared community account (per-user accounts, or any push beyond the current launch), **rotate the leaked credentials.** They sit in public git history, so rotation is the only thing that actually closes them:
+
+- **[Chris]** App account `dogsled@dogsled.dev` password (Supabase -> Authentication -> Users).
+- **[Chris]** Database password `SUPABASE_DB_PASSWORD` (Supabase -> Project Settings -> Database -> Reset), then update it in the local env on **both** machines.
+
+Full steps: `qc-audit/OWNER_ACTIONS.md` section 1. Deferred on purpose until this step (noted 2026-07-09); nothing running depends on either value (login rides the passwordless service-role path), so rotating is safe and non-breaking.
+
 ## 4. The rest (later)
 
 iPhone app (native vs PWA), finish the real Linq inbound loop, verify Krava routes on prod, screenshot-and-converse capture, "where'd you hear it" provenance, social.
