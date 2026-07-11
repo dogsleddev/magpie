@@ -132,6 +132,17 @@ export function connectionsPrompt(glint: string, existingTitles: string[]): AIPr
   };
 }
 
+/**
+ * A 1 to 3 word name for a curiosity, used when a caught glint runs longer than
+ * three words. A short label, not a sentence.
+ */
+export function shortTitlePrompt(text: string): AIPrompt {
+  return {
+    system: `Give a 1 to 3 word name for the curiosity below. It is a short label, not a sentence: no ending punctuation, no leading articles, Title Case, as few words as possible while staying recognizable (1 word is ideal, 3 is the hard maximum). Output ONLY the name and nothing else. ${NO_EM_DASH}`,
+    user: `Curiosity: "${text}"`,
+  };
+}
+
 export type CategorizeGroup = {
   /** Canonical entity name, e.g. "Seattle Seahawks", "Red Rising". */
   name: string;
