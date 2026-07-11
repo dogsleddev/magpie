@@ -3,19 +3,21 @@
 import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Tags, Shuffle, Waypoints } from 'lucide-react';
+import { LayoutGrid, Tags, Shuffle, Waypoints, Sparkles } from 'lucide-react';
 import { rediscover } from '@/lib/actions/topics';
 import { cn } from '@/lib/utils';
 
 type Tab = {
-  key: 'grid' | 'facets' | 'nest' | 'rediscover';
+  key: 'today' | 'grid' | 'facets' | 'nest' | 'rediscover';
   label: string;
   icon: typeof LayoutGrid;
   href?: Route;
 };
 
-// Grid, Facets, and Nest route. Rediscover spins to a random topic (server action).
+// Today (the glint loop), Grid, Facets, and Nest route. Rediscover spins to a
+// random topic (server action).
 const TABS: Tab[] = [
+  { key: 'today', label: 'Today', icon: Sparkles, href: '/home' },
   { key: 'grid', label: 'Grid', icon: LayoutGrid, href: '/app' },
   { key: 'facets', label: 'Facets', icon: Tags, href: '/facets' },
   { key: 'nest', label: 'Nest', icon: Waypoints, href: '/nest' },
@@ -40,6 +42,7 @@ export default function BottomTabBar({ variant = 'app' }: { variant?: 'app' | 'o
       {TABS.map((tab) => {
         const Icon = tab.icon;
         const active =
+          (tab.key === 'today' && pathname === '/home') ||
           (tab.key === 'grid' && pathname === '/app') ||
           (tab.key === 'facets' && pathname.startsWith('/facets')) ||
           (tab.key === 'nest' && pathname.startsWith('/nest'));

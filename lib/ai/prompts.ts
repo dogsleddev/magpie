@@ -138,7 +138,7 @@ export function connectionsPrompt(glint: string, existingTitles: string[]): AIPr
  */
 export function shortTitlePrompt(text: string): AIPrompt {
   return {
-    system: `Give a 1 to 3 word name for the curiosity below. It is a short label, not a sentence: no ending punctuation, no leading articles, Title Case, as few words as possible while staying recognizable (1 word is ideal, 3 is the hard maximum). Output ONLY the name and nothing else. ${NO_EM_DASH}`,
+    system: `Give a 1 to 3 word name for the curiosity below. It is a short label, not a sentence: no ending punctuation, no leading articles, all lowercase, as few words as possible while staying recognizable (1 word is ideal, 3 is the hard maximum). Output ONLY the name and nothing else. ${NO_EM_DASH}`,
     user: `Curiosity: "${text}"`,
   };
 }

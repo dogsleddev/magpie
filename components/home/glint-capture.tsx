@@ -101,7 +101,7 @@ export default function GlintCapture({
       {(provisional || result) && (
         <div className="space-y-2 rounded-xl border p-3">
           <div className="text-sm">
-            caught:{' '}
+            {result?.alreadyHad ? 'already in your nest: ' : 'caught: '}
             {result ? (
               <Link
                 href={`/topic/${result.topicId}`}

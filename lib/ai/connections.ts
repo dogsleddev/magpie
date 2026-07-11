@@ -1,18 +1,19 @@
 import { callClaude, MODELS } from '@/lib/ai/client';
 import { connectionsPrompt, extractJSON, type ConnectionsOutput } from '@/lib/ai/prompts';
-import { getTopicsLite } from '@/lib/queries/topics';
+import type { TopicLite } from '@/lib/queries/topics';
 
 export type Connection = { title: string; why: string; topicId: string | null };
 
 /**
- * The middle verb: given a freshly caught glint, find the 1 or 2 existing
- * curiosities it most genuinely connects to (a Haiku semantic match over the
- * user's titles, validated in scripts/connection-spike.mjs). Honest by design:
- * returns an empty list when nothing truly connects. Never throws; a model
- * failure just yields no chips.
+ * The middle verb: given a freshly caught glint and the caller's snapshot of the
+ * existing curiosities, find the 1 or 2 it most genuinely connects to (a Haiku
+ * semantic match over the titles, validated in scripts/connection-spike.mjs).
+ * The caller passes the topic list so this can run in parallel with the capture
+ * (the snapshot predates the new topic, so it never self-matches). Honest by
+ * design: returns an empty list when nothing truly connects. Never throws; a
+ * model failure just yields no chips.
  */
-export async function findConnections(glint: string, excludeTopicId?: string): Promise<Connection[]> {
-  const topics = (await getTopicsLite()).filter((t) => t.id !== excludeTopicId);
+export async function findConnections(glint: string, topics: TopicLite[]): Promise<Connection[]> {
   if (topics.length === 0) return [];
 
   const titleToId = new Map(topics.map((t) => [t.title.toLowerCase().trim(), t.id]));

@@ -213,7 +213,7 @@ export type AddTopicResult = {
  */
 export async function addTopicViaMagpie(
   idea: string,
-  options?: { subjectId?: string; parentTopicId?: string },
+  options?: { subjectId?: string; parentTopicId?: string; titleOverride?: string },
 ): Promise<AddTopicResult> {
   await requireUser();
   const trimmed = idea.trim();
@@ -237,8 +237,11 @@ export async function addTopicViaMagpie(
 
   let subjectId = options?.subjectId ?? (await resolveSubjectId(plan.subject));
   const facetIds = await resolveFacetIds(plan.facets);
+  // A caller can pin the title (a glint keeps the user's own words), so the topic
+  // is created titled correctly instead of created then renamed.
+  const title = options?.titleOverride?.trim() || plan.title;
   const topic = await createTopic({
-    title: plan.title,
+    title,
     subjectId,
     facetIds,
     parentTopicId: options?.parentTopicId ?? null,
