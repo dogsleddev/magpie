@@ -7,7 +7,14 @@ import { shortTitlePrompt } from '@/lib/ai/prompts';
 import { addTopicViaMagpie } from '@/lib/actions/topics';
 import { findConnections, type Connection } from '@/lib/ai/connections';
 import { setGlintSeed, updateTopicTitle } from '@/lib/queries/topics';
-import { getStreak, getUserTimezone, markTodayActive, type Streak } from '@/lib/queries/activity';
+import {
+  getActivityStrip,
+  getStreak,
+  getUserTimezone,
+  markTodayActive,
+  type ActivityDay,
+  type Streak,
+} from '@/lib/queries/activity';
 import { logEvent } from '@/lib/queries/usage';
 
 export type CaptureGlintResult = {
@@ -15,6 +22,7 @@ export type CaptureGlintResult = {
   title: string;
   connections: Connection[];
   streak: Streak;
+  strip: ActivityDay[];
 };
 
 /** Tidy a model-generated name down to at most 3 clean words. */
@@ -83,7 +91,7 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
     findConnections(trimmed, added.topicId),
     markTodayActive(tz),
   ]);
-  const streak = await getStreak(tz);
+  const [streak, strip] = await Promise.all([getStreak(tz), getActivityStrip(tz)]);
 
   await logEvent('glint_caught', {
     topicId: added.topicId,
@@ -92,5 +100,5 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
   });
 
   revalidatePath('/home');
-  return { topicId: added.topicId, title, connections, streak };
+  return { topicId: added.topicId, title, connections, streak, strip };
 }

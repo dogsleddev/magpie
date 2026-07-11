@@ -1,4 +1,3 @@
-import ActivityStrip from '@/components/home/activity-strip';
 import GlintCapture from '@/components/home/glint-capture';
 import { getActivityStrip, getStreak, getUserTimezone } from '@/lib/queries/activity';
 
@@ -15,8 +14,7 @@ export default async function HomePage() {
         <h1 className="text-2xl font-semibold tracking-tight">Today</h1>
         <p className="mt-0.5 text-sm text-muted-foreground">catch a glint. watch it connect.</p>
       </header>
-      <GlintCapture initialStreak={streak} />
-      <ActivityStrip days={strip} />
+      <GlintCapture initialStreak={streak} initialStrip={strip} />
     </div>
   );
 }
