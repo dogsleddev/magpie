@@ -71,7 +71,7 @@ export async function demoLogin(formData?: FormData) {
 
   const ok = await sharedAccountLogin('demo-login', DEMO_EMAIL, process.env.DEMO_LOGIN_PASSWORD);
 
-  redirect(ok ? (goNest ? '/nest' : openAdd ? '/app?add=1' : '/app') : '/login?error=demo');
+  redirect(ok ? (goNest ? '/nest' : openAdd ? '/app?add=1' : '/home') : '/login?error=demo');
 }
 
 /**

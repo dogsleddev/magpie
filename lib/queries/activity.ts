@@ -95,3 +95,26 @@ export async function getStreak(tz: string): Promise<Streak> {
 
   return { current, longest, today: dates.has(today) };
 }
+
+export type ActivityDay = { date: string; active: boolean };
+
+/** The last `days` local days (oldest first), each flagged active or not. */
+export async function getActivityStrip(tz: string, days = 14): Promise<ActivityDay[]> {
+  const supabase = await createClient();
+  const user = await requireUser();
+  const { data } = await (supabase as unknown as { from: (t: string) => any })
+    .from('activity_days')
+    .select('activity_date')
+    .eq('user_id', user.id);
+
+  const set = new Set<string>(
+    ((data ?? []) as { activity_date: string }[]).map((r) => r.activity_date),
+  );
+  const todayOrd = ordinal(localDate(tz));
+  const out: ActivityDay[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = fromOrdinal(todayOrd - i);
+    out.push({ date: d, active: set.has(d) });
+  }
+  return out;
+}
