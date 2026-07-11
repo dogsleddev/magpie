@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unescaped-entities, @next/next/no-img-element */
 import { Mic, FileText, Zap, MessageCircleQuestion, MessageCircleMore } from 'lucide-react';
-import { demoLogin, geminiLogin } from '@/lib/actions/demo-login';
+import { demoLogin } from '@/lib/actions/demo-login';
 import WaitlistForm from '@/components/landing/waitlist-form';
 import NestEmbed from '@/components/nest/nest-embed';
 import './landing.css';
@@ -74,34 +74,26 @@ export default function LandingPage() {
         </p>
         <div className="hero-cta">
           <div className="herobtns">
-            {demoOpen && (
-              <form action={demoLogin} style={{ display: 'contents' }}>
-                <input type="hidden" name="goNest" value="1" />
-                <button type="submit" className="btn-secondary">
-                  See the community nest
-                </button>
-              </form>
-            )}
-            <a href="/gemini" className="btn-primary">
-              Enter the Gemini nest
-            </a>
             {demoOpen ? (
-              <form action={demoLogin} style={{ display: 'contents' }}>
-                <input type="hidden" name="openAdd" value="1" />
-                <button type="submit" className="btn-secondary">
-                  Add a curiosity
-                </button>
-              </form>
+              <>
+                <form action={demoLogin} style={{ display: 'contents' }}>
+                  <button type="submit" className="btn-primary">
+                    Enter Magpie
+                  </button>
+                </form>
+                <form action={demoLogin} style={{ display: 'contents' }}>
+                  <input type="hidden" name="goNest" value="1" />
+                  <button type="submit" className="btn-secondary">
+                    See the community nest
+                  </button>
+                </form>
+              </>
             ) : (
               <a href="#how" className="btn-secondary">
                 See how it works
               </a>
             )}
           </div>
-          <a href="/gemini" className="hero-qr" aria-label="Scan or tap to enter the Gemini meetup nest">
-            <img src="/brand/qr-gemini.svg" alt="QR code for magpie.wiki/gemini" />
-            <p>scan for the Gemini meetup nest</p>
-          </a>
         </div>
         <p className="scrollcue">scroll to explore</p>
       </header>
@@ -131,35 +123,6 @@ export default function LandingPage() {
             friends, family, or your team, collect together, and watch one constellation grow from
             everyone's ideas. The community nest above is what that looks like.
           </p>
-        </div>
-      </section>
-
-      <section id="gemini">
-        <div className="wrap">
-          <p className="eyebrow">Live at the Gemini meetup</p>
-          <h2 className="section-title">Join the meetup nest.</h2>
-          <p className="section-lede">
-            We're presenting Magpie at the Gemini meetup and building a group nest live. Scan the
-            code or tap the button and you're in: one shared account, one constellation, fed by
-            the whole room.
-          </p>
-          <div className="gemini-row">
-            <div className="gemini-qr">
-              <img src="/brand/qr-gemini.svg" alt="QR code linking to magpie.wiki/gemini" />
-              <p className="gemini-link">magpie.wiki/gemini</p>
-            </div>
-            <div className="gemini-action">
-              <form action={geminiLogin} style={{ display: 'contents' }}>
-                <button type="submit" className="btn-primary">
-                  Enter the Gemini nest
-                </button>
-              </form>
-              <p className="gemini-note">
-                A shared account just for the meetup. Add a curiosity during the talk and watch it
-                land in the constellation on screen.
-              </p>
-            </div>
-          </div>
         </div>
       </section>
 
