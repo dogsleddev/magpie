@@ -1,6 +1,6 @@
 # Magpie · Handoff to a New Session
 
-_Updated 2026-07-10. **Magpie is pivoting to 2.0, glint-first:** catch a small shiny curiosity in about 30 seconds, watch Maggie connect it to what you already collect, and keep a daily streak. A hard adversarial critique reshaped the plan to ship the glint loop first (Slice-0, no auth) before building auth or the rest. The LinkedIn launch is parked. The full 2.0 model is `docs/MAGPIE_2.md`. Read top to bottom before doing anything._
+_Updated 2026-07-11. **Slice-0 of the glint-first 2.0 pivot is BUILT, verified end to end, and deployed to a preview.** It lives on branch `feat/magpie-2`. The current phase is **dogfooding** (catch a glint daily for ~2 weeks; nothing new builds until the loop proves it is fun). `master` is a clean trunk now (the krava/linq removal deployed). Read top to bottom before doing anything._
 
 ---
 
@@ -8,18 +8,53 @@ _Updated 2026-07-10. **Magpie is pivoting to 2.0, glint-first:** catch a small s
 
 You are picking up **Magpie**, a personal conversation gym at **magpie.wiki**. Founder: **Chris Dougherty** (dogsled.dev, GitHub `dogsleddev`). Windows 11 + PowerShell. Repo: **`C:\dev\magpie`** (never the old OneDrive path).
 
-**The app is BUILT and LIVE** as a shared-account community (one-click "Enter Magpie"). It has the five modes, the Nest constellation, entity groups, Add Topic, Facets, search, and Recent Ideas.
-
-**The current work is Magpie 2.0**, glint-first. The daily loop: catch a glint (a curiosity, one 1-to-3-word record), Maggie shows connection chips, catching one keeps your streak (7-day recovery, timezone-aware), and an opt-in daily email/text pulls you back. A public read view lets anyone browse without signup; the personal dashboard is gated. Everything heavier (per-user auth, item controls, the Library, adaptive temperature, communities) comes after the loop is proven by dogfooding. **`docs/MAGPIE_2.md` is the canonical spec.**
+**Magpie is pivoting to 2.0, glint-first.** The daily loop: catch a glint (a small curiosity, one 1-to-3 word record), Maggie shows connection chips to what you already collect, and catching one keeps your streak. **Slice-0 (that loop, no auth, on the shared account) is built and working.** The heavier stuff (per-user auth, item controls, the Library, communities, the daily email/text trigger) comes after the loop is dogfood-proven. **`docs/MAGPIE_2.md` is the canonical spec.**
 
 **Read in this order:**
 
-1. **`CLAUDE.md`** (the North Star; its "Current status" section is what is live) ← start here
-2. **`docs/BRD.md`** (the PRD, revised to 2.0: vision, requirements, metrics, decisions)
-3. **`docs/MAGPIE_2.md`** (the canonical 2.0 product model, schema, and staged roadmap)
-4. **`docs/SOP.md`** (the build plan: Slice-0 first, then phases, who does what)
-5. **`PROGRESS.md`** (build log; the START HERE block has the open bugs + backlog)
-6. Skim `docs/COMPETITORS.md` (positioning), `docs/MESSAGING.md` + `docs/MICROCOPY.md` (locked copy), `docs/BRAND.md` (voice), `docs/NEST.md`, `docs/FUTURE_FEATURES.md`
+1. **This file**, then the "Where we are" section below.
+2. **`CLAUDE.md`** (the North Star; it has a 2.0 banner up top).
+3. **`docs/MAGPIE_2.md`** (the canonical 2.0 product model, schema, staged roadmap).
+4. **`docs/BRD.md`** (the PRD) and **`docs/SOP.md`** (the build plan: Slice-0, then phases).
+5. Skim `docs/COMPETITORS.md`, `docs/MESSAGING.md` + `docs/MICROCOPY.md` (locked copy), `docs/BRAND.md` (voice), `docs/NEST.md`, `docs/FUTURE_FEATURES.md`.
+
+---
+
+## Where we are (session end, 2026-07-11): read this to pick up
+
+**Check out `feat/magpie-2`. That is where 2.0 lives** (both the pivot docs and Slice-0). `master` has the krava/linq removal but NONE of the pivot; do not work from it.
+
+**What shipped this session:**
+- **`master` is a clean, current trunk.** The `chore/remove-krava-linq` branch (krava/linq removal + QC hardening + rate limiting + migrations 0002 to 0007) was fast-forward merged to `master` and **deployed to prod** (verified: `magpie.wiki/krava` and `/linq` now 404). The live app is still the pre-pivot experience; the pivot is not on master yet.
+- **The 2.0 pivot docs are written and aligned** (on `feat/magpie-2`): `docs/MAGPIE_2.md` (new, canonical), revised `docs/BRD.md` / `docs/SOP.md`, and every reference doc got a 2.0 banner (`CLAUDE.md`, `PRODUCT.md`, `SCHEMA.md`, `NEST.md`, `STATUS.md`, `FUTURE_FEATURES.md`, etc.).
+- **The connection engine is validated.** `scripts/connection-spike.mjs` proved Haiku semantic matching produces genuinely good "connects to X" chips on the real 171-topic graph (keyword matching was too brittle; embeddings are only a later scale optimization).
+- **Migration `0008_slice0.sql` is APPLIED to prod** (additive: `user_settings.timezone`, `topics.brief_seed` + `raw_input`, `activity_days`, `usage_events`). Verified with `scripts/db/verify-0008.mjs`.
+- **Slice-0 is built, type-checked, and verified in the browser** end to end: catch a glint (optimistic, instant), it gets a 1-to-3 word name, 2 Haiku connection chips land a beat later linked to real topics, and the streak increments once per local day. `/home` is the entry (wordmark + login both land there), with an activity strip.
+
+**`feat/magpie-2` commits (all pushed to origin):**
+- `59b0bce` slice-0 start (connection spike + the additive migration)
+- `a021915` the capture flow
+- `e89d426` 1-to-3 word glint names
+- `3a385d7` `/home` as the entry + the activity strip
+- (plus `27fe123` the pivot docs, under those)
+
+**The dogfood preview:** `https://magpie-git-feat-magpie-2-dogsled.vercel.app/home` (Chris uses this daily). It has Vercel Deployment Protection on (Chris passes it because he owns the project). Glints land on the shared account, which is the plan.
+
+**The Slice-0 build map (what exists now):**
+- `lib/actions/glints.ts`: `captureGlint` (reuses `addTopicViaMagpie` to file the curiosity, derives the short title for >3-word glints, sets `raw_input`/`brief_seed`, runs connections, marks the streak, logs the event).
+- `lib/ai/connections.ts`: `findConnections`. `lib/ai/prompts.ts`: `connectionsPrompt` + `shortTitlePrompt`.
+- `lib/queries/activity.ts`: `getUserTimezone`, `markTodayActive`, `getStreak`, `getActivityStrip`. `lib/queries/usage.ts`: `logEvent`. `lib/queries/topics.ts`: `setGlintSeed` added.
+- `app/(main)/home/page.tsx`, `components/home/glint-capture.tsx` (optimistic client capture), `components/home/activity-strip.tsx`.
+- `components/nav/app-bar.tsx` (wordmark → `/home`), `lib/actions/demo-login.ts` (default redirect → `/home`).
+
+**Known small gaps (not blockers; post-dogfood):**
+- The Nest still labels nodes with full titles; the new short glint names want the short-label update (`docs/NEST.md`, C.11).
+- The activity strip's live-refresh-after-catch relies on the standard `revalidatePath('/home')`; confirmed rendering, not separately confirmed refreshing mid-session.
+- The glint's connection chips show the "why" only as a hover tooltip (no hover on mobile); consider showing it inline or on tap.
+
+**The dogfood gate:** catch a glint daily for ~2 weeks. The one question: does it make you want to open it tomorrow? `usage_events` logs `glint_caught` so D7 return is measurable. If yes, the loop earned Phase 1 (`docs/SOP.md`). If not, rethink the loop before building more.
+
+**Immediate next candidates (after / alongside dogfood):** the Nest short-labels; then Phase 1 (per-user auth + the public read view + the daily email/text trigger, which is what actually pulls people back).
 
 ---
 
@@ -34,55 +69,69 @@ You are picking up **Magpie**, a personal conversation gym at **magpie.wiki**. F
 - Marketing-shaped words: "unlock," "amazing," "supercharge," "AI-powered," "seamless," "next-level," "discover insights."
 - Excessive hedging. Direct opinions land harder.
 
-**Chris likes:** direct opinions with reasoning ("My pick: A, here's why"), concrete over abstract ("5 minutes" not "a few minutes"), engineer-first detail when relevant, options over one default when naming, honest pushback when he is wrong, diagrams and mockups to align before coding.
+**Chris likes:** direct opinions with reasoning ("My pick: A, here's why"), concrete over abstract ("5 minutes" not "a few minutes"), engineer-first detail when relevant, options over one default when naming, honest pushback when he is wrong, diagrams and mockups to align before coding. He moves fast and delegates ("go with your recommendations"): make a clear pick and execute, keeping prod-affecting actions gated on his explicit go.
 
 **Avoid:** sycophancy / "Great question," over-explaining before acting, asking permission for trivial things, making up facts (search or ask instead).
 
-**Coordinate before irreversible/outward moves** (pushes auto-deploy to prod; he does dashboard clicks for Supabase/Vercel/DNS, you drive the code).
+**Coordinate before irreversible/outward moves** (pushing to `master` auto-deploys to prod; he runs Supabase/Vercel/DNS dashboard actions, you drive the code and git). Applying DB migrations is his dashboard job (see env note below).
 
 ---
 
-## What Magpie is
+## Terminology (settled)
 
-A **conversation gym**. Hero line: _Collect curiosities. Talk them through._ You build a wiki of what you find interesting and talk it out loud in 3-to-5-minute reps with a persona who remembers. **2.0 adds the memory:** the best of what you say comes back on a spaced schedule. Four verbs: **Collect. Talk. Save the best. Review.**
-
-- **Three dimensions:** Subject × Topic × Facet.
-- **Persona = Maggie. Brand / product / domain = Magpie.** (Locked.)
-
----
-
-## Current state (live today, pre-pivot)
-
-- **https://magpie.wiki**, a **shared-account community**: everyone enters via one-click **"Enter Magpie"** (`dogsled@dogsled.dev`) and grows one shared grid + Nest.
-- **Live nav:** bottom bar is Grid / Facets / Nest / Rediscover; the wordmark links to the Grid (`/app`).
-- **Live topic tabs:** the persona-named tab renders Maggie's chat and is the default; then Brief, Challenge, Questions; the last tab is Thoughts (bullet capture). Component names are legacy (`ConvoMode` is the chat, `PersonaMode` is the capture).
-- **Shipped:** the Nest mind map (`/nest`, full-bleed on every viewport), entity groups with a drilldown UI (Red Rising, Corvids; umbrella check on every Add Topic), Add Topic with auto-filed subject + facets + grouping, Rediscover (random topic), search (`/search`), Recent Ideas + inline editing (`/recent`), Facets nav (`/facets`), Maggie's per-topic AI opener, quiet delete-topic, mic-to-text, Organize.
-- **RLS is already per-user** on every table; the shared login just pools all signal under one `auth.uid()`. So 2.0 activates per-user **authentication**, it does not "turn on RLS."
-- **Krava and Linq are being removed** (branch `chore/remove-krava-linq`). Out of the 2.0 stack.
-- **Open / caveats:** per-user signup is NOT wired (no SMTP, plus a `www` vs apex callback allow-list gap in `PROGRESS.md`); iOS mic is a WebKit dead stub (keyboard-dictation hint shipped, unverified on-device); repo is public and the demo-account + DB passwords in git history need rotating before real signups (see below).
+- **Glint** = the catch and the streak unit. "Catch a glint." A glint IS a curiosity.
+- **Curiosity** = the user-facing collection word (homepage, in-app). Hero line stays _Collect curiosities. Talk them through._
+- **Topic** = the internal / code entity (the `topics` table). Same record. No code-wide rename.
+- **Persona = Maggie. Brand / product / domain = Magpie.**
 
 ---
 
-## The 2.0 direction (the current work)
+## The 2.0 direction (locked decisions)
 
-Full detail in `docs/MAGPIE_2.md` and `docs/BRD.md`. It is **glint-first** after a hard adversarial critique (2026-07-10). Chris's locked decisions:
+Full detail in `docs/MAGPIE_2.md` and `docs/BRD.md`. Glint-first, after a hard adversarial critique.
 
-1. **The pivot is the focus, and it ships glint-first.** The daily habit is the glint, not a spaced-repetition review. Prove the loop on the shared account (Slice-0, no auth) before building auth or anything else.
-2. **Terminology: glint / curiosity / topic, one record.** A **glint** is the catch and the streak unit; a **curiosity** is what it becomes (user-facing, on the homepage); a **topic** is the code entity. No code-wide rename.
-3. **The glint is the daily habit and the streak.** Catch at least one glint (curiosity) per day, about 30 seconds, keeps the streak. 7-day recovery. "Today" is the user's timezone, or PST if unknown.
-4. **A glint is a curiosity is a topic.** Catching a glint = adding a curiosity. No separate glints table; it enters the graph and connects for free.
-5. **Connections fire at capture.** On catch, Maggie shows 2-3 tappable "connects to X" chips from a Haiku semantic match (spike-validated against the real 171-topic graph, `scripts/connection-spike.mjs`; keyword matching was too brittle). Capture is optimistic (saves instantly, chips animate in a beat later). Embeddings are only a later scale optimization.
-6. **The trigger is an opt-in daily email or text** (~7am local). Magpie has none today; it is what actually brings users back, and lands with accounts (email first via Resend, SMS later via Twilio).
-7. **A totally public read view.** Anyone browses the Grid, curiosities, Facets, Nest (the showcase) without signup; they never see a dashboard. Auth gates only the personal Home and private capture.
-8. **Home is the gated personal dashboard** behind the wordmark (your streak, glints, stats), the post-login landing. **Library replaces Rediscover** in the lower-right.
-9. **Facets become a controlled vocabulary:** max 50 system-wide (curated later), 20 per user. Makes connections reliable.
-10. **Communities, three kinds:** the public read view; shared-account communities (Gemini-style, dashboard/settings admin-gated); individual-share nests (later). The 168-topic account becomes the flagship public community nest (preserves demo density, seeds new users).
-11. **Accessibility Settings:** font choice (incl. a dyslexia-friendly option like OpenDyslexic) and theme (System / Light / Dark, default Dark).
-12. **Voice, server-side STT** (iOS Web Speech is dead), the priority right after the core structural work.
-13. **Nest: short-name labels + a 2D/3D toggle** (2D stays default; 3D is a parallel track Chris builds with Fable, over the same `build-graph.ts`).
-14. **No Daily Review feature.** The only daily thing is the glint. "Review" is just what Maggie does when she resurfaces past glints in the Library (pull-based, optional, never a gate). **Deferred (cut from early slices, not deleted):** any spaced-repetition ordering of that resurfacing, the Maggie tab merge, item controls with a binary favorite first (1-to-10 later), adaptive temperature behavior (columns captured early), the AI interest-picker (use the starter pack), community share.
+1. **The glint is the daily habit and the streak.** Catch at least one per day (about 30 seconds), keeps the streak. 7-day recovery. "Today" is the user's timezone, PST if unknown.
+2. **A glint is a curiosity is a topic.** No separate glints store; it enters the graph and connects for free.
+3. **Connections fire at capture,** from a Haiku semantic match (spike-validated). Optimistic capture; chips a beat later.
+4. **No Daily Review feature.** "Review" is just Maggie resurfacing past glints in the Library (pull-based, optional, never a gate).
+5. **The trigger is an opt-in daily email or text** (Phase 1; the real retention mechanism, email via Resend first, SMS later).
+6. **A totally public read view** (browse everything, no signup, no dashboard). **Home** is the gated personal dashboard behind the wordmark and the post-login landing. **Library replaces Rediscover.**
+7. **Facets become a controlled vocabulary** (max 50 system-wide, 20 per user).
+8. **Communities, three kinds:** the public read view; shared-account communities (Gemini-style, dashboard/settings admin-gated); individual-share nests (later). The 171-topic account becomes the flagship public community nest.
+9. **Accessibility Settings** (font choice incl. a dyslexia-friendly option; theme System/Light/Dark, default Dark). **Voice = server-side STT** (iOS Web Speech is dead), post-structural.
+10. **Nest: short-name labels + a 2D/3D toggle** (2D stays default; 3D is Chris's parallel Fable track over the same `build-graph.ts`).
+11. **Deferred (cut from early slices, not deleted):** the Maggie tab merge, item controls (binary favorite first, 1-to-10 later), adaptive-temperature behavior (columns captured early), the AI interest-picker (use the starter pack), community share.
 
-**The load-bearing build facts:** timezone must be stored before any dated table (the streak has no correct "today" otherwise); a glint is a topic, so capture is the existing add-a-topic path made fast and optimistic; and when item controls land, `response_items` needs a `generation_id`/`is_current` marker or reroll silently drops favorited text. Build order and ownership: `docs/SOP.md`.
+---
+
+## Env and tooling realities (learned this session)
+
+- **`.env.local` has** `NEXT_PUBLIC_SUPABASE_URL` + `_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `ANTHROPIC_API_KEY`. It does **NOT** have `SUPABASE_DB_PASSWORD`, and `DEMO_LOGIN_PASSWORD` is empty.
+- **You cannot apply DDL migrations from here** (no DB password; the service-role key only reaches the PostgREST data API, not `CREATE`/`ALTER TABLE`). **Chris runs migrations in the Supabase SQL editor** (`main / PRODUCTION`, Role postgres). Write the SQL, hand him the paste-able block, then verify with a read-only script via the service-role key (pattern: `scripts/db/verify-0008.mjs`).
+- **Local login works** via the passwordless service-role path in `lib/actions/demo-login.ts` (no `DEMO_LOGIN_PASSWORD` needed).
+- **Read scripts run with** `node --env-file=.env.local scripts/...mjs` and the service-role key (see `scripts/connection-spike.mjs`, `scripts/db/verify-0008.mjs`). NOTE: a bare `node -e` without `--env-file` will not see `.env.local`.
+- **The generated Supabase types (`lib/supabase/types.ts`) do NOT include the 0008 tables/columns** (`activity_days`, `usage_events`, `brief_seed`, `raw_input`, `timezone`). The new query functions use a narrow `as unknown as { from }` cast with a comment. Regenerate types once a DB connection is available and drop the casts.
+- **Vercel MCP (`vercel-chris`) needs an auth step** that a non-interactive session cannot do; verify deploys over HTTP (curl) instead. `gh-chris` did not connect; use plain `git`.
+
+---
+
+## Stack and ops
+
+- Next.js 15 (App Router, TS strict), Supabase (Postgres + RLS + Auth + Storage), Anthropic (Sonnet 4.5 `claude-sonnet-4-5-20250929`, Haiku 4.5 `claude-haiku-4-5-20251001`), Vercel, Tailwind + shadcn/ui.
+- `lib/queries/` is the single source of truth (UI + AI share it).
+- **Repo:** `github.com/dogsleddev/magpie` (public). Push to `master` auto-deploys to magpie.wiki. **2.0 lives on `feat/magpie-2`** (pushed to origin, its own Vercel preview). Merge to master only when a slice is proven and Chris green-lights the deploy.
+- Migration files: `master` is at 0007; `feat/magpie-2` adds `0008_slice0.sql` (applied to prod already).
+
+---
+
+## Hard rules (do not violate)
+
+- **No em dashes** anywhere (code, comments, copy, commits). Sweep new docs with a grep for the em and en dash characters before committing.
+- **Do not invent taglines or microcopy.** Use `MESSAGING.md` / `MICROCOPY.md`. New features ship with the feature name only. The one locked hero line stays _Collect curiosities. Talk them through._
+- **Clear `.next` before any build or dev** (`Remove-Item -Recurse -Force .next`).
+- **RLS everywhere.** No service-role key in the client. Every new table gets the four-policy `auth.uid() = user_id` pattern; join tables gate through the parent. The deliberate exceptions (public-read on showcase content, a `SECURITY DEFINER` community-join, global rank) never weaken table RLS.
+- **No Anthropic SDK in the client.** All model calls go through server routes / server actions.
+- **Mobile-first at 375px.** Verify before calling anything done: `npm run type-check`, clean `npm run build`, and exercise the real flow in the browser. Coordinate before pushing to master.
 
 ---
 
@@ -92,29 +141,8 @@ Slice-0 runs on the shared account and needs none of this. Phase 1 (per-user aut
 
 ---
 
-## Stack and ops
-
-- Next.js 15 (App Router, TS strict), Supabase (Postgres + RLS + Auth + Storage), Anthropic (Sonnet 4.5 `claude-sonnet-4-5-20250929`, Haiku 4.5 `claude-haiku-4-5-20251001`), Vercel, Tailwind + shadcn/ui.
-- `lib/queries/` is the single source of truth (UI + AI + any future API share it). Slice-0 adds `activity_days` + `usage_events` and `user_settings.timezone`; later phases add `response-items.ts`, `library.ts`, `stats.ts`, and the facet-vocabulary and community modules. New infra in 2.0: Resend + Vercel Cron (daily trigger), a transcription API (server-side voice), pgvector (embeddings, Phase 3).
-- **Connectors:** `vercel-chris` (Vercel MCP, `dogsled` team) drives and verifies deploys. `.mcp.json` is gitignored. `gh-chris` did not connect; use plain `git`.
-- **Repo:** `github.com/dogsleddev/magpie` (public). Push to `master` auto-deploys to magpie.wiki. **2.0 lives on a WIP branch** until its NOW slice is coherent (master keeps prod live meanwhile).
-
----
-
-## Hard rules (do not violate)
-
-- **No em dashes** anywhere (code, comments, copy, commits).
-- **Do not invent taglines or microcopy.** Use `MESSAGING.md` / `MICROCOPY.md`. New features without a locked tagline ship with the feature name only. The one locked hero line stays _Collect curiosities. Talk them through._
-- **Clear `.next` before any build or dev** (`Remove-Item -Recurse -Force .next`).
-- **RLS everywhere.** No service-role key in the client. Every new 2.0 table gets the four-policy `auth.uid() = user_id` pattern; join tables gate through the parent row. The one deliberate future exception (global streak rank) uses a narrow `SECURITY DEFINER` function, never weakened table RLS.
-- **No Anthropic SDK in the client.** All model calls go through `app/api/ai/*`.
-- **Mobile-first at 375px.** Every new 2.0 surface designed on the phone first.
-- **Verify before calling anything done:** `npm run type-check`, clean `npm run build`, exercise it. Coordinate before pushing (prod auto-deploys).
-
----
-
 ## Open decisions (for Chris)
 
-Recommendations are in `docs/MAGPIE_2.md` section E and `docs/BRD.md` section 11. Settled in batch 2: pricing (free now, paid later), favorite semantics (a light save with 1-to-10 intensity), and community share (in scope, highlight-grain, invite-by-link nests). The ones that most want his explicit call: whether the Daily Glint feeds the streak or keeps its own record, the Daily Review composition + spaced-repetition intervals, tagging model (highlight tags + colors vs facets), community-nest roles + when the full infra ships, and when global streak rank turns on.
+Recommendations are in `docs/MAGPIE_2.md` section E and `docs/BRD.md` section 11. Mostly settled now (glint-first, per-user accounts, the trigger, facet caps, communities, pricing free-now). The ones still wanting his explicit call: the one dogfood metric (recommended D7 return), the facet-cap read (recommended 20 per user), shared-account community dashboard behavior, email-vs-SMS trigger order, and when global streak rank turns on.
 
 🪶
