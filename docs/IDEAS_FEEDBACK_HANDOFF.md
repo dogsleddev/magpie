@@ -1,4 +1,6 @@
-# Magpie · Ideas + Feedback (like / dismiss) — readiness review & handoff
+# Magpie · Ideas + Feedback (like / dismiss): readiness review and handoff
+
+> **Magpie is now 2.0 (glint-first).** Canonical product model: [MAGPIE_2.md](MAGPIE_2.md). Build plan: [SOP.md](SOP.md). This doc predates the pivot and its like/dismiss scoping is now absorbed into 2.0: item controls are settled as a **binary Favorite / Dismiss / Highlight** on Brief, Challenge, and Questions (backed by a `response_items` table, not `content_feedback`), the preference signal becomes the **adaptive Maggie temperature** (a per-user `spice_score`, columns captured early and behavior flipped on later), and the account-model fork below is settled: **per-user auth (Phase 1)**, with the loop proven first on the shared account (Slice-0). Where this doc describes schema, surfaces, or the account model, MAGPIE_2.md wins. Keep it as the historical record of the like/dismiss investigation (the Discover/dormant-`discover_items` mapping and the Readwise pattern notes are still accurate).
 
 _Lean readiness review, 2026-07-09. For the next session, when the feature is scoped. Feature in one line: Maggie proposes ideas; the user likes (favorites / saves) or dismisses them, and that signal conditions what Maggie generates next. Readwise-style feedback loop. Same like/dismiss extends to Brief and Challenge._
 
@@ -34,7 +36,7 @@ The transferable ideas: a feedback verb on every surfaced item; the feedback con
 | **Convo** | Live, streamed | `app/api/ai/convo/route.ts`, `components/topic/convo-mode.tsx` |
 | **Settings** | `persona_name`, `ai_suggestions`, `default_mode` | table `user_settings`, `lib/queries/settings.ts` |
 | **Rediscover** (spin to a random topic) | Live. NOT Discover. | `rediscover()` in `lib/actions/topics.ts`, bottom tab |
-| **Glints** (inward: resurface EXISTING topics) | Planned, not built | `docs/FUTURE_FEATURES.md` section 8 |
+| **Glints** (inward: resurface EXISTING topics) | Planned, not built | `docs/FUTURE_FEATURES.md` section 8 [2.0 rename: this inward-surfacing mechanic is now the **resurfacing engine**, living in the Library; the word "glint" now means the daily capture. See MAGPIE_2.md C.4, C.12.] |
 | **Feedback / preference signal store** | **Does not exist** | (greenfield) |
 
 Two things worth internalizing:
@@ -74,7 +76,7 @@ On the Claude API, "trains Maggie" realistically means feeding liked/dismissed s
 
 ---
 
-## Proposed shape (options, not locked — for you to react to)
+## Proposed shape (options, not locked, for you to react to)
 
 **Schema**
 - A generic feedback table, target-agnostic so it covers ideas AND Brief/Challenge:
@@ -105,14 +107,14 @@ On the Claude API, "trains Maggie" realistically means feeding liked/dismissed s
 
 ## Touchpoint index (where the work lands)
 
-- Schema / migration: new `content_feedback` table (+ maybe widen `ai_cache` mode) — `supabase/migrations/00xx_*.sql`
-- `lib/queries/discover.ts` — generation + listing (exists, dormant)
-- `lib/queries/feedback.ts` — NEW
-- `lib/ai/prompts.ts` — `ideasPrompt` NEW; add `preferenceContext` to brief/challenge
-- `app/api/ai/*` — an ideas route; brief/challenge routes unchanged except prompt input
-- `components/topic/text-mode.tsx` — like/dismiss next to Reroll
-- Discover feed page + `components/nav/bottom-tab-bar.tsx` — NEW surface
-- `lib/queries/settings.ts` / `user_settings` — if preference toggles or the account-model decision touch settings
+- Schema / migration: new `content_feedback` table (+ maybe widen `ai_cache` mode), in `supabase/migrations/00xx_*.sql`
+- `lib/queries/discover.ts`: generation + listing (exists, dormant)
+- `lib/queries/feedback.ts`: NEW
+- `lib/ai/prompts.ts`: `ideasPrompt` NEW; add `preferenceContext` to brief/challenge
+- `app/api/ai/*`: an ideas route; brief/challenge routes unchanged except prompt input
+- `components/topic/text-mode.tsx`: like/dismiss next to Reroll
+- Discover feed page + `components/nav/bottom-tab-bar.tsx`: NEW surface
+- `lib/queries/settings.ts` / `user_settings`: if preference toggles or the account-model decision touch settings
 
 ---
 

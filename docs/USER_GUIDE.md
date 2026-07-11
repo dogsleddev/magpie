@@ -1,5 +1,7 @@
 # Magpie user guide
 
+> **Magpie is now 2.0 (glint-first).** Canonical product model: [MAGPIE_2.md](MAGPIE_2.md). Build plan: [SOP.md](SOP.md). This doc predates the pivot; where it describes the daily habit, navigation, modes, or roadmap, MAGPIE_2.md wins. This guide still accurately describes the current LIVE app (the shared community account, the five topic modes, the Grid, Facets, and the Nest), so it holds as a manual for what ships today.
+
 ## What is Magpie
 
 Magpie is a shared home for the things you find interesting, and a place to talk each one through with Maggie, the resident conversation partner. You collect curiosities (a question, a book, a strange fact, a half-formed idea) and the app helps you riff on each one: quick primers, gentle pushback, open questions, and a running chat. A magpie collects shiny things; your topics are the shiny things, and the app is the nest. The whole collection even renders as a living constellation, also called the Nest.
@@ -43,7 +45,7 @@ The Grid is home. It is a phone-width column, top to bottom:
 
 Inside a subject you get a back link to the Grid, an "Add a curiosity" button, and the topic list. If any topics carry facets, a row of filter chips sits above the list: an "All" chip first, then one chip per facet with its topic count, in alphabetical order. Tap a facet chip to filter to just those topics (the active chip turns teal), tap "All" to clear. The filter is per-visit and resets when you leave. The same chips appear above a collection's sub-topic list.
 
-Two pieces of chrome frame every screen. The top bar holds the Magpie wordmark (always a tap back to the Grid) and a "Join the waitlist" button that hops out to the landing page. The bottom bar holds four tabs, in order: **Grid**, **Facets**, **Nest**, and **Rediscover**. The first three go places; Rediscover spins you to a random topic on the spot.
+Two pieces of chrome frame every screen. The top bar holds the Magpie wordmark (always a tap back to the Grid) and a "Join the waitlist" button that hops out to the landing page. The bottom bar holds four tabs, in order: **Grid**, **Facets**, **Nest**, and **Rediscover**. The first three go places; Rediscover spins you to a random topic on the spot. (In 2.0, **Library replaces Rediscover** as the fourth tab, with the random spin folded in as a "surprise me" action, and the daily habit becomes the glint: catch a small curiosity in about 30 seconds, watch Maggie surface connection chips, and keep a streak. See MAGPIE_2.md.)
 
 ## Inside a topic
 
@@ -208,10 +210,10 @@ No. Titles are Maggie's department. You can change a topic's subject and facets 
 No. Deleting a thought, topic, or collection is immediate and permanent.
 
 **What are Glints and Draw Out?**
-Future features, marked "Coming soon" on the landing page. Neither is usable yet; Rediscover is the resurfacing that exists today.
+Future features, marked "Coming soon" on the landing page. Neither is usable yet; Rediscover is the resurfacing that exists today. (Note: in 2.0 the word "glint" is redefined. It now means the daily capture (catching a curiosity, the streak unit), while the older inward-surfacing feature this FAQ calls "Glints" is renamed the resurfacing engine and moves into the Library. See MAGPIE_2.md.)
 
 **Will Magpie ping me?**
-No. No notifications, streaks, feeds, or engagement emails. The landing page makes the promise plainly: pull, never push, and no ads, ever.
+No, not today. No notifications, streaks, feeds, or engagement emails. The landing page makes the promise plainly: pull, never push, and no ads, ever. (In 2.0 this softens: there is a quiet glint streak, and an opt-in daily email or text (off by default, your choice) becomes the one trigger that invites you back to catch a glint. Everything else stays pull, never push. See MAGPIE_2.md.)
 
 **What is the Gemini nest?**
 A temporary, separate shared account for the Gemini meetup, reachable during the event via magpie.wiki/gemini. It is not the community nest, and it goes away after the event.

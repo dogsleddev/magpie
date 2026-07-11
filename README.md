@@ -1,5 +1,7 @@
 # Magpie
 
+> **Magpie is now 2.0 (glint-first).** Canonical product model: [docs/MAGPIE_2.md](docs/MAGPIE_2.md). Build plan: [docs/SOP.md](docs/SOP.md). This doc predates the pivot; where it describes the daily habit, navigation, modes, or roadmap, MAGPIE_2.md wins. The setup, stack, scripts, code style, and brand reference below are still current.
+
 > Collect curiosities. Talk them through.
 
 A personal conversation gym. Build a grid of topics you care about. Get fresh angles in seconds. Riff for 3 to 5 minutes. Capture what you said. Watch the grid grow.
@@ -100,13 +102,15 @@ magpie/
 │       ├── starter-topics.ts      # 13 subjects, 18 facets, ~113 topics
 │       └── bakes/                 # Pre-written content for Tier 2 mocked features
 ├── styles/tokens.css              # The plumage palette
-├── supabase/migrations/           # SQL migrations (Option 2 columns dormant in 0001)
+├── supabase/migrations/           # SQL migrations (entity-group columns is_group / parent_topic_id are LIVE, not dormant)
 └── package.json
 ```
 
 ---
 
 ## Build sequence
+
+> Note: this is the original pre-2.0 build order and is kept for history. The current plan is glint-first (Slice-0: the glint loop on the shared account, no auth; then per-user auth, item controls, the Library, and communities). See `docs/SOP.md` and `docs/MAGPIE_2.md` section D. In 2.0 the old inward-surfacing "Glints" (item 10) is renamed the resurfacing engine, and "Glint" now means the daily capture.
 
 Full plan: `docs/BUILD_PLAN.md`. The 10-hour prototype before the hackathon covers a slice of phases 1-5 plus minimal polish. The full sequence:
 

@@ -1,5 +1,7 @@
 # Nest View
 
+> **Magpie is now 2.0 (glint-first).** Canonical product model: [MAGPIE_2.md](MAGPIE_2.md). Build plan: [SOP.md](SOP.md). This doc predates the pivot; where it describes the daily habit, navigation, modes, or roadmap, MAGPIE_2.md wins. The Nest architecture, the three-dimension graph model, `build-graph.ts`, and the interaction/surface detail here are all still current.
+
 The **Nest** is Magpie's mind map: a force-directed constellation of the user's whole wiki. It **replaced the Journal tab**. Instead of a flat list of thoughts, it's the reflective overview surface where the interrelationships between topics and facets are visible, and node size reflects thought density.
 
 This is the realized version of the old "Nest View" (Phase 11) concept and the static dot-mockup that used to sit on the landing page.
@@ -17,6 +19,8 @@ This is the realized version of the old "Nest View" (Phase 11) concept and the s
 
 **Node size:** thought count; degrades gracefully to facet-degree when thoughts are 0.
 **Color:** an iridescent teal -> blue -> purple ramp from the plumage palette, one hue per subject.
+
+> **2.0 note (MAGPIE_2.md C.11):** node labels and hover now use the 1-to-3-word curiosity name, which fixes the real legibility problem (100+ topics, unreadable hover). It is a legibility change only; it does NOT change clustering, which still comes from edges (containment, facet, resonance) in `d3-force`.
 
 ---
 
@@ -90,7 +94,8 @@ The demo/community login needs **one** server secret in `.env.local`: `DEMO_LOGI
 - **Run the Red Rising backfill** on the community account.
 - **Supabase `service_role` -> `sb_secret_` migration** (before end of 2026).
 - **Desktop responsive Nest** (Phase 9.5): mobile-first is shipped; `docs/nest-desktop.html` is the target for a future desktop layout (side panel + full-width canvas).
-- Optional: in-app facet chips (currently you light up facets by tapping facet nodes in Bridge mode), Glints, per-user accounts.
+- **2D/3D toggle (2.0, locked; MAGPIE_2.md C.11):** the current 2D `d3-force` view stays the default; a 2D/3D switch adds a rotatable WebGL mode (one-finger drag rotates, pinch zooms, tap selects, working at 375px). Both modes read the same `build-graph.ts` output so they never drift. **Chris is building the 3D track with Fable**, in parallel, outside the Claude sequence; the deep spec lands in this doc.
+- Optional: in-app facet chips (currently you light up facets by tapping facet nodes in Bridge mode), per-user accounts. (Note: "Glints" in 2.0 is the daily capture verb, not the old resurfacing mechanic; see MAGPIE_2.md.)
 
 **Known issue (pre-existing, low-risk):** `seedStarterTopics` guards on "user has 0 subjects", so two brand-new accounts seeding at the same instant could double-insert. Moot for the shared community account (already seeded); relevant only when per-user signup ships. Fix it then with a unique constraint or advisory lock.
 

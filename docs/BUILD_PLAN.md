@@ -1,5 +1,7 @@
 # Magpie · Build Plan
 
+> **Magpie is now 2.0 (glint-first).** Canonical product model: [MAGPIE_2.md](MAGPIE_2.md). Build plan: [SOP.md](SOP.md). This doc predates the pivot; where it describes the daily habit, navigation, modes, or roadmap, MAGPIE_2.md wins (the current build order is Slice-0 then phases in SOP.md, not the 9 phases below). Still valid as history: this is the record of how the live app was actually built, and the per-phase deliverables (schema, queries, the AI modes, the Nest) describe real shipped code.
+
 A 9-phase build. Each phase ships. No skipping ahead.
 
 ---
@@ -87,7 +89,7 @@ A 9-phase build. Each phase ships. No skipping ahead.
 3. Build `app/(main)/topic/[id]/page.tsx`:
    - Static layout only this phase: meta pills, title, mode tabs, mode content placeholder
    - The four mode tabs render but only the `{persona}` tab shows actual content (deferred to Phase 4)
-4. Build `<BottomTabBar>` with Grid / Facets / Discover / Journal. Active state tied to route.
+4. Build `<BottomTabBar>` with Grid / Facets / Discover / Journal. Active state tied to route. [Nav evolved: the live bottom bar is Grid / Facets / Nest / Rediscover (Journal was replaced by the Nest). In 2.0 it becomes Grid / Facets / Nest / Library, with Home behind the wordmark; see MAGPIE_2.md C.2.]
 5. Implement Convo Roulette: a Server Action that calls `spinRandomTopic()` and redirects to `/topic/[id]`.
 
 **Done when:**
@@ -169,7 +171,9 @@ A 9-phase build. Each phase ships. No skipping ahead.
 
 **Goal:** Implement Option 2 from the architecture decision. A topic can be a *group* that anchors sub-topic threads. Group-level Convo synthesizes across all child threads. See `docs/MEMORY.md` for the full cross-context model and pacing rules.
 
-This phase has been waiting in the schema since v1: the `is_group` and `parent_topic_id` columns on topics are already there, dormant. Phase 5.5 brings them to life.
+> [Live-state correction: `is_group` and `parent_topic_id` are no longer dormant. Entity groups shipped and are live (Red Rising, Corvids) with a drilldown UI and an umbrella check on every add. In 2.0 the placement resolver runs on every glint catch; see MAGPIE_2.md C.1.]
+
+This phase brought the `is_group` and `parent_topic_id` columns on topics to life.
 
 **Steps:**
 
@@ -260,6 +264,7 @@ This phase has been waiting in the schema since v1: the `is_group` and `parent_t
 2. Build `app/(main)/journal/page.tsx`:
    - List of topics with thoughts, each showing first 6 bullets
    - Tap a topic to jump to it
+   - [Superseded: the Journal surface was replaced by the Nest. In 2.0 its thoughts view folds into the Library (Maggie as librarian), pull-based; see MAGPIE_2.md C.4. The underlying query survives.]
 3. Build onboarding:
    - Post-signup screen: "What are you into?" textarea with mic
    - Or "Skip and use starter pack" button
@@ -334,6 +339,8 @@ The 10-hour prototype shipped a minimal desktop layout (left rail + reading widt
 ---
 
 ## Phase 10: Glints (the surfacing surface)
+
+> [Terminology moved: in 2.0 the word "glint" is the daily capture (catch a small curiosity in about 30 seconds, keep a streak). This older inward-surfacing feature is renamed the "resurfacing engine" and now lives inside the Library, pull-based; see MAGPIE_2.md C.4 and D (Phase 3). Read every "Glints" below as that resurfacing engine, not the daily catch.]
 
 **Goal:** Maggie surfaces things from the user's own wiki that connect to what they are currently working on. Glints is the *inward* counterpart to Discover (which proposes new things to add). See `docs/FUTURE_FEATURES.md` for the full Glints spec, three-surface design, and copy patterns.
 

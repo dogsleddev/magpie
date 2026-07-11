@@ -1,5 +1,7 @@
 # Magpie · Product Spec
 
+> **Magpie is now 2.0 (glint-first).** Canonical product model: [MAGPIE_2.md](MAGPIE_2.md). Build plan: [SOP.md](SOP.md). This doc predates the pivot; where it describes the daily habit, navigation, modes, or roadmap, MAGPIE_2.md wins. The three dimensions (Subject, Topic, Facet), the mode content and prompts, mic-to-text, empty states, and responsive rules here are still valid.
+
 ## Purpose
 
 A personal conversation gym. You customize a grid of topics you actually care about. Magpie gives you a fresh angle on any of them in seconds. You riff for 3 to 5 minutes and capture what you said. Over time the grid grows, your notes compound, and topics you didn't know existed find their way in.
@@ -35,6 +37,8 @@ One topic can have multiple facets. Most topics have 1 to 3.
 ## Navigation
 
 ### Bottom tab bar (4 tabs)
+
+> **Stale nav.** The four tabs below (Grid / Facets / Discover / Journal) predate the build. Live today the bar is **Grid / Facets / Nest / Rediscover** (the Nest constellation replaced the Journal tab). In 2.0 it becomes **Grid / Facets / Nest / Library** (Library replaces Rediscover), with a gated personal **Home** dashboard behind the wordmark. See MAGPIE_2.md C.2.
 
 1. **Grid**: Home view, browse by Subject
 2. **Facets**: Browse by Facet (cross-subject lens)
@@ -85,6 +89,8 @@ The default active mode on topic open is `{persona}` (the bullet capture, named 
 ---
 
 ## The five modes
+
+> **2.0 restructures the tabs.** The mode content and prompts below still hold, but the tab set and default change: 2.0 tabs are **Brief (default) · Challenge · Questions · Maggie**, where the far-right Maggie surface merges today's chat (Convo) and bullet capture (persona/Thoughts). This is deferred until after the glint loop is proven, so the live app still opens on the persona tab for now. See MAGPIE_2.md C.3.
 
 ### Mode 1: `{persona}` (default: "Maggie")
 
@@ -160,6 +166,8 @@ Saved per topic in the `conversations` table.
 Optional: skip onboarding and seed with the starter pack from `lib/seed/starter-topics.ts`.
 
 ### Returning user, daily riff
+
+> **In 2.0 the daily habit is the glint, not a Convo-Roulette spin.** The returning-user loop is: catch a glint (a 1-to-3-word curiosity in about 30 seconds), tap one of Maggie's 2-to-3 connection chips, and that catch keeps the streak. The random spin survives as a "surprise me" action inside the Library, not the daily hook. See MAGPIE_2.md C.5 and C.6.
 
 1. Open app on phone
 2. See home grid
@@ -248,7 +256,7 @@ Reusable hook: `useSpeechToText()` returns `{ isListening, transcript, start, st
 
 - **Persona name** (default "Maggie"): text input + mic
 - **AI suggestions toggle**: on by default; controls Discover surface visibility and AI-assist Add Topic
-- **Glints toggle**: on by default; controls inline-in-Convo Glints surfacing only. The home grid Glints section and topic-page Glints card remain accessible regardless. See `docs/FUTURE_FEATURES.md` for the full Glints spec.
+- **Glints toggle**: on by default; controls inline-in-Convo Glints surfacing only. The home grid Glints section and topic-page Glints card remain accessible regardless. See `docs/FUTURE_FEATURES.md` for the full Glints spec. **(2.0 rename: the word "glint" now means the daily 30-second capture and streak unit. This inward-surfacing feature is renamed the "resurfacing engine" and moves into the Library. 2.0 Settings also gain a daily-trigger channel, font choice with a dyslexia-friendly option, and a System/Light/Dark theme. See MAGPIE_2.md C.9 and C.12.)**
 - **Default landing mode**: which tab is active when opening a topic. Default is the persona-named tab.
 - **Reset to seed**: destructive, requires confirm
 - **Account**: email, sign out, delete account
@@ -276,9 +284,9 @@ Magpie is mobile-first by design. Desktop is a real surface that earns one extra
 
 ## Out of scope for v1 launch
 
-- Topic groups (Option 2 architecture): schema is dormant in v1, feature ships in Phase 5.5
-- Glints (the surfacing surface): ships in Phase 10
-- Nest View (constellation graph): ships in Phase 11. Mock-only in the v1 reference HTML.
+- Topic groups (Option 2 architecture): **now LIVE.** `is_group` and `parent_topic_id` are active with a drilldown UI (Red Rising, Corvids), no longer dormant. In 2.0 the placement step runs on every glint catch.
+- Glints (the surfacing surface): **now the "resurfacing engine"** (renamed in 2.0, since "glint" is the daily capture); lives in the Library.
+- Nest View (constellation graph): **now LIVE** at the `/nest` tab (it replaced the Journal tab). 2.0 adds a 2D/3D toggle over the same `build-graph.ts`.
 - Topic sharing (send a topic to a friend)
 - Multi-device sync conflict resolution (Supabase handles last-write-wins by default; fine for now)
 - Public profile / discoverable curators

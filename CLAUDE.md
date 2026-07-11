@@ -4,6 +4,8 @@ This is the project context for **Magpie**, a personal conversation gym. Read th
 
 For deep detail on any section, follow the pointers to `docs/`.
 
+> **Magpie is pivoting to 2.0 (glint-first), as of 2026-07-10.** The current product direction lives in `docs/MAGPIE_2.md` (the canonical model), `docs/BRD.md` (the PRD), `docs/SOP.md` (the build plan, Slice-0 first), and `HANDOFF.md` (the entry point). In 2.0 the daily habit is the **glint**: catch a curiosity in about 30 seconds, Maggie shows how it connects, and catching one keeps a streak. A **glint**, a **curiosity**, and a **topic** are the same record (the catch, the user-facing collection word, and the code entity). The sections below still describe the product as it is LIVE today (pre-pivot), which remains accurate for the running app, but where they describe direction, navigation, modes, or roadmap, the 2.0 docs win.
+
 ---
 
 ## What we're building
@@ -22,6 +24,7 @@ Magpie is a mobile-first web app for people who love to talk and think out loud.
 
 ## Current status (read first)
 
+- **Direction note (2026-07-10):** the active work is the **Magpie 2.0 glint-first pivot** (see the banner above and `docs/MAGPIE_2.md`). The bullets below are the pre-pivot LIVE state, still true for the running app; they are not the 2.0 plan.
 - **It is all committed and LIVE at magpie.wiki.** Master auto-deploys to production. (Full build log: `PROGRESS.md`.)
 - **Repo checkout: `C:\dev\magpie` (since session 13, 2026-06-10).** The repo moved out of OneDrive after a sync incident dehydrated source + `.git` mid-session and rolled master back a commit (recovered from origin). GitHub is the sync between Chris's two machines; unfinished work travels on WIP branches because master auto-deploys. Do not work from the old `OneDrive\02_Projects\Magpie\code` path; it is being archived. The dogPC still needs its clone + `.env.local`.
 - **Community curation (session 15, live):** 5 duplicate topic pairs merged on the community DB with zero data loss (facets carried onto the keeper, empty copy deleted), the Yellowstone keeper retitled to "Why wolves changed the path of rivers in Yellowstone", and the Seahawks + basketball topics refiled from Hobbies to Sports. Now 168 topics / 15 subjects. Script: `scripts/merge-dupes.mjs` (idempotent, dry-run default, `--write`). Two pairs were judged distinct and kept on purpose (PROGRESS session 15 has the list); do not re-flag them.

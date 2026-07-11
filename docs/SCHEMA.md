@@ -1,5 +1,7 @@
 # Magpie · Schema
 
+> **Magpie is now 2.0 (glint-first).** Canonical product model: [MAGPIE_2.md](MAGPIE_2.md). Build plan: [SOP.md](SOP.md). This doc predates the pivot; where it describes the daily habit, navigation, modes, or roadmap, MAGPIE_2.md wins. The base table shapes, RLS pattern, onboarding trigger, and query-spine contract below are still accurate for the live schema; the 2.0 additions (`activity_days`, `usage_events`, `response_items`, timezone and streak columns, the facet vocabulary, community tables) live in MAGPIE_2.md section F, not here.
+
 The source of truth for the schema is `supabase/migrations/0001_init.sql`. This document explains the rationale.
 
 ## Tables overview
@@ -50,6 +52,8 @@ create index topics_subject_id_idx on topics(subject_id);
 
 `user_id` is denormalized from `subjects.user_id` for simpler RLS policies and faster queries. Trigger keeps them in sync if we ever care (we probably don't).
 
+Note (live): `topics` also carries `is_group boolean` and `parent_topic_id uuid` (self-reference) for entity groups and subtopics. These are LIVE, not dormant (Red Rising and Corvids are real groups), and the 2.0 catch flow runs placement through them. In 2.0 a glint is a topic (same table, no separate glints table), so `topics` gains `brief_seed` and `raw_input`; see MAGPIE_2.md section F.
+
 ### `facets`
 
 ```sql
@@ -93,7 +97,7 @@ create index thoughts_topic_id_idx on thoughts(topic_id);
 create index thoughts_user_id_idx on thoughts(user_id);
 ```
 
-Each bullet is one row. Ordering via `position`. The original idea of using a JSONB array on topics was rejected because (a) we want to query thoughts independently for the Journal view, (b) Supabase realtime works better with row-level changes, (c) reordering and editing single thoughts is cleaner.
+Each bullet is one row. Ordering via `position`. The original idea of using a JSONB array on topics was rejected because (a) we want to query thoughts independently (originally for the Journal view; the Journal tab is gone, replaced by the Nest, but `getAllThoughtsGrouped` survives and now feeds the 2.0 Library, MAGPIE_2.md C.4), (b) Supabase realtime works better with row-level changes, (c) reordering and editing single thoughts is cleaner.
 
 ### `conversations`
 
@@ -226,7 +230,7 @@ The starter pack seed is intentionally done from the app server (Server Action o
 - `facets.user_id`: listing facets in the Facets tab
 - `topic_facets.facet_id`: finding all topics for a facet (the cross-subject lens)
 - `thoughts.topic_id`: loading a topic's bullets
-- `thoughts.user_id`: building the Journal view
+- `thoughts.user_id`: reading a user's thoughts across topics (the old Journal view, now the 2.0 Library)
 - `discover_items.(user_id, status)`: filtering the queue
 
 ## Query patterns

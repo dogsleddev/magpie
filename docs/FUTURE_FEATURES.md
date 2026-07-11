@@ -1,5 +1,7 @@
 # Magpie · Future Features Notes
 
+> **Magpie is now 2.0 (glint-first).** Canonical product model: [MAGPIE_2.md](MAGPIE_2.md). Build plan: [SOP.md](SOP.md). This doc predates the pivot; where it describes the daily habit, navigation, modes, or roadmap, MAGPIE_2.md wins. The feature ideas and rationale here (social/overlap, embeds, voice, cross-media surfacing, the badass list) stay a valid parking lot, but read them through the 2.0 lens: the word "glint" now means the daily 30-second capture and streak unit, and the inward-surfacing feature described in section 8 is renamed the resurfacing engine.
+
 Notes captured for when you pick this back up on the other computer. Stuff that goes beyond the 9-phase build plan in `BUILD_PLAN.md`. Treat this as a parking lot, not a commitment.
 
 ---
@@ -168,7 +170,7 @@ A button on any topic: "walk with this." Locks the screen to a single big mic an
 Maggie's Convo prompt currently has no cross-topic memory. Build a "user context summary" that gets prepended to her system prompt: "the user has been riffing a lot on empires and AI ethics recently. their typical takes: X, Y, Z." Generated weekly with a Sonnet call over recent thoughts. Maggie becomes spookily aware of who you are.
 
 ### 7e. Riff streaks and stats (low impact, low effort)
-A small stats card on the home screen: "5-day streak. 23 thoughts captured this week. Your most-riffed subject: Wildlife." Light gamification, doesn't dominate the UX. Lives in Journal tab.
+A small stats card on the home screen: "5-day streak. 23 thoughts captured this week. Your most-riffed subject: Wildlife." Light gamification, doesn't dominate the UX. [2.0: this is now core, not a future idea. Streak plus stats live on the gated personal **Home** dashboard behind the wordmark, and the streak derives from the daily glint. See MAGPIE_2.md C.5. The old Journal tab named here no longer exists; it was replaced by the Nest.]
 
 ### 7f. Curated wiki themes / starter packs by archetype (medium impact, low effort)
 On signup, offer "themed packs" instead of plain interest chips: "Polymath," "History Buff," "Tech Bro" (haha), "Music Nerd," "Curious Kid." Each is a hand-curated set of subjects and topics that compose a distinctive wiki vibe. Doubles as a marketing surface.
@@ -196,6 +198,8 @@ Aligns with your finance-engineer / API-first instincts.
 ---
 
 ## 8. Glints (inward surfacing)
+
+> **2.0 rename (see MAGPIE_2.md C.4, C.12, and the Phase 3 roadmap).** The word "glint" was reassigned: in 2.0 a **glint** is the daily 30-second capture and the streak unit (catch a curiosity, act on a connection). The inward-surfacing mechanic described in this section is now the **resurfacing engine** (unbranded), and it lives inside the **Library** tab (which replaces Rediscover), pull-based and optional. There is no "Daily Review" surface. Everything below (the pull-not-push principle, Maggie's voice, decay and surprise, the Convo inline surface, the Discover-vs-inward distinction) still holds for the resurfacing engine; only the name and the surface (Library, not a home section) changed.
 
 Glints surfaces things from the user's own wiki that connect to what they are currently working on. This is the *inward* counterpart to Discover (which proposes new things to add). Different verbs, different copy patterns, different surfaces.
 
@@ -242,6 +246,8 @@ Glints depends on Level 3 cross-context (facet-overlap query) from `docs/MEMORY.
 ---
 
 ## 9. Nest View (the constellation)
+
+> **Built and live.** The Nest shipped and is its own bottom-nav tab (it replaced the Journal), full-bleed on every viewport, not an embed inside Facets and not a "Phase 11" future item. The notes below are the original design brief, kept for rationale. Current state is `docs/NEST.md`; 2.0 adds a 2D/3D toggle and 1-to-3-word node labels (MAGPIE_2.md C.11).
 
 The visual read of the same cross-context engine that powers Glints. A force-directed graph showing topics as nodes and the connections Maggie has drawn between them as lines.
 
