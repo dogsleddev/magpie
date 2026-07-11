@@ -131,7 +131,8 @@ export default function TopicMetaEditor({
         onBlur={() => adding.trim() && addFacet(adding)}
         placeholder="+ facet"
         aria-label="Add a facet"
-        className="w-20 rounded-full border border-dashed border-border bg-transparent px-2.5 py-0.5 text-xs text-text placeholder:text-text-dim focus-visible:border-border-strong focus-visible:outline-none"
+        disabled={pending}
+        className="w-20 rounded-full border border-dashed border-border bg-transparent px-2.5 py-0.5 text-xs text-text placeholder:text-text-dim focus-visible:border-border-strong focus-visible:outline-none disabled:opacity-50"
       />
       <datalist id={`facets-${topicId}`}>
         {suggestions.map((f) => (

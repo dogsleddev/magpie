@@ -5,7 +5,7 @@
 // Usage: SUPABASE_DB_PASSWORD=... node scripts/db/apply-sql.mjs <file.sql> --write
 import { readFileSync } from 'node:fs';
 import pg from 'pg';
-import { dbSsl } from './ssl.mjs';
+import { dbSsl, certErrorHint } from './ssl.mjs';
 
 const args = process.argv.slice(2);
 const write = args.includes('--write');
@@ -50,6 +50,8 @@ try {
   console.log('public tables:', rows.map((r) => r.tablename).join(', '));
 } catch (e) {
   console.error('FAILED:', e.message);
+  const hint = certErrorHint(e);
+  if (hint) console.error(hint);
   process.exitCode = 1;
 } finally {
   await client.end();

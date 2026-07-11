@@ -3,7 +3,7 @@
 // email + password are passed as argv. Idempotent (re-running replaces the user).
 // Usage: SUPABASE_DB_PASSWORD=... node scripts/db/create-user.mjs <email> <password>
 import pg from 'pg';
-import { dbSsl } from './ssl.mjs';
+import { dbSsl, certErrorHint } from './ssl.mjs';
 
 const password = process.env.SUPABASE_DB_PASSWORD;
 if (!password) {
@@ -57,6 +57,8 @@ try {
   console.log('Created confirmed user:', email, '-> id', res.rows[0]?.user_id);
 } catch (e) {
   console.error('FAILED:', e.message);
+  const hint = certErrorHint(e);
+  if (hint) console.error(hint);
   process.exitCode = 1;
 } finally {
   await client.end();

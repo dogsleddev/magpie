@@ -142,7 +142,8 @@ function RecentRow({
           }}
           onBlur={() => adding.trim() && addFacet(adding)}
           placeholder="+ facet"
-          className="w-24 rounded border border-dashed border-border bg-transparent px-2 py-0.5 text-[11px] text-text placeholder:text-text-dim focus-visible:border-border-strong focus-visible:outline-none"
+          disabled={pending}
+          className="w-24 rounded border border-dashed border-border bg-transparent px-2 py-0.5 text-[11px] text-text placeholder:text-text-dim focus-visible:border-border-strong focus-visible:outline-none disabled:opacity-50"
         />
         <datalist id={`facets-${topic.id}`}>
           {suggestions.map((f) => (

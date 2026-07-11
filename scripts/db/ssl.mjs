@@ -4,15 +4,16 @@ import { fileURLToPath } from 'node:url';
 /**
  * TLS config for the operator scripts' direct Postgres connection.
  *
- * Secure by default: verifies the server certificate. The Supabase pooler
- * presents a publicly-trusted cert, so the system CA store is enough and no
- * file is needed. If your project hands out a private CA bundle instead
- * (Dashboard -> Project Settings -> Database -> SSL configuration), download it
- * to scripts/db/prod-ca-2021.crt and it is picked up automatically.
+ * Secure by default: the DB password is never sent over unverified TLS. The
+ * Supabase pooler (aws-*.pooler.supabase.com) presents a cert signed by a
+ * PRIVATE Supabase CA, not a public root, so verification REQUIRES that CA
+ * bundle. Download it from the dashboard (Project Settings -> Database -> SSL
+ * configuration) to scripts/db/prod-ca-2021.crt and it is picked up here
+ * automatically. Without it these scripts fail closed with a self-signed-cert
+ * error (certErrorHint explains the fix), which is the safe default.
  *
  * SUPABASE_DB_SSL_INSECURE=1 is a deliberate, loud escape hatch that disables
- * verification (the old `rejectUnauthorized: false` behavior). Use it only as a
- * temporary unblock, never as the default.
+ * verification for a one-off run. Never the default.
  */
 export function dbSsl() {
   if (process.env.SUPABASE_DB_SSL_INSECURE === '1') {
@@ -24,4 +25,19 @@ export function dbSsl() {
     return { ca: readFileSync(caPath, 'utf8'), rejectUnauthorized: true };
   }
   return { rejectUnauthorized: true };
+}
+
+/**
+ * If a connection error is a TLS/cert-verification failure, return an actionable
+ * hint (the pooler's private CA is missing). Returns null for other errors so
+ * callers only print it when relevant.
+ */
+export function certErrorHint(err) {
+  const s = `${err?.code ?? ''} ${err?.message ?? ''}`.toLowerCase();
+  if (!s.includes('cert') && !s.includes('self-signed') && !s.includes('self signed')) return null;
+  return [
+    'This is a TLS verification failure: the Supabase pooler uses a private CA.',
+    'Fix: dashboard -> Project Settings -> Database -> SSL configuration -> download the CA',
+    'to scripts/db/prod-ca-2021.crt, then re-run. One-off bypass: prefix SUPABASE_DB_SSL_INSECURE=1.',
+  ].join('\n');
 }
