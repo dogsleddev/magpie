@@ -25,6 +25,14 @@ import {
 import { createThought } from '@/lib/queries/thoughts';
 import { createSubject, getSubjectsWithCounts } from '@/lib/queries/subjects';
 import { findOrCreateFacet, getFacetsWithCounts, setTopicFacets } from '@/lib/queries/facets';
+import {
+  addEntityParent,
+  findOrCreateEntity,
+  getEntitiesLite,
+  isEntityLike,
+  linkTopicEntity,
+  type EntityLite,
+} from '@/lib/queries/entities';
 
 // Deterministic demo anchor: "High Agency" always files the same way on stage.
 const HIGH_AGENCY: CategorizeOutput = {
@@ -43,16 +51,18 @@ function isHighAgency(idea: string): boolean {
 }
 
 async function categorize(idea: string): Promise<CategorizeOutput> {
-  const [subjects, facets, topics] = await Promise.all([
+  const [subjects, facets, topics, existingEntities] = await Promise.all([
     getSubjectsWithCounts(),
     getFacetsWithCounts(),
     getTopicsLite(),
+    getEntitiesLite(),
   ]);
   const prompt = categorizeTopicPrompt(
     idea,
     subjects.map((s) => s.name),
     facets.map((f) => f.name),
     topics.map((t) => t.title),
+    existingEntities.map((e) => e.name),
   );
   let parsed: CategorizeOutput | null = null;
   try {
@@ -76,6 +86,20 @@ async function categorize(idea: string): Promise<CategorizeOutput> {
             : [],
         }
       : null;
+  // Entities: keep real nouns only (drop lens words and vacuous fillers), cap at 3.
+  const entities = (Array.isArray(parsed?.entities) ? parsed!.entities : [])
+    .filter((e): e is { name: string; broader?: string | null } => !!e && typeof e.name === 'string')
+    .filter((e) => isEntityLike(e.name))
+    .slice(0, 3)
+    .map((e) => ({
+      name: e.name.trim(),
+      broader:
+        typeof e.broader === 'string' && e.broader.trim() && isEntityLike(e.broader)
+          ? e.broader.trim()
+          : null,
+    }));
+  const split = Array.isArray(parsed?.split) && parsed!.split.length ? parsed!.split : null;
+
   return {
     title: parsed?.title?.trim() || idea,
     subject: parsed?.subject?.trim() || 'Ideas',
@@ -86,6 +110,8 @@ async function categorize(idea: string): Promise<CategorizeOutput> {
           .slice(0, 3)
       : [],
     group,
+    entities,
+    split,
   };
 }
 
@@ -202,6 +228,7 @@ export type AddTopicResult = {
   subjectId: string;
   subjectName: string;
   facets: string[];
+  entities: EntityLite[];
 };
 
 /**
@@ -265,6 +292,24 @@ export async function addTopicViaMagpie(
     }
   }
 
+  // Link the extracted entity hubs (the connective spine). Best-effort, like the
+  // umbrella: an extraction or link failure never breaks the add. The hubs and
+  // their broader-than nesting are resolved through findOrCreateEntity (reuse).
+  const entities: EntityLite[] = [];
+  for (const e of plan.entities ?? []) {
+    try {
+      const hub = await findOrCreateEntity(e.name);
+      await linkTopicEntity(topic.id, hub.id);
+      entities.push(hub);
+      if (e.broader && isEntityLike(e.broader)) {
+        const parent = await findOrCreateEntity(e.broader);
+        await addEntityParent(hub.id, parent.id);
+      }
+    } catch (err) {
+      console.error('[addTopic] entity link failed for', e.name, err);
+    }
+  }
+
   const subjects = await getSubjectsWithCounts();
   const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? plan.subject;
 
@@ -274,7 +319,7 @@ export async function addTopicViaMagpie(
   revalidatePath('/nest');
   revalidatePath(`/subject/${subjectId}`);
   if (options?.parentTopicId) revalidatePath(`/topic/${options.parentTopicId}`);
-  return { topicId: topic.id, title: topic.title, subjectId, subjectName, facets: plan.facets };
+  return { topicId: topic.id, title: topic.title, subjectId, subjectName, facets: plan.facets, entities };
 }
 
 export async function moveTopicToSubject(topicId: string, subjectId: string): Promise<void> {

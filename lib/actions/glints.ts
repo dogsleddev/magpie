@@ -6,6 +6,7 @@ import { callClaude, MODELS } from '@/lib/ai/client';
 import { shortTitlePrompt } from '@/lib/ai/prompts';
 import { addTopicViaMagpie } from '@/lib/actions/topics';
 import { findConnections, type Connection } from '@/lib/ai/connections';
+import { getSharedEntityConnections, getTopicEntities } from '@/lib/queries/entities';
 import { getTopicsLite, setGlintSeed, updateTopicTitle } from '@/lib/queries/topics';
 import {
   getActivityStrip,
@@ -23,6 +24,8 @@ export type CaptureGlintResult = {
   connections: Connection[];
   streak: Streak;
   strip: ActivityDay[];
+  // The entity hubs this glint is about (names), shown as the "about" line.
+  entities: string[];
   // True when the glint was one already in the collection: we opened it instead
   // of creating a twin.
   alreadyHad: boolean;
@@ -76,8 +79,9 @@ async function deriveShortTitle(text: string): Promise<string> {
  *     short derived name, with the full text seeding its Brief.
  *   - Catching one you already have opens it instead of making a twin. It still
  *     counts for the day.
- *   - The connection chips run in parallel with the create (against a pre-catch
- *     snapshot), so they land without waiting on the whole categorize chain.
+ *   - Connections are honest: other glints that share an extracted entity hub
+ *     ("both about wolves"). When nothing shares a hub yet (a cold graph), it
+ *     falls back to the fuzzy title match so a chip still lands.
  * One call; the client commits the input optimistically, so it feels instant.
  */
 export async function captureGlint(input: string): Promise<CaptureGlintResult> {
@@ -99,14 +103,18 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
   const match = existingTopics.find((t) => !t.is_group && titleKey(t.title) === key);
   if (match) {
     await markTodayActive(tz);
-    const [connections, streak, strip] = await Promise.all([
-      findConnections(
+    const matchEntities = await getTopicEntities(match.id);
+    let connections = await getSharedEntityConnections(
+      match.id,
+      matchEntities.map((e) => e.id),
+    );
+    if (connections.length === 0) {
+      connections = await findConnections(
         trimmed,
         existingTopics.filter((t) => t.id !== match.id),
-      ),
-      getStreak(tz),
-      getActivityStrip(tz),
-    ]);
+      );
+    }
+    const [streak, strip] = await Promise.all([getStreak(tz), getActivityStrip(tz)]);
     await logEvent('glint_caught', {
       topicId: match.id,
       words,
@@ -114,18 +122,25 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
       alreadyHad: true,
     });
     revalidatePath('/home');
-    return { topicId: match.id, title: match.title, connections, streak, strip, alreadyHad: true };
+    return {
+      topicId: match.id,
+      title: match.title,
+      connections,
+      streak,
+      strip,
+      entities: matchEntities.map((e) => e.name),
+      alreadyHad: true,
+    };
   }
 
   // A new catch. Keep the user's words unless the glint is very long.
   const isLong = trimmed.length > GLINT_TITLE_MAX;
 
-  // Create, name, connect, and mark the day in parallel. Connections run against
-  // the pre-catch snapshot, so the chips do not wait on categorize + create.
-  const [added, derived, connections] = await Promise.all([
+  // Create + name + mark the day. Entity extraction and linking happen inside
+  // addTopicViaMagpie, so its result carries the resolved hubs.
+  const [added, derived] = await Promise.all([
     addTopicViaMagpie(trimmed, isLong ? undefined : { titleOverride: trimmed }),
     isLong ? deriveShortTitle(trimmed) : Promise.resolve(''),
-    findConnections(trimmed, existingTopics),
     markTodayActive(tz),
   ]);
 
@@ -140,6 +155,16 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
     console.error('[captureGlint] title/seed update failed:', e);
   }
 
+  // Honest connections first (glints sharing an entity hub), fuzzy title match
+  // as the cold-graph fallback so a chip still lands.
+  let connections = await getSharedEntityConnections(
+    added.topicId,
+    added.entities.map((e) => e.id),
+  );
+  if (connections.length === 0) {
+    connections = await findConnections(trimmed, existingTopics);
+  }
+
   const [streak, strip] = await Promise.all([getStreak(tz), getActivityStrip(tz)]);
 
   await logEvent('glint_caught', {
@@ -149,5 +174,13 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
   });
 
   revalidatePath('/home');
-  return { topicId: added.topicId, title, connections, streak, strip, alreadyHad: false };
+  return {
+    topicId: added.topicId,
+    title,
+    connections,
+    streak,
+    strip,
+    entities: added.entities.map((e) => e.name),
+    alreadyHad: false,
+  };
 }

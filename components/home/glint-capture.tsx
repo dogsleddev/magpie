@@ -114,6 +114,17 @@ export default function GlintCapture({
             )}
           </div>
 
+          {result && result.entities.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">about</span>
+              {result.entities.map((e, i) => (
+                <span key={i} className="rounded-full border px-2 py-0.5 text-xs text-teal">
+                  {e}
+                </span>
+              ))}
+            </div>
+          )}
+
           {!result ? (
             <p className="text-xs text-muted-foreground">finding connections...</p>
           ) : result.connections.length > 0 ? (

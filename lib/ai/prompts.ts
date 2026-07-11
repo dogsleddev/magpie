@@ -150,11 +150,28 @@ export type CategorizeGroup = {
   members: string[];
 };
 
+export type CategorizeEntity = {
+  /** The entity noun (lowercase), e.g. "wolves", "yellowstone". */
+  name: string;
+  /** An obvious broader parent noun, or null. e.g. wolves -> "predators". */
+  broader?: string | null;
+};
+
+export type CategorizeSplit = {
+  /** One curiosity pulled out of a multi-idea brain-dump, in the user's voice. */
+  glint: string;
+  entities: CategorizeEntity[];
+};
+
 export type CategorizeOutput = {
   title: string;
   subject: string;
   facets: string[];
   group?: CategorizeGroup | null;
+  /** The 1 to 3 entity hubs this glint is about (validated in scripts/entity-spike.mjs). */
+  entities?: CategorizeEntity[];
+  /** Non-null only when the input is clearly 2 to 3 distinct curiosities. */
+  split?: CategorizeSplit[] | null;
 };
 
 /**
@@ -172,21 +189,24 @@ export function categorizeTopicPrompt(
   existingSubjects: string[],
   existingFacets: string[],
   existingTopics: string[],
+  existingEntities: string[] = [],
 ): AIPrompt {
   const topicList = existingTopics
     .slice(0, 400)
     .map((t) => `- ${t}`)
     .join('\n');
   return {
-    system: `The user wants to add a conversation topic to their personal wiki. Turn their idea into a clean topic and file it.
+    system: `The user wants to add a conversation topic to their personal wiki. Turn their idea into a clean topic, file it, and pull out what it is ABOUT.
 
 Output ONLY valid JSON with this exact shape, no other text:
-{"title":"a specific conversation topic","subject":"Subject Name","facets":["facet","facet"],"group":{"name":"Entity Name","members":["exact existing topic title"]}}
+{"title":"a specific conversation topic","subject":"Subject Name","facets":["facet","facet"],"group":{"name":"Entity Name","members":["exact existing topic title"]},"entities":[{"name":"noun","broader":"broader noun or null"}],"split":null}
 
 Rules:
 - "title" is a specific conversation prompt someone could riff on for 3 to 5 minutes, written naturally. Keep the user's intent. Do not just echo a bare category.
 - "subject" is the single best parent category. Strongly prefer reusing one of the user's existing subjects when one fits. Invent a new subject only if none fit.
 - "facets" are 1 to 3 lowercase cross-cutting tags. Strongly prefer reusing the user's existing facets when they fit. Facets are lenses (paradox, ethics, fun facts), never entity names.
+- "entities": the 1 to 3 MOST CENTRAL nouns the idea is ABOUT (a person, place, work, organism, group, field, or named thing: wolves, Yellowstone, Stoicism, Red Rising, jazz). Fewer is better, NEVER more than 3, all lowercase. REUSE an entity from the existing-entities list verbatim when it fits, instead of minting a near-duplicate. NEVER return a lens/angle word (paradox, ethics, evolution, future, history) as an entity: those are facets. NEVER return a vague noun (life, things, the world, people, society). For "broader", give an obvious stable superset ONLY (wolves -> predators, Yellowstone -> national parks); otherwise null.
+- "split": null in the normal case. Only when the idea clearly holds 2 or 3 DISTINCT curiosities (a brain-dump, "and also", plainly separate ideas), return an array where each item is {"glint":"short curiosity in the user's lowercase voice","entities":[...]}. Default to null; only split when it is obvious.
 - "group": ONLY when the idea is about the same specific named entity as one or more topics in the existing-topics list: a book or series, a movie, a TV show, a sports team, a band, a game, a franchise, a person. Then "name" is the entity's canonical name and "members" are the EXACT titles of those existing topics, copied character for character from the list. A shared theme or genre is NOT a group (that is what facets are for). When in doubt, use null.
 - No matching entity: "group" is null.
 ${NO_EM_DASH}`,
@@ -194,6 +214,7 @@ ${NO_EM_DASH}`,
 
 Existing subjects: ${existingSubjects.join(', ') || '(none yet)'}
 Existing facets: ${existingFacets.join(', ') || '(none yet)'}
+Existing entities: ${existingEntities.join(', ') || '(none yet)'}
 
 Existing topics:
 ${topicList || '(none yet)'}`,
