@@ -336,3 +336,20 @@ export async function updateTopicSubject(id: string, subjectId: string): Promise
     .eq('id', id);
   if (error) throw error;
 }
+
+/**
+ * Slice-0: store the raw glint input and an optional Brief seed on a topic. A
+ * glint is a topic, so this just annotates it. brief_seed/raw_input are 0008
+ * columns not yet in the generated Database types, hence the narrow cast.
+ */
+export async function setGlintSeed(
+  topicId: string,
+  fields: { rawInput: string; briefSeed: string | null },
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await (supabase as unknown as { from: (t: string) => any })
+    .from('topics')
+    .update({ raw_input: fields.rawInput, brief_seed: fields.briefSeed })
+    .eq('id', topicId);
+  if (error) throw error;
+}

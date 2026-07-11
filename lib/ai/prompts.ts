@@ -115,6 +115,23 @@ export function questionsPrompt(topic: Topic): AIPrompt {
   };
 }
 
+export type ConnectionMatch = { title: string; why: string };
+export type ConnectionsOutput = { matches: ConnectionMatch[] };
+
+/**
+ * The "catch to connect" match: given a freshly caught glint and the user's
+ * existing curiosity titles, name the 1 or 2 that genuinely connect, each with a
+ * short reason. Honest by design (empty when nothing fits). Validated against the
+ * real 171-topic graph in scripts/connection-spike.mjs.
+ */
+export function connectionsPrompt(glint: string, existingTitles: string[]): AIPrompt {
+  const numbered = existingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n');
+  return {
+    system: `You are Maggie, connecting a newly caught curiosity (a "glint") to a person's existing collection. Given the new glint and the numbered list of their existing curiosities, pick the 1 or 2 that most genuinely connect, and give a 4 to 8 word reason for each. Be honest: return only a connection you would actually stand behind. If nothing genuinely connects, return an empty list. Never force a weak or generic match, and never return more than 2. Use the exact existing titles, copied from the list. Return STRICT JSON only, no other text: {"matches":[{"title":"<exact existing title>","why":"<4 to 8 words>"}]}. ${NO_EM_DASH}`,
+    user: `New glint: "${glint}"\n\nExisting curiosities:\n${numbered || '(none yet)'}`,
+  };
+}
+
 export type CategorizeGroup = {
   /** Canonical entity name, e.g. "Seattle Seahawks", "Red Rising". */
   name: string;
