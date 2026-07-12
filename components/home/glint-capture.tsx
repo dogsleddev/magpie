@@ -5,6 +5,7 @@ import { useState, useTransition } from 'react';
 import { captureGlint, type CaptureGlintResult } from '@/lib/actions/glints';
 import type { ActivityDay, Streak } from '@/lib/queries/activity';
 import ActivityStrip from '@/components/home/activity-strip';
+import EntityEditor from '@/components/home/entity-editor';
 
 /**
  * The catch-a-glint surface. Optimistic: on submit the input clears instantly,
@@ -114,15 +115,8 @@ export default function GlintCapture({
             )}
           </div>
 
-          {result && result.entities.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">about</span>
-              {result.entities.map((e, i) => (
-                <span key={i} className="rounded-full border px-2 py-0.5 text-xs text-teal">
-                  {e}
-                </span>
-              ))}
-            </div>
+          {result && (result.entities.length > 0 || !result.alreadyHad) && (
+            <EntityEditor key={result.topicId} topicId={result.topicId} initial={result.entities} />
           )}
 
           {!result ? (

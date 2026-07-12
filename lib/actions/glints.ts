@@ -24,8 +24,8 @@ export type CaptureGlintResult = {
   connections: Connection[];
   streak: Streak;
   strip: ActivityDay[];
-  // The entity hubs this glint is about (names), shown as the "about" line.
-  entities: string[];
+  // The entity hubs this glint is about, shown as the editable "about" line.
+  entities: { id: string; name: string }[];
   // True when the glint was one already in the collection: we opened it instead
   // of creating a twin.
   alreadyHad: boolean;
@@ -139,7 +139,7 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
       connections,
       streak,
       strip,
-      entities: matchEntities.map((e) => e.name),
+      entities: matchEntities.map((e) => ({ id: e.id, name: e.name })),
       alreadyHad: true,
     };
   }
@@ -188,7 +188,7 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
     connections,
     streak,
     strip,
-    entities: added.entities.map((e) => e.name),
+    entities: added.entities.map((e) => ({ id: e.id, name: e.name })),
     alreadyHad: false,
   };
 }
