@@ -7,7 +7,13 @@ import { shortTitlePrompt } from '@/lib/ai/prompts';
 import { addTopicViaMagpie } from '@/lib/actions/topics';
 import { findConnections, type Connection } from '@/lib/ai/connections';
 import { getSharedEntityConnections, getTopicEntities } from '@/lib/queries/entities';
-import { getTopicsLite, setGlintSeed, updateTopicTitle, type TopicLite } from '@/lib/queries/topics';
+import {
+  deleteTopic,
+  getTopicsLite,
+  setGlintSeed,
+  updateTopicTitle,
+  type TopicLite,
+} from '@/lib/queries/topics';
 import {
   getActivityStrip,
   getStreak,
@@ -26,6 +32,9 @@ export type CaptureGlintResult = {
   strip: ActivityDay[];
   // The entity hubs this glint is about, shown as the editable "about" line.
   entities: { id: string; name: string }[];
+  // The distinct curiosities Maggie spotted in a brain-dump (2 to 3 short glint
+  // texts), or null. When present, the caught card offers to split.
+  split: string[] | null;
   // True when the glint was one already in the collection: we opened it instead
   // of creating a twin.
   alreadyHad: boolean;
@@ -140,6 +149,7 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
       streak,
       strip,
       entities: matchEntities.map((e) => ({ id: e.id, name: e.name })),
+      split: null,
       alreadyHad: true,
     };
   }
@@ -175,10 +185,15 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
 
   const [streak, strip] = await Promise.all([getStreak(tz), getActivityStrip(tz)]);
 
+  const splitGlints = (added.split ?? [])
+    .map((s) => (typeof s?.glint === 'string' ? s.glint.trim() : ''))
+    .filter(Boolean);
+
   await logEvent('glint_caught', {
     topicId: added.topicId,
     words,
     connections: connections.length,
+    split: splitGlints.length >= 2,
   });
 
   revalidatePath('/home');
@@ -189,6 +204,45 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
     streak,
     strip,
     entities: added.entities.map((e) => ({ id: e.id, name: e.name })),
+    split: splitGlints.length >= 2 ? splitGlints : null,
     alreadyHad: false,
   };
+}
+
+/**
+ * Split a caught brain-dump into separate glints. Each text is filed as its own
+ * glint through the shared add flow (so it gets a subject, facets, and entity
+ * hubs, keeping the user's words), then the original combined topic is removed.
+ * The day was already marked on the original catch, so this creates topics only:
+ * one catch stays one streak tick.
+ */
+export async function splitGlint(
+  originalTopicId: string,
+  glints: string[],
+): Promise<{ id: string; title: string }[]> {
+  await requireUser();
+  const texts = glints.map((g) => g.trim()).filter(Boolean).slice(0, 5);
+  if (texts.length < 2) throw new Error('Nothing to split.');
+
+  const created: { id: string; title: string }[] = [];
+  for (const text of texts) {
+    const added = await addTopicViaMagpie(text, { titleOverride: text });
+    try {
+      await setGlintSeed(added.topicId, { rawInput: text, briefSeed: null });
+    } catch (e) {
+      console.error('[splitGlint] seed failed:', e);
+    }
+    created.push({ id: added.topicId, title: added.title });
+  }
+
+  try {
+    await deleteTopic(originalTopicId);
+  } catch (e) {
+    console.error('[splitGlint] delete original failed:', e);
+  }
+
+  revalidatePath('/home');
+  revalidatePath('/app');
+  revalidatePath('/library');
+  return created;
 }

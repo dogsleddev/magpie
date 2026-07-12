@@ -6,6 +6,7 @@ import { captureGlint, type CaptureGlintResult } from '@/lib/actions/glints';
 import type { ActivityDay, Streak } from '@/lib/queries/activity';
 import ActivityStrip from '@/components/home/activity-strip';
 import EntityEditor from '@/components/home/entity-editor';
+import SplitBanner from '@/components/home/split-banner';
 
 /**
  * The catch-a-glint surface. Optimistic: on submit the input clears instantly,
@@ -26,6 +27,7 @@ export default function GlintCapture({
   const [strip, setStrip] = useState(initialStrip);
   const [provisional, setProvisional] = useState<string | null>(null);
   const [result, setResult] = useState<CaptureGlintResult | null>(null);
+  const [splitDone, setSplitDone] = useState<{ id: string; title: string }[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
@@ -41,6 +43,7 @@ export default function GlintCapture({
     setValue('');
     setError(null);
     setResult(null);
+    setSplitDone(null);
     setProvisional(text);
     setBusy(true);
 
@@ -101,50 +104,82 @@ export default function GlintCapture({
 
       {(provisional || result) && (
         <div className="space-y-2 rounded-xl border p-3">
-          <div className="text-sm">
-            {result?.alreadyHad ? 'already in your nest: ' : 'caught: '}
-            {result ? (
-              <Link
-                href={`/topic/${result.topicId}`}
-                className="font-medium underline-offset-2 hover:underline"
-              >
-                {result.title}
-              </Link>
-            ) : (
-              <span className="font-medium">{provisional}</span>
-            )}
-          </div>
-
-          {result && (result.entities.length > 0 || !result.alreadyHad) && (
-            <EntityEditor key={result.topicId} topicId={result.topicId} initial={result.entities} />
+          {result?.split && !splitDone && (
+            <SplitBanner
+              key={result.topicId}
+              topicId={result.topicId}
+              splits={result.split}
+              onSplitDone={setSplitDone}
+            />
           )}
 
-          {!result ? (
-            <p className="text-xs text-muted-foreground">finding connections...</p>
-          ) : result.connections.length > 0 ? (
-            <div className="space-y-2 pt-1">
-              {result.connections.map((c, i) => (
-                <div key={i} className="flex flex-col items-start gap-1">
-                  {c.topicId ? (
-                    <Link
-                      href={`/topic/${c.topicId}`}
-                      className="rounded-full border px-2.5 py-1 text-xs hover:bg-accent"
-                    >
-                      connects to {c.title}
-                    </Link>
-                  ) : (
-                    <span className="rounded-full border px-2.5 py-1 text-xs">
-                      connects to {c.title}
-                    </span>
-                  )}
-                  {c.why && (
-                    <p className="pl-1 text-xs leading-snug text-muted-foreground">{c.why}</p>
-                  )}
-                </div>
+          {splitDone ? (
+            <div className="text-sm">
+              caught {splitDone.length}:{' '}
+              {splitDone.map((t, i) => (
+                <span key={t.id}>
+                  {i > 0 && ' · '}
+                  <Link
+                    href={`/topic/${t.id}`}
+                    className="font-medium underline-offset-2 hover:underline"
+                  >
+                    {t.title}
+                  </Link>
+                </span>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">a fresh one. nothing connects yet.</p>
+            <>
+              <div className="text-sm">
+                {result?.alreadyHad ? 'already in your nest: ' : 'caught: '}
+                {result ? (
+                  <Link
+                    href={`/topic/${result.topicId}`}
+                    className="font-medium underline-offset-2 hover:underline"
+                  >
+                    {result.title}
+                  </Link>
+                ) : (
+                  <span className="font-medium">{provisional}</span>
+                )}
+              </div>
+
+              {result && (result.entities.length > 0 || !result.alreadyHad) && (
+                <EntityEditor
+                  key={result.topicId}
+                  topicId={result.topicId}
+                  initial={result.entities}
+                />
+              )}
+
+              {!result ? (
+                <p className="text-xs text-muted-foreground">finding connections...</p>
+              ) : result.connections.length > 0 ? (
+                <div className="space-y-2 pt-1">
+                  {result.connections.map((c, i) => (
+                    <div key={i} className="flex flex-col items-start gap-1">
+                      {c.topicId ? (
+                        <Link
+                          href={`/topic/${c.topicId}`}
+                          className="rounded-full border px-2.5 py-1 text-xs hover:bg-accent"
+                        >
+                          connects to {c.title}
+                        </Link>
+                      ) : (
+                        <span className="rounded-full border px-2.5 py-1 text-xs">
+                          connects to {c.title}
+                        </span>
+                      )}
+                      {c.why && (
+                        <p className="pl-1 text-xs leading-snug text-muted-foreground">{c.why}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">a fresh one. nothing connects yet.</p>
+              )}
+            </>
           )}
         </div>
       )}

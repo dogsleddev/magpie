@@ -10,6 +10,7 @@ import {
   extractJSON,
   type CategorizeGroup,
   type CategorizeOutput,
+  type CategorizeSplit,
 } from '@/lib/ai/prompts';
 import {
   adoptTopicsUnderGroup,
@@ -229,6 +230,9 @@ export type AddTopicResult = {
   subjectName: string;
   facets: string[];
   entities: EntityLite[];
+  // Non-null only when the categorizer read the input as 2 to 3 distinct
+  // curiosities. The caller (captureGlint) may offer to split it.
+  split: CategorizeSplit[] | null;
 };
 
 /**
@@ -319,7 +323,15 @@ export async function addTopicViaMagpie(
   revalidatePath('/nest');
   revalidatePath(`/subject/${subjectId}`);
   if (options?.parentTopicId) revalidatePath(`/topic/${options.parentTopicId}`);
-  return { topicId: topic.id, title: topic.title, subjectId, subjectName, facets: plan.facets, entities };
+  return {
+    topicId: topic.id,
+    title: topic.title,
+    subjectId,
+    subjectName,
+    facets: plan.facets,
+    entities,
+    split: plan.split ?? null,
+  };
 }
 
 export async function moveTopicToSubject(topicId: string, subjectId: string): Promise<void> {
