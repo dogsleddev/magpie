@@ -3,18 +3,8 @@ import type { Route } from 'next';
 import { notFound } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { getHubDetail } from '@/lib/queries/entities';
+import { relativeDate } from '@/lib/format';
 import BackLink from '@/components/nav/back-link';
-
-// A relative date for a glint's meta line. Server-rendered, so new Date() is fine.
-function ago(iso: string): string {
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-  if (days <= 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 7) return `${days} days ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 export default async function HubPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -88,7 +78,7 @@ export default async function HubPage({ params }: { params: Promise<{ id: string
                   <span className="font-medium text-text">{g.title}</span>
                   <span className="text-[11px] text-text-dim">
                     {g.subject ? `${g.subject} · ` : ''}
-                    {ago(g.createdAt)}
+                    {relativeDate(g.createdAt)}
                   </span>
                 </span>
                 <ChevronRight className="h-4 w-4 shrink-0 text-text-dim" />
