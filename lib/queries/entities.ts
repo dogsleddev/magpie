@@ -225,3 +225,139 @@ export async function getEntityRollup(): Promise<{ id: string; name: string; cou
     .map((e) => ({ id: e.id, name: e.name, count: e.topic_entities?.[0]?.count ?? 0 }))
     .sort((a, b) => b.count - a.count);
 }
+
+export type HubRow = {
+  id: string;
+  name: string;
+  count: number;
+  preview: string[];
+  children: string[]; // narrower entities that nest under this hub
+};
+
+/**
+ * The Library's Hubs lens: every entity that gathers at least `minCount` glints,
+ * richest first, each with a short preview of its glint titles and the narrower
+ * hubs nested under it. One pass over the join, plus one over the nesting edges.
+ */
+export async function getHubRollup(minCount = 2): Promise<HubRow[]> {
+  const supabase = (await createClient()) as unknown as Db;
+  const user = await requireUser();
+
+  const [{ data: ents }, { data: edges }] = await Promise.all([
+    supabase
+      .from('entities')
+      .select('id, name, topic_entities(topics(title, is_group))')
+      .eq('user_id', user.id),
+    supabase.from('entity_parents').select('child_entity_id, parent_entity_id'),
+  ]);
+
+  const nameById = new Map(
+    ((ents ?? []) as { id: string; name: string }[]).map((e) => [e.id, e.name]),
+  );
+  const childrenOf = new Map<string, string[]>();
+  for (const e of (edges ?? []) as { child_entity_id: string; parent_entity_id: string }[]) {
+    const childName = nameById.get(e.child_entity_id);
+    if (!childName) continue;
+    childrenOf.set(e.parent_entity_id, [...(childrenOf.get(e.parent_entity_id) ?? []), childName]);
+  }
+
+  const rows: HubRow[] = ((ents ?? []) as {
+    id: string;
+    name: string;
+    topic_entities: { topics: { title: string; is_group: boolean } | null }[];
+  }[]).map((e) => {
+    const titles = (e.topic_entities ?? [])
+      .map((te) => te.topics)
+      .filter((t): t is { title: string; is_group: boolean } => !!t && !t.is_group)
+      .map((t) => t.title);
+    return {
+      id: e.id,
+      name: e.name,
+      count: titles.length,
+      preview: titles.slice(0, 2),
+      children: childrenOf.get(e.id) ?? [],
+    };
+  });
+
+  return rows.filter((r) => r.count >= minCount).sort((a, b) => b.count - a.count);
+}
+
+export type HubGlint = { id: string; title: string; subject: string | null; createdAt: string };
+export type HubDetail = {
+  id: string;
+  name: string;
+  glints: HubGlint[];
+  narrowsTo: { id: string; name: string }[];
+  partOf: { id: string; name: string }[];
+  facets: string[];
+};
+
+/** One entity hub: its glints (newest first), what it nests with, and the facets present. */
+export async function getHubDetail(entityId: string): Promise<HubDetail | null> {
+  const supabase = (await createClient()) as unknown as Db;
+  const user = await requireUser();
+
+  const { data: entity } = await supabase
+    .from('entities')
+    .select('id, name')
+    .eq('user_id', user.id)
+    .eq('id', entityId)
+    .maybeSingle();
+  if (!entity) return null;
+
+  const [{ data: links }, { data: childEdges }, { data: parentEdges }] = await Promise.all([
+    supabase
+      .from('topic_entities')
+      .select('topics(id, title, is_group, created_at, subjects(name))')
+      .eq('entity_id', entityId),
+    supabase.from('entity_parents').select('child_entity_id').eq('parent_entity_id', entityId),
+    supabase.from('entity_parents').select('parent_entity_id').eq('child_entity_id', entityId),
+  ]);
+
+  const glints: HubGlint[] = ((links ?? []) as {
+    topics: {
+      id: string;
+      title: string;
+      is_group: boolean;
+      created_at: string;
+      subjects: { name: string } | null;
+    } | null;
+  }[])
+    .map((l) => l.topics)
+    .filter((t): t is NonNullable<typeof t> => !!t && !t.is_group)
+    .map((t) => ({ id: t.id, title: t.title, subject: t.subjects?.name ?? null, createdAt: t.created_at }))
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+
+  const relIds = [
+    ...((childEdges ?? []) as { child_entity_id: string }[]).map((e) => e.child_entity_id),
+    ...((parentEdges ?? []) as { parent_entity_id: string }[]).map((e) => e.parent_entity_id),
+  ];
+  const relNames = new Map<string, string>();
+  if (relIds.length) {
+    const { data: rel } = await supabase.from('entities').select('id, name').in('id', relIds);
+    for (const r of (rel ?? []) as { id: string; name: string }[]) relNames.set(r.id, r.name);
+  }
+  const toRel = (ids: string[]) =>
+    ids.map((id) => ({ id, name: relNames.get(id) ?? '' })).filter((r) => r.name);
+
+  const facetSet = new Set<string>();
+  const glintIds = glints.map((g) => g.id);
+  if (glintIds.length) {
+    const { data: tf } = await supabase
+      .from('topic_facets')
+      .select('facets(name)')
+      .in('topic_id', glintIds);
+    for (const row of (tf ?? []) as { facets: { name: string } | null }[]) {
+      if (row.facets?.name) facetSet.add(row.facets.name);
+    }
+  }
+
+  return {
+    id: entity.id,
+    name: entity.name,
+    glints,
+    narrowsTo: toRel(((childEdges ?? []) as { child_entity_id: string }[]).map((e) => e.child_entity_id)),
+    partOf: toRel(((parentEdges ?? []) as { parent_entity_id: string }[]).map((e) => e.parent_entity_id)),
+    facets: [...facetSet].sort(),
+  };
+}

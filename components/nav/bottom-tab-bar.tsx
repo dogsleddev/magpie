@@ -3,25 +3,24 @@
 import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Tags, Shuffle, Waypoints, Sparkles } from 'lucide-react';
-import { rediscover } from '@/lib/actions/topics';
+import { LayoutGrid, Tags, Library, Waypoints, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Tab = {
-  key: 'today' | 'grid' | 'facets' | 'nest' | 'rediscover';
+  key: 'today' | 'grid' | 'facets' | 'nest' | 'library';
   label: string;
   icon: typeof LayoutGrid;
-  href?: Route;
+  href: Route;
 };
 
-// Today (the glint loop), Grid, Facets, and Nest route. Rediscover spins to a
-// random topic (server action).
+// Today (the glint loop), Grid, Facets, Nest, and Library. Library replaced the
+// old random Rediscover tab (the spin lives on as the dice inside the Library).
 const TABS: Tab[] = [
   { key: 'today', label: 'Today', icon: Sparkles, href: '/home' },
   { key: 'grid', label: 'Grid', icon: LayoutGrid, href: '/app' },
   { key: 'facets', label: 'Facets', icon: Tags, href: '/facets' },
   { key: 'nest', label: 'Nest', icon: Waypoints, href: '/nest' },
-  { key: 'rediscover', label: 'Rediscover', icon: Shuffle },
+  { key: 'library', label: 'Library', icon: Library, href: '/library' as Route },
 ];
 
 // 'app' is the standard phone-frame bar. 'overlay' is a floating pill for the
@@ -45,7 +44,8 @@ export default function BottomTabBar({ variant = 'app' }: { variant?: 'app' | 'o
           (tab.key === 'today' && pathname === '/home') ||
           (tab.key === 'grid' && pathname === '/app') ||
           (tab.key === 'facets' && pathname.startsWith('/facets')) ||
-          (tab.key === 'nest' && pathname.startsWith('/nest'));
+          (tab.key === 'nest' && pathname.startsWith('/nest')) ||
+          (tab.key === 'library' && pathname.startsWith('/library'));
 
         const inner = (
           <span
@@ -59,21 +59,10 @@ export default function BottomTabBar({ variant = 'app' }: { variant?: 'app' | 'o
           </span>
         );
 
-        if (tab.href) {
-          return (
-            <Link key={tab.key} href={tab.href} className="flex flex-1">
-              {inner}
-            </Link>
-          );
-        }
-
-        // Rediscover: spin to a random topic in the wiki.
         return (
-          <form key={tab.key} action={rediscover} className="flex flex-1">
-            <button type="submit" className="flex w-full">
-              {inner}
-            </button>
-          </form>
+          <Link key={tab.key} href={tab.href} className="flex flex-1">
+            {inner}
+          </Link>
         );
       })}
     </nav>
