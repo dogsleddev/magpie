@@ -7,7 +7,7 @@ import { shortTitlePrompt } from '@/lib/ai/prompts';
 import { addTopicViaMagpie } from '@/lib/actions/topics';
 import { findConnections, type Connection } from '@/lib/ai/connections';
 import { getSharedEntityConnections, getTopicEntities } from '@/lib/queries/entities';
-import { getTopicsLite, setGlintSeed, updateTopicTitle } from '@/lib/queries/topics';
+import { getTopicsLite, setGlintSeed, updateTopicTitle, type TopicLite } from '@/lib/queries/topics';
 import {
   getActivityStrip,
   getStreak,
@@ -53,6 +53,21 @@ function cleanShortTitle(raw: string): string {
     .replace(/\s+/g, ' ')
     .toLowerCase();
   return cleaned.split(' ').slice(0, 3).join(' ');
+}
+
+/**
+ * The connection engine for a caught glint: honest shared-hub matches first
+ * ("both about wolves"), falling back to the fuzzy title match on a cold graph
+ * so a chip still lands. Shared by the re-catch and new-catch paths.
+ */
+async function connectionsFor(
+  glint: string,
+  topicId: string,
+  entityIds: string[],
+  fallbackTopics: TopicLite[],
+): Promise<Connection[]> {
+  const shared = await getSharedEntityConnections(topicId, entityIds);
+  return shared.length > 0 ? shared : findConnections(glint, fallbackTopics);
 }
 
 /** Derive a 1 to 3 word name for a long glint. Empty string on failure. */
@@ -104,16 +119,12 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
   if (match) {
     await markTodayActive(tz);
     const matchEntities = await getTopicEntities(match.id);
-    let connections = await getSharedEntityConnections(
+    const connections = await connectionsFor(
+      trimmed,
       match.id,
       matchEntities.map((e) => e.id),
+      existingTopics.filter((t) => t.id !== match.id),
     );
-    if (connections.length === 0) {
-      connections = await findConnections(
-        trimmed,
-        existingTopics.filter((t) => t.id !== match.id),
-      );
-    }
     const [streak, strip] = await Promise.all([getStreak(tz), getActivityStrip(tz)]);
     await logEvent('glint_caught', {
       topicId: match.id,
@@ -155,15 +166,12 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
     console.error('[captureGlint] title/seed update failed:', e);
   }
 
-  // Honest connections first (glints sharing an entity hub), fuzzy title match
-  // as the cold-graph fallback so a chip still lands.
-  let connections = await getSharedEntityConnections(
+  const connections = await connectionsFor(
+    trimmed,
     added.topicId,
     added.entities.map((e) => e.id),
+    existingTopics,
   );
-  if (connections.length === 0) {
-    connections = await findConnections(trimmed, existingTopics);
-  }
 
   const [streak, strip] = await Promise.all([getStreak(tz), getActivityStrip(tz)]);
 

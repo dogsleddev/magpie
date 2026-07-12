@@ -7,8 +7,10 @@
 // Phase A: lift existing groups (is_group topics: Red Rising, Corvids) into
 //          entities and link their children. Deterministic, zero model calls.
 // Phase B: extract 1-3 entity hubs per plain topic via Haiku, reusing hubs
-//          discovered so far so the graph self-densifies. Skips topics already
-//          linked (re-runs only fill gaps).
+//          discovered so far so the graph self-densifies. Skips any topic that
+//          already has an entity link, so re-runs fill gaps at topic granularity
+//          (a topic hard-killed mid-loop is skipped wholesale; delete its links
+//          to reprocess it).
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -129,8 +131,15 @@ for (const t of todo) {
     names.push(hub.name);
     if (e.broader && isEntityLike(e.broader) && write && !String(hub.id).startsWith('new:')) {
       const parent = await findOrCreate(e.broader);
-      if (parent && !String(parent.id).startsWith('new:')) {
-        await s.from('entity_parents').upsert({ child_entity_id: hub.id, parent_entity_id: parent.id }, { onConflict: 'child_entity_id,parent_entity_id', ignoreDuplicates: true });
+      if (parent && !String(parent.id).startsWith('new:') && parent.id !== hub.id) {
+        // Guard the DAG: skip if the reverse edge exists, so an inverted broader
+        // from the model (predators->wolves and wolves->predators) cannot persist
+        // a 2-cycle. The DB check blocks only self-loops.
+        const { data: reverse } = await s.from('entity_parents').select('child_entity_id')
+          .eq('child_entity_id', parent.id).eq('parent_entity_id', hub.id).maybeSingle();
+        if (!reverse) {
+          await s.from('entity_parents').upsert({ child_entity_id: hub.id, parent_entity_id: parent.id }, { onConflict: 'child_entity_id,parent_entity_id', ignoreDuplicates: true });
+        }
       }
     }
   }

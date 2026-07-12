@@ -213,19 +213,6 @@ export async function getSharedEntityConnections(
   return out;
 }
 
-/** Hubs with their glint counts, richest first. Backs the Library and verification. */
-export async function getEntityRollup(): Promise<{ id: string; name: string; count: number }[]> {
-  const supabase = (await createClient()) as unknown as Db;
-  const user = await requireUser();
-  const { data } = await supabase
-    .from('entities')
-    .select('id, name, topic_entities(count)')
-    .eq('user_id', user.id);
-  return ((data ?? []) as { id: string; name: string; topic_entities: { count: number }[] }[])
-    .map((e) => ({ id: e.id, name: e.name, count: e.topic_entities?.[0]?.count ?? 0 }))
-    .sort((a, b) => b.count - a.count);
-}
-
 export type HubRow = {
   id: string;
   name: string;
@@ -332,24 +319,26 @@ export async function getHubDetail(entityId: string): Promise<HubDetail | null> 
     ...((childEdges ?? []) as { child_entity_id: string }[]).map((e) => e.child_entity_id),
     ...((parentEdges ?? []) as { parent_entity_id: string }[]).map((e) => e.parent_entity_id),
   ];
+  // The related-entity names and the facets-present reads are independent (both
+  // inputs are already resolved above), so fetch them together.
+  const glintIds = glints.map((g) => g.id);
+  const [{ data: rel }, { data: tf }] = await Promise.all([
+    relIds.length
+      ? supabase.from('entities').select('id, name').in('id', relIds)
+      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+    glintIds.length
+      ? supabase.from('topic_facets').select('facets(name)').in('topic_id', glintIds)
+      : Promise.resolve({ data: [] as { facets: { name: string } | null }[] }),
+  ]);
+
   const relNames = new Map<string, string>();
-  if (relIds.length) {
-    const { data: rel } = await supabase.from('entities').select('id, name').in('id', relIds);
-    for (const r of (rel ?? []) as { id: string; name: string }[]) relNames.set(r.id, r.name);
-  }
+  for (const r of (rel ?? []) as { id: string; name: string }[]) relNames.set(r.id, r.name);
   const toRel = (ids: string[]) =>
     ids.map((id) => ({ id, name: relNames.get(id) ?? '' })).filter((r) => r.name);
 
   const facetSet = new Set<string>();
-  const glintIds = glints.map((g) => g.id);
-  if (glintIds.length) {
-    const { data: tf } = await supabase
-      .from('topic_facets')
-      .select('facets(name)')
-      .in('topic_id', glintIds);
-    for (const row of (tf ?? []) as { facets: { name: string } | null }[]) {
-      if (row.facets?.name) facetSet.add(row.facets.name);
-    }
+  for (const row of (tf ?? []) as { facets: { name: string } | null }[]) {
+    if (row.facets?.name) facetSet.add(row.facets.name);
   }
 
   return {
