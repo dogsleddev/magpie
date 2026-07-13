@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Nest 3D control prototype</title>
+    <style>
+      :root {
+        --bg0: #0a0a09;
+        --bg1: #13110f;
+        --ink: #f5f4ef;
+        --muted: #b9b6ad;
+        --dim: #78756c;
+        --teal: #35c99a;
+        --line: #2a2823;
+        --card: rgba(18, 17, 15, 0.86);
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg0);
+        color: var(--ink);
+        font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #stage { position: fixed; inset: 0; }
+      canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+      canvas.panning { cursor: move; }
+
+      .panel {
+        position: fixed;
+        top: 14px;
+        left: 14px;
+        width: 268px;
+        max-width: calc(100vw - 28px);
+        background: var(--card);
+        backdrop-filter: blur(9px);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px 14px 12px;
+        z-index: 5;
+      }
+      .title {
+        font-family: "Fraunces", Georgia, serif;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: 0.2px;
+        margin: 0 0 2px;
+      }
+      .sub { font-size: 11.5px; color: var(--dim); margin: 0 0 12px; line-height: 1.4; }
+      .lab {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--dim);
+        margin: 0 0 6px;
+      }
+      .seg {
+        display: flex;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 3px;
+        gap: 3px;
+        margin-bottom: 12px;
+        background: rgba(0, 0, 0, 0.25);
+      }
+      .seg button {
+        flex: 1;
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 7px 6px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+      }
+      .seg button.on { background: var(--teal); color: #05130d; }
+      .hint {
+        font-size: 11.5px;
+        color: var(--muted);
+        line-height: 1.5;
+        border-top: 1px solid var(--line);
+        margin-top: 10px;
+        padding-top: 10px;
+      }
+      .hint b { color: var(--ink); font-weight: 600; }
+      .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+      .chk { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+      .chk input { accent-color: var(--teal); }
+      .btn {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--muted);
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .btn:hover { color: var(--ink); }
+      .footer {
+        position: fixed;
+        bottom: 12px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 11px;
+        color: var(--dim);
+        z-index: 5;
+        pointer-events: none;
+      }
+      @media (max-width: 520px) {
+        .panel { top: 10px; left: 10px; right: 10px; width: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"><canvas id="c"></canvas></div>
+
+    <div class="panel">
+      <p class="title">Nest 3D. control feel</p>
+      <p class="sub">Same graph, two schemes. Flip between them and feel which "3D model" you want.</p>
+
+      <p class="lab">Drag scheme</p>
+      <div class="seg" id="seg">
+        <button data-scheme="grab" class="on">Grab to spin</button>
+        <button data-scheme="ctrl">Ctrl to spin</button>
+      </div>
+
+      <div class="row">
+        <label class="chk"><input type="checkbox" id="drift" checked /> idle drift</label>
+        <label class="chk"><input type="checkbox" id="labels" checked /> labels</label>
+        <button class="btn" id="reset">Reset view</button>
+      </div>
+
+      <p class="hint" id="hint"></p>
+    </div>
+
+    <p class="footer">prototype. pure canvas 3D projection, no libraries. production uses WebGL + d3-force-3d.</p>
+
+    <script>
+      // ---- deterministic RNG so the layout looks the same every load ----
+      function mulberry32(a) {
+        return function () {
+          a |= 0; a = (a + 0x6d2b79f5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rnd = mulberry32(20260713);
+
+      // ---- palette (from lib/nest/build-graph.ts) ----
+      const FACET_COLOR = "#c9c6bc";
+      const CORE = "#fbfaf6";
+      function subjectColor(i, total, light = 60, sat = 62) {
+        const hue = total <= 1 ? 200 : 150 + (282 - 150) * (i / (total - 1));
+        return `hsl(${Math.round(hue)} ${sat}% ${light}%)`;
+      }
+
+      // ---- a representative mini-nest (short 1-to-3-word labels per C.11) ----
+      const SUBJECTS = [
+        { name: "History", topics: [["Roman roads", ["origins"]], ["Silk Road", ["origins", "trade"]], ["Cartography", ["maps"]]] },
+        { name: "Music", topics: [["Polyrhythm", ["paradox"]], ["Blue notes", ["evolution"]], ["Field recording", ["nature"]]] },
+        { name: "AI", topics: [["Attention", ["evolution"]], ["Hallucination", ["paradox"]], ["Embeddings", ["maps"]]] },
+        { name: "Nature", topics: [["Corvid tools", ["evolution", "nature"]], ["River capture", ["maps"]], ["Murmurations", ["paradox", "nature"]]] },
+        { name: "Sports", topics: [["Zone defense", ["paradox"]], ["Altitude edge", ["nature"]], ["Set pieces", ["trade"]]] },
+      ];
+      const SUBTOPICS = { "Corvid tools": ["Magpies", "Ravens"], "Silk Road": ["Spices"], "Attention": ["Heads"] };
+
+      // build node + link lists
+      const nodes = [];
+      const links = [];
+      const byId = new Map();
+      function add(n) { nodes.push(n); byId.set(n.id, n); return n; }
+      const total = SUBJECTS.length;
+      const facetSet = new Map(); // facet -> [topic ids]
+
+      SUBJECTS.forEach((s, si) => {
+        const sid = "s" + si;
+        add({ id: sid, type: "subject", label: s.name, color: subjectColor(si, total, 60), r: 11, subject: si });
+        s.topics.forEach((t, ti) => {
+          const [title, facets] = t;
+          const tid = sid + "t" + ti;
+          add({ id: tid, type: "topic", label: title, color: subjectColor(si, total, 60), r: 6.2, subject: si });
+          links.push({ a: sid, b: tid, kind: "containment" });
+          facets.forEach((f) => {
+            if (!facetSet.has(f)) facetSet.set(f, []);
+            facetSet.get(f).push(tid);
+          });
+          (SUBTOPICS[title] || []).forEach((st, sti) => {
+            const stid = tid + "x" + sti;
+            add({ id: stid, type: "subtopic", label: st, color: subjectColor(si, total, 68), r: 4, subject: si });
+            links.push({ a: tid, b: stid, kind: "containment" });
+          });
+        });
+      });
+
+      // facet bridge nodes (only facets shared by >= 2 topics, like the real build)
+      let fi = 0;
+      for (const [f, ids] of facetSet) {
+        if (ids.length < 2) continue;
+        const fid = "f" + fi++;
+        add({ id: fid, type: "facet", label: f, color: FACET_COLOR, r: 5, subject: -1 });
+        ids.forEach((tid) => links.push({ a: tid, b: fid, kind: "facet" }));
+      }
+
+      // ---- 3D layout: fibonacci sphere of subjects, topics clustered around, then relax ----
+      const GA = Math.PI * (3 - Math.sqrt(5));
+      function fib(i, n, R) {
+        const y = n <= 1 ? 0 : 1 - (i / (n - 1)) * 2;
+        const r = Math.sqrt(Math.max(0, 1 - y * y));
+        const th = i * GA;
+        return { x: Math.cos(th) * r * R, y: y * R, z: Math.sin(th) * r * R };
+      }
+      const subjNodes = nodes.filter((n) => n.type === "subject");
+      subjNodes.forEach((n, i) => {
+        const p = fib(i, subjNodes.length, 165);
+        n.x = p.x; n.y = p.y; n.z = p.z;
+      });
+      const subjPos = new Map(subjNodes.map((n) => [n.subject, n]));
+      nodes.forEach((n) => {
+        if (n.type === "subject") return;
+        const base = n.subject >= 0 ? subjPos.get(n.subject) : { x: 0, y: 0, z: 0 };
+        const spread = n.type === "facet" ? 120 : n.type === "subtopic" ? 26 : 58;
+        n.x = base.x + (rnd() - 0.5) * spread;
+        n.y = base.y + (rnd() - 0.5) * spread;
+        n.z = base.z + (rnd() - 0.5) * spread;
+      });
+
+      // light force relaxation (repulsion + link springs + weak centering)
+      const rest = { containment: 46, facet: 92 };
+      for (let it = 0; it < 90; it++) {
+        for (const n of nodes) { n.dx = 0; n.dy = 0; n.dz = 0; }
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const a = nodes[i], b = nodes[j];
+            let dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+            let d2 = dx * dx + dy * dy + dz * dz || 0.01;
+            const f = 3600 / d2;
+            const d = Math.sqrt(d2);
+            dx /= d; dy /= d; dz /= d;
+            a.dx += dx * f; a.dy += dy * f; a.dz += dz * f;
+            b.dx -= dx * f; b.dy -= dy * f; b.dz -= dz * f;
+          }
+        }
+        for (const l of links) {
+          const a = byId.get(l.a), b = byId.get(l.b);
+          let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+          const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.01;
+          const k = ((d - (rest[l.kind] || 60)) / d) * 0.09;
+          dx *= k; dy *= k; dz *= k;
+          a.dx += dx; a.dy += dy; a.dz += dz;
+          b.dx -= dx; b.dy -= dy; b.dz -= dz;
+        }
+        for (const n of nodes) {
+          n.dx += -n.x * 0.012; n.dy += -n.y * 0.012; n.dz += -n.z * 0.012;
+          const step = 0.55;
+          n.x += Math.max(-9, Math.min(9, n.dx * step));
+          n.y += Math.max(-9, Math.min(9, n.dy * step));
+          n.z += Math.max(-9, Math.min(9, n.dz * step));
+        }
+      }
+
+      // adjacency for hover highlight
+      const adj = new Map(nodes.map((n) => [n.id, new Set()]));
+      for (const l of links) { adj.get(l.a).add(l.b); adj.get(l.b).add(l.a); }
+
+      // ---- camera / rotation state ----
+      const cv = document.getElementById("c");
+      const ctx = cv.getContext("2d");
+      let W = 0, H = 0, DPR = 1;
+      // rotation as a 3x3 matrix, row-major
+      let R = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+      const R0 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+      let dist = 620, dist0 = 620;
+      let panX = 0, panY = 0;
+      let velA = 0, velB = 0; // inertia (yaw, pitch)
+      const FOCAL = 620;
+
+      function mul(m, n) {
+        const o = new Array(9);
+        for (let r = 0; r < 3; r++)
+          for (let c = 0; c < 3; c++)
+            o[r * 3 + c] = m[r * 3] * n[c] + m[r * 3 + 1] * n[3 + c] + m[r * 3 + 2] * n[6 + c];
+        return o;
+      }
+      function rotY(a) { const c = Math.cos(a), s = Math.sin(a); return [c, 0, s, 0, 1, 0, -s, 0, c]; }
+      function rotX(a) { const c = Math.cos(a), s = Math.sin(a); return [1, 0, 0, 0, c, -s, 0, s, c]; }
+      function applyDrag(dyaw, dpitch) {
+        // pre-multiply so rotation is in screen/camera space (trackball feel)
+        R = mul(rotX(dpitch), mul(rotY(dyaw), R));
+      }
+      function rot(n) {
+        return {
+          x: R[0] * n.x + R[1] * n.y + R[2] * n.z,
+          y: R[3] * n.x + R[4] * n.y + R[5] * n.z,
+          z: R[6] * n.x + R[7] * n.y + R[8] * n.z,
+        };
+      }
+
+      // ---- controls ----
+      let scheme = "grab";
+      let labelsOn = true;
+      let drift = true;
+      let hoverId = null;
+
+      const pointers = new Map();
+      let dragging = null; // 'rotate' | 'pan' | null
+      let pinchDist = 0;
+      let lastSingle = null;
+
+      function schemeMode(ev) {
+        const mod = ev.ctrlKey || ev.metaKey || ev.shiftKey;
+        if (scheme === "grab") return mod ? "pan" : "rotate";
+        return mod ? "rotate" : "pan";
+      }
+      function localXY(e) {
+        const r = cv.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+      }
+
+      cv.addEventListener("pointerdown", (e) => {
+        cv.setPointerCapture(e.pointerId);
+        const p = localXY(e);
+        pointers.set(e.pointerId, p);
+        if (e.pointerType === "touch" && pointers.size === 2) {
+          const [a, b] = [...pointers.values()];
+          pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
+          dragging = "pan-pinch";
+          return;
+        }
+        // touch single finger always rotates (mobile spec). mouse follows the scheme.
+        dragging = e.pointerType === "touch" ? "rotate" : schemeMode(e);
+        velA = velB = 0;
+        lastSingle = p;
+        cv.classList.toggle("panning", dragging === "pan");
+      });
+
+      cv.addEventListener("pointermove", (e) => {
+        const p = localXY(e);
+        if (pointers.has(e.pointerId)) pointers.set(e.pointerId, p);
+
+        if (dragging === "pan-pinch" && pointers.size >= 2) {
+          const [a, b] = [...pointers.values()];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (pinchDist) dist = Math.max(240, Math.min(1500, dist * (pinchDist / d)));
+          pinchDist = d;
+          return;
+        }
+        if (!dragging || !lastSingle) {
+          // hover pick (mouse only)
+          if (e.pointerType !== "touch") pickHover(p);
+          return;
+        }
+        const dx = p.x - lastSingle.x, dy = p.y - lastSingle.y;
+        lastSingle = p;
+        if (dragging === "rotate") {
+          const ky = dx * 0.008, kx = dy * 0.008;
+          applyDrag(ky, kx);
+          velA = ky; velB = kx;
+        } else if (dragging === "pan") {
+          panX += dx; panY += dy;
+        }
+      });
+
+      function endPointer(e) {
+        pointers.delete(e.pointerId);
+        if (pointers.size < 2) pinchDist = 0;
+        if (pointers.size === 0) {
+          dragging = null;
+          lastSingle = null;
+          cv.classList.remove("panning");
+        }
+      }
+      cv.addEventListener("pointerup", endPointer);
+      cv.addEventListener("pointercancel", endPointer);
+
+      cv.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        dist = Math.max(240, Math.min(1500, dist * Math.exp(e.deltaY * 0.0012)));
+      }, { passive: false });
+
+      function pickHover(p) {
+        let best = null, bestD = 22 * 22;
+        for (const n of nodes) {
+          if (n._sx === undefined) continue;
+          const d = (n._sx - p.x) ** 2 + (n._sy - p.y) ** 2;
+          if (d < bestD) { bestD = d; best = n.id; }
+        }
+        hoverId = best;
+      }
+
+      // panel wiring
+      document.getElementById("seg").addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        if (!b) return;
+        scheme = b.dataset.scheme;
+        [...e.currentTarget.children].forEach((c) => c.classList.toggle("on", c === b));
+        updateHint();
+      });
+      document.getElementById("labels").addEventListener("change", (e) => (labelsOn = e.target.checked));
+      document.getElementById("drift").addEventListener("change", (e) => (drift = e.target.checked));
+      document.getElementById("reset").addEventListener("click", () => {
+        R = R0.slice(); dist = dist0; panX = 0; panY = 0; velA = velB = 0;
+      });
+
+      function updateHint() {
+        const h = document.getElementById("hint");
+        h.innerHTML =
+          scheme === "grab"
+            ? "<b>Drag</b> spins the nest. <b>Ctrl / Shift + drag</b> pans. Scroll zooms. This matches phones (one finger spins) and real 3D viewers."
+            : "<b>Ctrl + drag</b> spins the nest. <b>Drag</b> pans (like the 2D nest). Scroll zooms. On touch, one finger still spins.";
+      }
+      updateHint();
+
+      // ---- render loop ----
+      function resize() {
+        DPR = Math.min(window.devicePixelRatio || 1, 2);
+        W = cv.clientWidth; H = cv.clientHeight;
+        cv.width = Math.round(W * DPR);
+        cv.height = Math.round(H * DPR);
+      }
+      window.addEventListener("resize", resize);
+
+      function frame() {
+        // self-heal size (the pane can lay out after first paint, leaving a 0-wide canvas)
+        if (cv.clientWidth !== W || cv.clientHeight !== H) resize();
+        // inertia + idle drift
+        if (!dragging && (Math.abs(velA) > 1e-4 || Math.abs(velB) > 1e-4)) {
+          applyDrag(velA, velB);
+          velA *= 0.94; velB *= 0.94;
+        } else if (!dragging && drift) {
+          applyDrag(0.0016, 0);
+        }
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      function draw() {
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        const g = ctx.createRadialGradient(W / 2, H * 0.42, 0, W / 2, H * 0.42, Math.max(W, H) * 0.75);
+        g.addColorStop(0, "#13110f");
+        g.addColorStop(1, "#0a0a09");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+
+        const cx = W / 2 + panX, cy = H / 2 + panY;
+        // project
+        for (const n of nodes) {
+          const r = rot(n);
+          const s = FOCAL / (dist + r.z);
+          n._sx = cx + r.x * s;
+          n._sy = cy + r.y * s;
+          n._s = s;
+          n._z = r.z;
+          // depth cue: near is brighter/bigger
+          n._depth = Math.max(0.28, Math.min(1, 1 - (r.z + 200) / 620));
+        }
+
+        const hi = hoverId ? new Set([hoverId, ...adj.get(hoverId)]) : null;
+
+        // links (drawn under nodes, sorted far to near by midpoint z)
+        const sortedLinks = links
+          .map((l) => ({ l, a: byId.get(l.a), b: byId.get(l.b) }))
+          .sort((p, q) => (q.a._z + q.b._z) - (p.a._z + p.b._z));
+        for (const { l, a, b } of sortedLinks) {
+          const on = !hi || (hi.has(a.id) && hi.has(b.id));
+          const depth = (a._depth + b._depth) / 2;
+          ctx.strokeStyle = l.kind === "facet" ? FACET_COLOR : a.color;
+          ctx.globalAlpha = (on ? 0.34 : 0.05) * depth;
+          ctx.lineWidth = Math.max(0.5, 1 * ((a._s + b._s) / 2));
+          ctx.beginPath();
+          ctx.moveTo(a._sx, a._sy);
+          ctx.lineTo(b._sx, b._sy);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        // nodes far to near
+        const order = [...nodes].sort((a, b) => b._z - a._z);
+        for (const n of nodes) n._rr = n.r * (0.7 + 0.5 * n._s);
+        for (const n of order) {
+          const on = !hi || hi.has(n.id);
+          const rr = n._rr;
+          const depth = n._depth;
+          if (n.type === "facet") {
+            ctx.globalAlpha = (on ? 0.95 : 0.16) * depth;
+            ctx.save();
+            ctx.translate(n._sx, n._sy);
+            ctx.rotate(Math.PI / 4);
+            ctx.strokeStyle = FACET_COLOR;
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = FACET_COLOR;
+            ctx.shadowBlur = on ? 10 * depth : 0;
+            ctx.strokeRect(-rr * 0.8, -rr * 0.8, rr * 1.6, rr * 1.6);
+            ctx.restore();
+            ctx.shadowBlur = 0;
+          } else {
+            ctx.globalAlpha = (on ? 1 : 0.2) * depth;
+            ctx.beginPath();
+            ctx.fillStyle = n.color;
+            ctx.shadowColor = n.color;
+            ctx.shadowBlur = on ? (n.type === "subject" ? 20 : 11) * depth : 0;
+            ctx.arc(n._sx, n._sy, rr, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = (on ? 0.9 : 0.22) * depth;
+            ctx.beginPath();
+            ctx.fillStyle = CORE;
+            ctx.arc(n._sx, n._sy, Math.max(1, rr * 0.32), 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+
+          const showLabel =
+            labelsOn && (n.type === "subject" || (hi && hi.has(n.id)) || (hoverId === n.id));
+          if (showLabel && n._s > 0.35) {
+            const fz = n.type === "subject" ? 13 : 11.5;
+            ctx.font = `${n.type === "subject" ? "600" : "500"} ${fz}px ${
+              n.type === "subject" ? "Fraunces, Georgia, serif" : "DM Sans, system-ui, sans-serif"
+            }`;
+            ctx.globalAlpha = (on ? 0.96 : 0.3) * Math.max(0.5, depth);
+            ctx.fillStyle =
+              n.type === "subject" ? "#f5f4ef" : n.type === "facet" ? FACET_COLOR : "#e7e5dc";
+            ctx.textBaseline = "middle";
+            ctx.fillText(n.label, n._sx + rr + 5, n._sy);
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
+
+      resize();
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>
