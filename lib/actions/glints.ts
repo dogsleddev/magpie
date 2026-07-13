@@ -142,6 +142,7 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
       alreadyHad: true,
     });
     revalidatePath('/home');
+    revalidatePath('/library');
     return {
       topicId: match.id,
       title: match.title,
@@ -197,6 +198,7 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
   });
 
   revalidatePath('/home');
+  revalidatePath('/library');
   return {
     topicId: added.topicId,
     title,

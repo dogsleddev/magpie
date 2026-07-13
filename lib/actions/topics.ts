@@ -319,6 +319,7 @@ export async function addTopicViaMagpie(
 
   revalidatePath('/app');
   revalidatePath('/recent');
+  revalidatePath('/library');
   revalidatePath('/facets');
   revalidatePath('/nest');
   revalidatePath(`/subject/${subjectId}`);

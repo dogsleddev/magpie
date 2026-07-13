@@ -39,6 +39,12 @@ export async function getNestGraph(): Promise<NestSource> {
   if (subjectsRes.error) throw subjectsRes.error;
   if (topicsRes.error) throw topicsRes.error;
   if (facetsRes.error) throw facetsRes.error;
+  // The entity reads ride the untyped cast path and back an off-by-default layer.
+  // A failure logs and degrades (the teal layer just drops) rather than throwing
+  // and taking down the whole graph over an additive dimension.
+  if (entitiesRes.error) console.error('[getNestGraph] entities read failed:', entitiesRes.error);
+  if (linksRes.error) console.error('[getNestGraph] topic_entities read failed:', linksRes.error);
+  if (parentsRes.error) console.error('[getNestGraph] entity_parents read failed:', parentsRes.error);
 
   const entityIdsByTopic = new Map<string, string[]>();
   for (const l of (linksRes.data ?? []) as { topic_id: string; entity_id: string }[]) {
