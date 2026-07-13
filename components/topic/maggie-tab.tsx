@@ -53,7 +53,8 @@ export default function MaggieTab({
           personaName={personaName}
           initialMessages={initialMessages}
           tagline="talk it through"
-          onKeep={(content) => void store.add(content)}
+          active={view === 'talk'}
+          onKeep={(content) => store.add(content).then(Boolean)}
         />
       </div>
       <div className={view === 'notes' ? '' : 'hidden'}>

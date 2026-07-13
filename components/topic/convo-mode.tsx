@@ -29,14 +29,19 @@ export default function ConvoMode({
   initialMessages,
   tagline,
   onKeep,
+  active = true,
 }: {
   topicId: string;
   personaName: string;
   initialMessages: ConversationMessage[];
   tagline: string;
   // When present, each real message gets a "keep" action that pins it to the
-  // topic's notes (the merged Maggie tab passes this). Undefined = no keep UI.
-  onKeep?: (content: string) => void;
+  // topic's notes (the merged Maggie tab passes this). Resolves true on save, so
+  // the button only flips to "kept" when the write actually landed.
+  onKeep?: (content: string) => Promise<boolean>;
+  // False while this view is hidden behind the Notes toggle, so we can re-scroll
+  // to the latest message when it becomes visible again.
+  active?: boolean;
 }) {
   const [messages, setMessages] = useState<ConversationMessage[]>(initialMessages);
   const [input, setInput] = useState('');
@@ -70,9 +75,10 @@ export default function ConvoMode({
   };
 
   useEffect(() => {
+    if (!active) return; // hidden: scrollHeight is 0, so defer to when we're shown
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages]);
+  }, [messages, active]);
 
   // Abort an in-flight reply if the user leaves this view (tab switch / topic change),
   // so the stream stops and a half-finished answer is never persisted.
@@ -208,9 +214,18 @@ export default function ConvoMode({
               {canKeep && (
                 <button
                   type="button"
-                  onClick={() => {
-                    onKeep(m.content);
+                  onClick={async () => {
+                    if (kept.has(i) || !onKeep) return;
+                    // Mark kept synchronously so a rapid second click is a no-op
+                    // (the guard above), then revert if the save actually failed.
                     setKept((prev) => new Set(prev).add(i));
+                    const ok = await onKeep(m.content);
+                    if (!ok)
+                      setKept((prev) => {
+                        const next = new Set(prev);
+                        next.delete(i);
+                        return next;
+                      });
                   }}
                   aria-label="Keep this in your notes"
                   className="inline-flex items-center gap-1 px-1 text-[11px] text-text-dim transition-colors hover:text-teal"

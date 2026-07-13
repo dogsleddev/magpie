@@ -29,6 +29,12 @@ export function useThoughts(topicId: string, initial: Thought[]) {
       if (!content) return null;
       setError(null);
 
+      // Dedup: favoriting/keeping/jotting content already in the list is a no-op
+      // that returns the existing note. Repeat clicks, and re-favoriting after a
+      // tab switch remounts the button, never write duplicate rows to the shared DB.
+      const existing = ref.current.find((t) => t.content.trim() === content);
+      if (existing) return existing;
+
       const tempId = `temp-${crypto.randomUUID()}`;
       setThoughts((prev) => [
         ...prev,

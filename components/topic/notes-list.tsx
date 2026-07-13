@@ -18,11 +18,13 @@ export default function NotesList({ store }: { store: ThoughtsStore }) {
   const [editValue, setEditValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const commit = () => {
+  const commit = async () => {
     const value = input;
     setInput('');
     inputRef.current?.focus();
-    void add(value);
+    const saved = await add(value);
+    // Restore the text if the save failed (add returns null), so it is not lost.
+    if (!saved && value.trim()) setInput((cur) => cur || value);
   };
 
   const startEdit = (id: string, content: string) => {
