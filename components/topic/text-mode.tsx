@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Star, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type Mode = 'brief' | 'challenge' | 'questions';
 
@@ -10,20 +11,27 @@ export default function TextMode({
   mode,
   tagline,
   personaName,
+  onFavorite,
 }: {
   topicId: string;
   mode: Mode;
   tagline: string;
   personaName: string;
+  // Pins the current response into the topic's shared notes store. Returns true
+  // on success so the button can flip to "Saved".
+  onFavorite: (content: string) => Promise<boolean>;
 }) {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(
     async (reroll: boolean) => {
       setLoading(true);
       setError(null);
+      setSaved(false);
       try {
         const res = await fetch(`/api/ai/${mode}`, {
           method: 'POST',
@@ -49,6 +57,20 @@ export default function TextMode({
     void load(false);
   }, [load]);
 
+  // Favorite pins this response to the topic's notes (the shared thoughts store),
+  // so a later Dismiss/reroll never loses it. Dismiss is just a reroll.
+  const favorite = async () => {
+    if (!content || saving || saved) return;
+    setSaving(true);
+    setError(null);
+    try {
+      if (await onFavorite(content)) setSaved(true);
+      else setError('Could not save that. Try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xs italic text-text-dim">{tagline}</p>
@@ -68,8 +90,31 @@ export default function TextMode({
             <div className="text-sm leading-relaxed text-text">
               <AIContent text={content ?? ''} />
             </div>
-            <div className="flex justify-end border-t border-border pt-3">
-              <RerollButton label="Reroll" onClick={() => void load(true)} />
+            <div className="flex items-center gap-2 border-t border-border pt-3">
+              <button
+                type="button"
+                onClick={() => void favorite()}
+                disabled={saving || saved}
+                aria-label={saved ? 'Saved to your notes' : 'Favorite this response'}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-colors',
+                  saved
+                    ? 'text-teal'
+                    : 'text-text-muted hover:bg-bg-card-2 hover:text-text disabled:opacity-50',
+                )}
+              >
+                <Star className={cn('h-3.5 w-3.5', saved && 'fill-teal')} />
+                <span>{saved ? 'Saved' : 'Favorite'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => void load(true)}
+                aria-label="Dismiss and get a fresh one"
+                className="ml-auto inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium text-text-muted transition-colors hover:bg-bg-card-2 hover:text-text"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span>Dismiss</span>
+              </button>
             </div>
           </div>
         )}

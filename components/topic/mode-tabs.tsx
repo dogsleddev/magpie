@@ -2,16 +2,17 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import PersonaMode from '@/components/topic/persona-mode';
 import TextMode from '@/components/topic/text-mode';
-import ConvoMode from '@/components/topic/convo-mode';
+import MaggieTab from '@/components/topic/maggie-tab';
+import { useThoughts } from '@/components/topic/use-thoughts';
 import type { ConversationMessage, Thought } from '@/lib/queries/types';
 
-// 'persona' is the persona-named tab (the chat with Maggie); 'thoughts' is the
-// bullet capture. They render the swapped components below.
-type ModeKey = 'persona' | 'brief' | 'challenge' | 'questions' | 'thoughts';
+// The merged topic interface (Slice 4): it opens on Brief. Brief/Challenge/
+// Questions are AI takes you can favorite or dismiss; the persona-named tab is
+// last and holds the chat plus your kept notes (it absorbed the old Thoughts tab).
+type ModeKey = 'brief' | 'challenge' | 'questions' | 'maggie';
 
-const MODE_KEYS: ModeKey[] = ['persona', 'brief', 'challenge', 'questions', 'thoughts'];
+const MODE_KEYS: ModeKey[] = ['brief', 'challenge', 'questions', 'maggie'];
 
 const TAGLINES: Record<'brief' | 'challenge' | 'questions', string> = {
   brief: 'the primer you needed earlier',
@@ -32,17 +33,24 @@ export default function ModeTabs({
   thoughts: Thought[];
   conversationMessages: ConversationMessage[];
 }) {
+  // Land on Brief unless the user has explicitly chosen one of the new tabs; old
+  // stored defaults ("persona", "thoughts") fall through to Brief.
   const initial = (MODE_KEYS as string[]).includes(defaultMode)
     ? (defaultMode as ModeKey)
-    : 'persona';
+    : 'brief';
   const [active, setActive] = useState<ModeKey>(initial);
 
+  // One notes store for the whole topic interface, lifted here so a Favorite from
+  // Brief/Challenge/Questions and a "keep" from the Maggie chat land in the same
+  // live list (it persists across tab switches because this component stays mounted).
+  const notes = useThoughts(topicId, thoughts);
+  const favorite = async (content: string) => !!(await notes.add(content));
+
   const tabs: { key: ModeKey; label: string }[] = [
-    { key: 'persona', label: personaName },
     { key: 'brief', label: 'Brief' },
     { key: 'challenge', label: 'Challenge' },
     { key: 'questions', label: 'Questions' },
-    { key: 'thoughts', label: 'Thoughts' },
+    { key: 'maggie', label: personaName },
   ];
 
   return (
@@ -55,6 +63,7 @@ export default function ModeTabs({
             onClick={() => setActive(tab.key)}
             className={cn(
               'whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors',
+              tab.key === 'maggie' && 'ml-auto',
               active === tab.key
                 ? 'border-teal text-text'
                 : 'border-transparent text-text-dim hover:text-text-muted',
@@ -65,15 +74,6 @@ export default function ModeTabs({
         ))}
       </div>
 
-      {active === 'persona' && (
-        <ConvoMode
-          key={`convo-${topicId}`}
-          topicId={topicId}
-          personaName={personaName}
-          initialMessages={conversationMessages}
-          tagline="talk it through"
-        />
-      )}
       {active === 'brief' && (
         <TextMode
           key={`brief-${topicId}`}
@@ -81,6 +81,7 @@ export default function ModeTabs({
           mode="brief"
           tagline={TAGLINES.brief}
           personaName={personaName}
+          onFavorite={favorite}
         />
       )}
       {active === 'challenge' && (
@@ -90,6 +91,7 @@ export default function ModeTabs({
           mode="challenge"
           tagline={TAGLINES.challenge}
           personaName={personaName}
+          onFavorite={favorite}
         />
       )}
       {active === 'questions' && (
@@ -99,10 +101,17 @@ export default function ModeTabs({
           mode="questions"
           tagline={TAGLINES.questions}
           personaName={personaName}
+          onFavorite={favorite}
         />
       )}
-      {active === 'thoughts' && (
-        <PersonaMode key={`thoughts-${topicId}`} topicId={topicId} initialThoughts={thoughts} />
+      {active === 'maggie' && (
+        <MaggieTab
+          key={`maggie-${topicId}`}
+          topicId={topicId}
+          personaName={personaName}
+          store={notes}
+          initialMessages={conversationMessages}
+        />
       )}
     </div>
   );

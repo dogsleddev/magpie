@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Send } from 'lucide-react';
+import { BookmarkPlus, Check, Send } from 'lucide-react';
 import { saveConvoTurn } from '@/lib/actions/conversations';
 import { CONVO_STREAM_ERROR_MARK } from '@/lib/ai/stream-markers';
 import type { ConversationMessage } from '@/lib/queries/types';
@@ -28,15 +28,20 @@ export default function ConvoMode({
   personaName,
   initialMessages,
   tagline,
+  onKeep,
 }: {
   topicId: string;
   personaName: string;
   initialMessages: ConversationMessage[];
   tagline: string;
+  // When present, each real message gets a "keep" action that pins it to the
+  // topic's notes (the merged Maggie tab passes this). Undefined = no keep UI.
+  onKeep?: (content: string) => void;
 }) {
   const [messages, setMessages] = useState<ConversationMessage[]>(initialMessages);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
+  const [kept, setKept] = useState<Set<number>>(new Set());
   const [opener, setOpener] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -186,15 +191,41 @@ export default function ConvoMode({
           const isUser = m.role === 'user';
           const isStreamingPlaceholder =
             !isUser && i === shown.length - 1 && m.content === '' && (streaming || loadingOpener);
+          // Keep is offered only inside a real conversation (not on the synthetic
+          // opener) and only on a settled, non-empty message.
+          const canKeep =
+            !!onKeep && messages.length > 0 && !isStreamingPlaceholder && m.content.trim().length > 0;
           return (
-            <div
-              key={i}
-              className={cn(
-                'max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm',
-                isUser ? 'self-end bg-teal/15 text-text' : 'self-start bg-bg-card-2 text-text',
+            <div key={i} className={cn('flex flex-col gap-0.5', isUser ? 'items-end' : 'items-start')}>
+              <div
+                className={cn(
+                  'max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm',
+                  isUser ? 'bg-teal/15 text-text' : 'bg-bg-card-2 text-text',
+                )}
+              >
+                {isStreamingPlaceholder ? <Typing /> : m.content}
+              </div>
+              {canKeep && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onKeep(m.content);
+                    setKept((prev) => new Set(prev).add(i));
+                  }}
+                  aria-label="Keep this in your notes"
+                  className="inline-flex items-center gap-1 px-1 text-[11px] text-text-dim transition-colors hover:text-teal"
+                >
+                  {kept.has(i) ? (
+                    <>
+                      <Check className="h-3 w-3" /> kept
+                    </>
+                  ) : (
+                    <>
+                      <BookmarkPlus className="h-3 w-3" /> keep
+                    </>
+                  )}
+                </button>
               )}
-            >
-              {isStreamingPlaceholder ? <Typing /> : m.content}
             </div>
           );
         })}
