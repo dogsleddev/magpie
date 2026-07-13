@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireUser } from '@/lib/supabase/server';
 import { callClaude, MODELS } from '@/lib/ai/client';
 import { shortTitlePrompt } from '@/lib/ai/prompts';
-import { addTopicViaMagpie, type NestSuggestion } from '@/lib/actions/topics';
+import { addTopicViaMagpie } from '@/lib/actions/topics';
 import { findConnections, type Connection } from '@/lib/ai/connections';
 import { getSharedEntityConnections, getTopicEntities } from '@/lib/queries/entities';
 import {
@@ -32,8 +32,6 @@ export type CaptureGlintResult = {
   strip: ActivityDay[];
   // The entity hubs this glint is about, shown as the editable "about" line.
   entities: { id: string; name: string }[];
-  // Broader hubs Maggie proposed that do not exist yet: one-tap accepts.
-  nestSuggestions: NestSuggestion[];
   // The distinct curiosities Maggie spotted in a brain-dump (2 to 3 short glint
   // texts), or null. When present, the caught card offers to split.
   split: string[] | null;
@@ -152,7 +150,6 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
       streak,
       strip,
       entities: matchEntities.map((e) => ({ id: e.id, name: e.name })),
-      nestSuggestions: [],
       split: null,
       alreadyHad: true,
     };
@@ -209,7 +206,6 @@ export async function captureGlint(input: string): Promise<CaptureGlintResult> {
     streak,
     strip,
     entities: added.entities.map((e) => ({ id: e.id, name: e.name })),
-    nestSuggestions: added.nestSuggestions,
     split: splitGlints.length >= 2 ? splitGlints : null,
     alreadyHad: false,
   };

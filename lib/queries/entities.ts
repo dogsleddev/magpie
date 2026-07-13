@@ -104,42 +104,6 @@ export async function findOrCreateEntity(name: string): Promise<EntityLite> {
   return created as EntityLite;
 }
 
-/**
- * Resolve a name to an EXISTING hub (canonical key, then a recorded alias).
- * Returns null if there is none. Never creates, so callers can branch on whether
- * a hub already exists without minting an empty one.
- */
-export async function findEntityByName(name: string): Promise<EntityLite | null> {
-  const supabase = (await createClient()) as unknown as Db;
-  const user = await requireUser();
-  const key = entityKey(name.trim());
-  if (!key) return null;
-
-  const { data: hit } = await supabase
-    .from('entities')
-    .select('id, name, canonical_key')
-    .eq('user_id', user.id)
-    .eq('canonical_key', key)
-    .maybeSingle();
-  if (hit) return hit as EntityLite;
-
-  const { data: alias } = await supabase
-    .from('entity_aliases')
-    .select('entity_id')
-    .eq('user_id', user.id)
-    .eq('alias_key', key)
-    .maybeSingle();
-  if (alias?.entity_id) {
-    const { data: viaAlias } = await supabase
-      .from('entities')
-      .select('id, name, canonical_key')
-      .eq('id', alias.entity_id)
-      .maybeSingle();
-    if (viaAlias) return viaAlias as EntityLite;
-  }
-  return null;
-}
-
 /** Link a glint to an entity hub. Idempotent (the PK makes re-links a no-op). */
 export async function linkTopicEntity(topicId: string, entityId: string): Promise<void> {
   const supabase = (await createClient()) as unknown as Db;

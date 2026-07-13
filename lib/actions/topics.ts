@@ -28,8 +28,6 @@ import { createSubject, getSubjectsWithCounts } from '@/lib/queries/subjects';
 import { findOrCreateFacet, getFacetsWithCounts, setTopicFacets } from '@/lib/queries/facets';
 import {
   addEntityParent,
-  entityKey,
-  findEntityByName,
   findOrCreateEntity,
   getEntitiesLite,
   isEntityLike,
@@ -225,11 +223,6 @@ async function resolveFacetIds(names: string[]): Promise<string[]> {
   return ids;
 }
 
-// A proposed nesting the user can accept with one tap. Maggie extracted a broader
-// hub for a glint's entity, but that broader hub does not exist yet, so we surface
-// it instead of auto-minting a single-child ghost (REDESIGN 6.5).
-export type NestSuggestion = { childId: string; childName: string; parentName: string };
-
 export type AddTopicResult = {
   topicId: string;
   title: string;
@@ -237,8 +230,6 @@ export type AddTopicResult = {
   subjectName: string;
   facets: string[];
   entities: EntityLite[];
-  // Broader hubs Maggie proposed that do not exist yet: offered as one-tap accepts.
-  nestSuggestions: NestSuggestion[];
   // Non-null only when the categorizer read the input as 2 to 3 distinct
   // curiosities. The caller (captureGlint) may offer to split it.
   split: CategorizeSplit[] | null;
@@ -308,26 +299,18 @@ export async function addTopicViaMagpie(
   // Link the extracted entity hubs (the connective spine). Best-effort, like the
   // umbrella: an extraction or link failure never breaks the add. The hubs and
   // their broader-than nesting are resolved through findOrCreateEntity (reuse).
+  // Nesting is automatic, kept honest by the extractor prompt: `broader` is only a
+  // common recurring category (sports, animals), never a one-off parent, so this
+  // does not mint single-child ghost hubs. See categorizeTopicPrompt and REDESIGN 6.5.
   const entities: EntityLite[] = [];
-  const nestSuggestions: NestSuggestion[] = [];
   for (const e of plan.entities ?? []) {
     try {
       const hub = await findOrCreateEntity(e.name);
       await linkTopicEntity(topic.id, hub.id);
       entities.push(hub);
-      // Nesting policy (REDESIGN 6.5): PROPOSE, do not auto-mint. Auto-link the
-      // broader edge only when the parent hub already exists (a proven rollup like
-      // "sports"), which keeps valuable aggregation free. A brand-new parent would
-      // be a single-child ghost, so surface it as a one-tap suggestion instead.
-      // (Flip to pure-auto: always findOrCreateEntity + addEntityParent. Flip to
-      // pure-proposed: always push a suggestion, never auto-link.)
-      if (e.broader && isEntityLike(e.broader) && entityKey(e.broader) !== hub.canonical_key) {
-        const parent = await findEntityByName(e.broader);
-        if (parent && parent.id !== hub.id) {
-          await addEntityParent(hub.id, parent.id);
-        } else if (!parent) {
-          nestSuggestions.push({ childId: hub.id, childName: hub.name, parentName: e.broader.trim() });
-        }
+      if (e.broader && isEntityLike(e.broader)) {
+        const parent = await findOrCreateEntity(e.broader);
+        await addEntityParent(hub.id, parent.id);
       }
     } catch (err) {
       console.error('[addTopic] entity link failed for', e.name, err);
@@ -351,7 +334,6 @@ export async function addTopicViaMagpie(
     subjectName,
     facets: plan.facets,
     entities,
-    nestSuggestions,
     split: plan.split ?? null,
   };
 }
