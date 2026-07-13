@@ -6,6 +6,7 @@ import { captureGlint, type CaptureGlintResult } from '@/lib/actions/glints';
 import type { ActivityDay, Streak } from '@/lib/queries/activity';
 import ActivityStrip from '@/components/home/activity-strip';
 import EntityEditor from '@/components/home/entity-editor';
+import NestSuggestions from '@/components/home/nest-suggestions';
 import SplitBanner from '@/components/home/split-banner';
 
 /**
@@ -150,6 +151,10 @@ export default function GlintCapture({
                   topicId={result.topicId}
                   initial={result.entities}
                 />
+              )}
+
+              {result && !result.alreadyHad && result.nestSuggestions.length > 0 && (
+                <NestSuggestions key={`nest-${result.topicId}`} initial={result.nestSuggestions} />
               )}
 
               {!result ? (

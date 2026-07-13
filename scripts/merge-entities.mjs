@@ -15,6 +15,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const DETECT = process.argv.includes('--detect');
+const GHOSTS = process.argv.includes('--ghosts');
 const WRITE = process.argv.includes('--write');
 const DEMO_EMAIL = 'dogsled@dogsled.dev';
 
@@ -156,6 +157,37 @@ if (DETECT) {
   const mergeable = candidates.filter((c) => !c.parentEdge);
   console.log(`\n${candidates.length} name-variant pair(s); ${mergeable.length} without an existing nesting edge.`);
   console.log('Curate MERGES only from pairs that are truly the SAME concept. A broader/narrower pair is a nesting edge, not a merge.');
+  process.exit(0);
+}
+
+// ===========================================================================
+// GHOSTS: zero-glint hubs (the auto-nesting artifacts), read-only.
+// ===========================================================================
+if (GHOSTS) {
+  console.log(`=== zero-glint hubs: scanning ${entIds.length} entities ===\n`);
+  const pushTo = (map, k, v) => { if (!map.has(k)) map.set(k, []); map.get(k).push(v); };
+  const childrenOf = new Map();  // parentId -> [childId]
+  const parentAdj = new Map();   // childId  -> [parentId]
+  for (const e of parents ?? []) {
+    if (!entIdSet.has(e.child_entity_id) || !entIdSet.has(e.parent_entity_id)) continue;
+    pushTo(childrenOf, e.parent_entity_id, e.child_entity_id);
+    pushTo(parentAdj, e.child_entity_id, e.parent_entity_id);
+  }
+  const ghosts = entIds
+    .filter((id) => countOf(id) === 0)
+    .sort((a, b) => (childrenOf.get(b)?.length ?? 0) - (childrenOf.get(a)?.length ?? 0));
+  let broaderHubs = 0, orphans = 0;
+  for (const id of ghosts) {
+    const kids = (childrenOf.get(id) ?? []).map(nameOf);
+    const pars = (parentAdj.get(id) ?? []).map(nameOf);
+    const kind = kids.length && !pars.length ? 'broader-hub' : !kids.length && !pars.length ? 'ORPHAN' : 'mid';
+    if (kind === 'broader-hub') broaderHubs++;
+    if (kind === 'ORPHAN') orphans++;
+    console.log(`"${nameOf(id)}"  [${kind}]  narrows: [${kids.join(', ') || '-'}]  broader: [${pars.join(', ') || '-'}]`);
+    console.log(`    ${id}`);
+  }
+  console.log(`\n${ghosts.length} zero-glint hub(s): ${broaderHubs} pure broader-hub(s) from auto-nesting, ${orphans} orphan(s).`);
+  console.log('Invisible in the Library Hubs lens (count>=2) and the Nest (nodes need >=2 glints), but they surface as dead-end "part of" links on hub pages and pad the entity count. Auto-nesting (topics.ts) mints these with no undo; REDESIGN 6.5 recommends propose-not-automatic.');
   process.exit(0);
 }
 
