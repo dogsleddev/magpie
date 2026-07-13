@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 import { Monitor } from 'lucide-react';
 import { buildNestGraph } from '@/lib/nest/build-graph';
 import type { NestFacetMode, NestSource } from '@/lib/nest/types';
@@ -10,8 +12,10 @@ import NestTopicCard from './nest-topic-card';
 import { cn } from '@/lib/utils';
 
 export default function NestView({ source }: { source: NestSource }) {
+  const router = useRouter();
   const [facetMode, setFacetMode] = useState<NestFacetMode>('bridge');
   const [resonance, setResonance] = useState(true);
+  const [entities, setEntities] = useState(false);
   const [labels, setLabels] = useState(true);
   const [tapped, setTapped] = useState<NestTapInfo | null>(null);
   const [desktop, setDesktop] = useState(false);
@@ -24,8 +28,8 @@ export default function NestView({ source }: { source: NestSource }) {
   }, []);
 
   const graph = useMemo(
-    () => buildNestGraph(source, { facetMode, resonance }),
-    [source, facetMode, resonance],
+    () => buildNestGraph(source, { facetMode, resonance, entities }),
+    [source, facetMode, resonance, entities],
   );
 
   const subjectName = useMemo(() => new Map(source.subjects.map((s) => [s.id, s.name])), [source]);
@@ -54,6 +58,7 @@ export default function NestView({ source }: { source: NestSource }) {
             ))}
           </div>
           <div className="flex gap-1.5">
+            <Toggle on={entities} onClick={() => setEntities((v) => !v)} label="Entities" />
             <Toggle on={resonance} onClick={() => setResonance((v) => !v)} label="Resonance" />
             <Toggle on={labels} onClick={() => setLabels((v) => !v)} label="Labels" />
           </div>
@@ -64,6 +69,7 @@ export default function NestView({ source }: { source: NestSource }) {
             graph={graph}
             showLabels={labels}
             onTopicTap={setTapped}
+            onEntityTap={(id) => router.push(`/library/${id}` as Route)}
             className="h-full w-full"
           />
 
@@ -95,7 +101,7 @@ export default function NestView({ source }: { source: NestSource }) {
       {desktop && (
         <NestDesktopView
           source={source}
-          initial={{ facetMode, resonance, labels }}
+          initial={{ facetMode, resonance, labels, entities }}
           onClose={() => setDesktop(false)}
         />
       )}

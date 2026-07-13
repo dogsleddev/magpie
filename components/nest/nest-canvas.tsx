@@ -15,6 +15,7 @@ import type { NestGraph, NestNode } from '@/lib/nest/types';
 
 const FACET_COLOR = '#C9C6BC';
 const RES_COLOR = '#7F77DD';
+const ENTITY_COLOR = '#35C99A';
 const CORE = '#FBFAF6';
 
 export type NestTapInfo = { id: string; x: number; y: number };
@@ -30,6 +31,8 @@ type Props = {
   linkLen?: number;
   /** tap on a topic / sub-topic node (null = tapped empty space) */
   onTopicTap?: (info: NestTapInfo | null) => void;
+  /** tap on an entity hub node: jump to its Library page */
+  onEntityTap?: (id: string) => void;
   /** drive the highlight from outside (panel facet chip / subject legend). null = none. */
   externalHighlight?: { type: 'facet' | 'node'; id: string } | null;
   /** push the big subject nodes out to a ring so the interior weaves like a nest */
@@ -40,6 +43,7 @@ type Props = {
 function baseRadius(n: NestNode): number {
   if (n.type === 'subject') return Math.min(8 + n.degree * 0.55, 17);
   if (n.type === 'facet') return Math.min(5 + n.degree * 0.22, 11);
+  if (n.type === 'entity') return Math.min(5 + n.degree * 0.5, 13);
   if (n.type === 'subtopic') return 3.6;
   return Math.min(4 + n.degree * 0.7 + Math.sqrt(n.weight) * 1.4, 11);
 }
@@ -52,6 +56,7 @@ export default function NestCanvas({
   repel = 70,
   linkLen = 34,
   onTopicTap,
+  onEntityTap,
   externalHighlight = null,
   subjectsOutside = false,
   className,
@@ -59,8 +64,8 @@ export default function NestCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   // config that can change without rebuilding the sim
-  const cfg = useRef({ showLabels, onTopicTap, externalHighlight });
-  cfg.current = { showLabels, onTopicTap, externalHighlight };
+  const cfg = useRef({ showLabels, onTopicTap, onEntityTap, externalHighlight });
+  cfg.current = { showLabels, onTopicTap, onEntityTap, externalHighlight };
   // node positions preserved across graph rebuilds (facet-mode toggles)
   const positions = useRef<Map<string, { x: number; y: number }>>(new Map());
   // imperative repaint hook, so toggling Labels repaints a settled (non-ticking) graph
@@ -291,13 +296,16 @@ export default function NestCanvas({
         let col: string;
         if (l.kind === 'containment') col = s.color || t.color;
         else if (l.kind === 'resonance') col = RES_COLOR;
+        else if (l.kind === 'entity') col = ENTITY_COLOR;
         else col = FACET_COLOR;
         ctx.globalAlpha = on
           ? l.kind === 'resonance'
             ? 0.2
             : l.kind === 'facet'
               ? 0.26
-              : 0.34
+              : l.kind === 'entity'
+                ? 0.3
+                : 0.34
           : hi
             ? 0.03
             : 0.06;
@@ -328,6 +336,17 @@ export default function NestCanvas({
           ctx.shadowBlur = on ? 12 : 0;
           ctx.strokeRect(-r * 0.8, -r * 0.8, r * 1.6, r * 1.6);
           ctx.restore();
+          ctx.shadowBlur = 0;
+        } else if (n.type === 'entity') {
+          // hollow teal ring: the connective hub, distinct from filled topic circles
+          ctx.globalAlpha = on ? 0.95 : 0.2;
+          ctx.beginPath();
+          ctx.strokeStyle = ENTITY_COLOR;
+          ctx.lineWidth = 2;
+          ctx.shadowColor = ENTITY_COLOR;
+          ctx.shadowBlur = on ? 14 : 0;
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.stroke();
           ctx.shadowBlur = 0;
         } else {
           ctx.globalAlpha = on ? 1 : 0.22;
@@ -364,7 +383,13 @@ export default function NestCanvas({
           }
           ctx.globalAlpha = on ? 0.96 : 0.3;
           ctx.fillStyle =
-            n.type === 'subject' ? '#F5F4EF' : n.type === 'facet' ? FACET_COLOR : '#E7E5DC';
+            n.type === 'subject'
+              ? '#F5F4EF'
+              : n.type === 'facet'
+                ? FACET_COLOR
+                : n.type === 'entity'
+                  ? ENTITY_COLOR
+                  : '#E7E5DC';
           ctx.textBaseline = 'middle';
           ctx.fillText(label, lx, p.y);
           ctx.globalAlpha = 1;
@@ -549,6 +574,11 @@ export default function NestCanvas({
       if (n.type === 'topic' || n.type === 'subtopic') {
         selected = n.id;
         cfg.current.onTopicTap?.({ id: n.id, x: p.x, y: p.y });
+      } else if (n.type === 'entity') {
+        // a hub: jump to its Library page
+        cfg.current.onEntityTap?.(n.id);
+        selected = n.id;
+        cfg.current.onTopicTap?.(null);
       } else {
         // subject or facet: highlight its constellation
         selected = n.id;

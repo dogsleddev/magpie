@@ -18,19 +18,26 @@ export type NestSourceTopic = {
   isGroup: boolean;
   parentId: string | null;
   facetIds: string[];
+  /** entity hub ids this glint links to. Optional: absent on seed data. */
+  entityIds?: string[];
   /** Thought count, drives node size. 0 when unknown (e.g. fresh seed data). */
   weight: number;
 };
 export type NestSourceFacet = { id: string; name: string };
+export type NestSourceEntity = { id: string; name: string };
+export type NestEntityEdge = { childId: string; parentId: string };
 
 export type NestSource = {
   subjects: NestSourceSubject[];
   topics: NestSourceTopic[];
   facets: NestSourceFacet[];
+  /** entity hubs and their nesting. Optional: absent on the landing seed source. */
+  entities?: NestSourceEntity[];
+  entityParents?: NestEntityEdge[];
 };
 
-export type NestNodeType = 'subject' | 'topic' | 'subtopic' | 'facet';
-export type NestLinkKind = 'containment' | 'facet' | 'resonance';
+export type NestNodeType = 'subject' | 'topic' | 'subtopic' | 'facet' | 'entity';
+export type NestLinkKind = 'containment' | 'facet' | 'resonance' | 'entity';
 
 /** A graph node. x/y/vx/vy/fx/fy/index are added by d3-force at runtime. */
 export type NestNode = {
@@ -67,6 +74,8 @@ export type NestGraph = { nodes: NestNode[]; links: NestLink[] };
 export type NestBuildOptions = {
   facetMode: NestFacetMode;
   resonance: boolean;
+  /** show entity hubs (nodes that gather glints across subjects) */
+  entities?: boolean;
   /** min shared facets for a resonance thread (default 2) */
   resonanceThreshold?: number;
 };

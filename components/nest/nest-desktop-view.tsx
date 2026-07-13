@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 import { RotateCcw, X } from 'lucide-react';
 import { buildNestGraph, subjectColor } from '@/lib/nest/build-graph';
 import type { NestFacetMode, NestSource } from '@/lib/nest/types';
@@ -17,7 +19,7 @@ const FACET_MODES: { v: NestFacetMode; label: string }[] = [
   { v: 'off', label: 'Off' },
 ];
 
-type Initial = { facetMode: NestFacetMode; resonance: boolean; labels: boolean };
+type Initial = { facetMode: NestFacetMode; resonance: boolean; labels: boolean; entities: boolean };
 
 /**
  * The desktop Nest: a full-bleed canvas with a docked control panel, modeled on
@@ -34,8 +36,10 @@ export default function NestDesktopView({
   initial: Initial;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [facetMode, setFacetMode] = useState<NestFacetMode>(initial.facetMode);
   const [resonance, setResonance] = useState(initial.resonance);
+  const [entities, setEntities] = useState(initial.entities);
   const [labels, setLabels] = useState(initial.labels);
   const [drift, setDrift] = useState(true);
   const [repel, setRepel] = useState(70);
@@ -51,8 +55,8 @@ export default function NestDesktopView({
   const [resetKey, setResetKey] = useState(0);
 
   const graph = useMemo(
-    () => buildNestGraph(source, { facetMode, resonance }),
-    [source, facetMode, resonance],
+    () => buildNestGraph(source, { facetMode, resonance, entities }),
+    [source, facetMode, resonance, entities],
   );
 
   const subjects = useMemo(
@@ -139,6 +143,7 @@ export default function NestDesktopView({
           externalHighlight={externalHighlight}
           subjectsOutside
           onTopicTap={handleTap}
+          onEntityTap={(id) => router.push(`/library/${id}` as Route)}
           className="h-full w-full"
         />
       </div>
@@ -192,6 +197,11 @@ export default function NestDesktopView({
             </Group>
 
             <div className="flex flex-col">
+              <SwitchRow
+                on={entities}
+                onClick={() => setEntities((v) => !v)}
+                label="Entity hubs"
+              />
               <SwitchRow
                 on={resonance}
                 onClick={() => setResonance((v) => !v)}

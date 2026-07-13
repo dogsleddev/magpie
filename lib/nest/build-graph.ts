@@ -12,6 +12,7 @@
 import type { NestBuildOptions, NestGraph, NestLink, NestNode, NestSource } from './types';
 
 const FACET_COLOR = '#C9C6BC'; // soft plumage white
+const ENTITY_COLOR = '#35C99A'; // bright teal: the connective entity layer
 
 /** Iridescent ramp across the teal -> blue -> purple plumage range, one hue per subject. */
 export function subjectColor(index: number, total: number, light = 60, sat = 62): string {
@@ -20,7 +21,7 @@ export function subjectColor(index: number, total: number, light = 60, sat = 62)
 }
 
 export function buildNestGraph(source: NestSource, options: NestBuildOptions): NestGraph {
-  const { facetMode, resonance, resonanceThreshold = 2 } = options;
+  const { facetMode, resonance, entities = false, resonanceThreshold = 2 } = options;
   const nodes: NestNode[] = [];
   const links: NestLink[] = [];
 
@@ -127,6 +128,44 @@ export function buildNestGraph(source: NestSource, options: NestBuildOptions): N
         if (seen.has(key)) continue;
         seen.add(key);
         links.push({ source: a.id, target: bid, kind: 'resonance' });
+      }
+    }
+  }
+
+  // Entity web: hubs that gather glints across the graph. Only an entity linking
+  // >= 2 glints becomes a node, so it reads as connective tissue (a bridge), not a
+  // node dangling off a single topic. Nesting edges connect hubs that both survive.
+  if (entities && source.entities?.length) {
+    const entityName = new Map(source.entities.map((e) => [e.id, e.name]));
+    const entityToTopics = new Map<string, string[]>();
+    for (const t of source.topics) {
+      for (const eid of t.entityIds ?? []) {
+        const arr = entityToTopics.get(eid);
+        if (arr) arr.push(t.id);
+        else entityToTopics.set(eid, [t.id]);
+      }
+    }
+    const shown = new Set<string>();
+    for (const [eid, ids] of entityToTopics) {
+      if (ids.length < 2) continue;
+      shown.add(eid);
+      nodes.push({
+        id: eid,
+        type: 'entity',
+        label: entityName.get(eid) ?? eid,
+        color: ENTITY_COLOR,
+        subjectId: null,
+        parentId: null,
+        facetIds: [],
+        isGroup: false,
+        weight: 0,
+        degree: ids.length,
+      });
+      for (const tid of ids) links.push({ source: tid, target: eid, kind: 'entity' });
+    }
+    for (const edge of source.entityParents ?? []) {
+      if (shown.has(edge.childId) && shown.has(edge.parentId)) {
+        links.push({ source: edge.childId, target: edge.parentId, kind: 'entity' });
       }
     }
   }
