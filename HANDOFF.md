@@ -2,6 +2,8 @@
 
 _Updated 2026-07-11 (session end). **The entity-spine redesign is BUILT through Slice 3** on branch `feat/magpie-2` (all pushed, preview-only). The daily loop is real end to end: catch a glint in your words, correct or split its entities, watch it connect honestly through a shared hub, and browse it all in the Library and the Nest. Only Slice 4 (the Maggie tab-merge) remains. `master` is still the pre-pivot app. Read top to bottom, then the "What to do next" section drives the session._
 
+_Update 2026-07-12: two commits on top (`eb75165`, `9bf092e`), committed but NOT pushed (a push rebuilds the preview, gated on Chris). The no-gate audit cleanups are done (Library revalidation, honest Nest error handling, the `+ add` reuse typeahead, the §3.7 spec fix) and the "see as nest" reverse jump shipped and was verified in-browser. Slice 4 plus the Chris-gated preconditions (security rotation, DB snapshot) are the open front. Completed items are struck through with `[DONE 2026-07-12]` markers below._
+
 ---
 
 ## TL;DR (30-second briefing)
@@ -51,9 +53,9 @@ Ordered. The first two are Chris-only preconditions that gate the rest.
 ### By area
 
 **Build (Slice 4 and deferred):**
-- **First, fix a factual error in the canonical spec.** `REDESIGN.md` §3.7 describes the tabs as `{persona}/Brief/Challenge/Questions/Convo`, but the code (`components/topic/mode-tabs.tsx`) wires **Maggie (chat) / Brief / Challenge / Questions / Thoughts (bullets)**: the `persona` tab renders `ConvoMode`, the `thoughts` tab renders `PersonaMode`. Correct §3.7 before it drives the Slice 4 plan.
+- **[DONE 2026-07-12]** ~~First, fix a factual error in the canonical spec.~~ `REDESIGN.md` §3.7 now matches the code: the `persona` tab renders `ConvoMode` (the Maggie chat) and the fifth tab is Thoughts (`PersonaMode`, bullets). A "Code reality" note there spells out that the merge is additive (the chat thread already exists as tab 1), which should drive the Slice 4 plan.
 - **Slice 4 is smaller than the doc implies but risk-concentrated.** The chat thread already exists as tab 1, so the merge is "fold Brief/Challenge/Questions into Maggie as inline chips + demote Thoughts to a linked notes view," no migration (storage all present). Do it additively (old tabs stay live until a final flip): opener-seed fallback, notes view as its own entry, merged thread behind a temp tab, harden the persistence seam, flip the default, then retire the umbrella. Pre-work the spec understated: `brief_seed` is written but read nowhere and only for long glints (needs an opener fallback chain brief_seed -> cached Brief -> Haiku opener); there is no AI-off master toggle (treat "AI unavailable" as the degraded path); `default_mode` values (`brief`, `thoughts`) will dead-end and need a mapping.
-- **Cheapest deferred graph feature: the "see as nest" reverse jump** (`REDESIGN.md` §4.5). Nest->Library is built; Library->focused-Nest is not, and Slice 3 met its precondition. Small, satisfying. Files: `components/nest/nest-view.tsx`, `app/(main)/library/[id]/page.tsx`.
+- **[DONE 2026-07-12]** ~~Cheapest deferred graph feature: the "see as nest" reverse jump~~ (`REDESIGN.md` §4.5). Shipped in `9bf092e`: a hub page with >=2 glints gets a "see as nest" link to `/nest?focus=<entityId>`; the Nest lands with the entity layer on and flies to the hub via the existing `setFocus`. Optional one-time `focusNodeId` prop on `NestCanvas`; Reset clears it. Verified in-browser (entity layer flips on, 205->237 nodes, no console errors).
 - **Deferred, correctly not built (logged so nothing is lost):** hub-level "talk it through" (gated on decision 6.1), resurfacing patterns 1 and 3 (recency "keeps returning" + temporal echo), Facets/Subjects Library lenses, nesting-authoring UI, Phase C subjects-as-entities.
 - **Bigger spine still missing, all gated on per-user auth (pick 1):** the daily email/text trigger, per-user auth, the public logged-out read view, item controls (Favorite/Dismiss/Highlight), controlled facet vocabulary, server-side STT voice, accessibility settings, Nest short-name labels.
 
@@ -76,10 +78,10 @@ Ordered. The first two are Chris-only preconditions that gate the rest.
 - Confirm the 3 live `is_group` topics have matching entity hubs, else Slice 4's "re-point group pages at hubs" will orphan them.
 
 **Cleanup (lower priority):**
-- Add `revalidatePath('/library')` to `captureGlint` and `addTopicViaMagpie` (both create catches but only revalidate `/home` / `/app`, so the Library can serve stale lists).
-- `getNestGraph` swallows the three entity-read errors with no `.error` check, so a failure silently drops the whole teal layer. Add checks.
-- `suggestEntities` (`entities.ts`) is a dead export: wire it into `EntityEditor` as the `+ add` typeahead (helps reuse) or drop it.
-- Unify the two teal greens: the Nest hubs use `#35C99A`, the Library uses `var(--teal)` `#1D9E75`, same concept across surfaces the user bounces between.
+- **[DONE 2026-07-12, `eb75165`]** ~~Add `revalidatePath('/library')` to `captureGlint` and `addTopicViaMagpie`.~~ Both catch paths now revalidate `/library`.
+- **[DONE 2026-07-12, `eb75165`]** ~~`getNestGraph` swallows the three entity-read errors.~~ It now logs each and degrades (drops the teal layer) instead of failing silently or nuking the graph.
+- **[DONE 2026-07-12, `eb75165`]** ~~`suggestEntities` is a dead export.~~ Wired into `EntityEditor` as a lazy `<datalist>` typeahead on `+ add` (progressive enhancement, can't regress the input).
+- **STILL OPEN (Chris's call):** unify the two teal greens: the Nest hubs use `#35C99A`, the Library uses `var(--teal)` `#1D9E75`, same concept across surfaces the user bounces between. Left as a brand decision, not slammed in.
 - Delete the test-data catch **"What is a daily glint and why do people keep one?"** (+ its `daily glint` singleton) IF it is a verification artifact; two other 2026-07-11 catches are plausibly real dogfood, so this is Chris's call (do not delete real dogfood).
 
 ### Watch-outs (the traps)
