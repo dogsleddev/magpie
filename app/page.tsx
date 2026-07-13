@@ -149,40 +149,39 @@ export default function LandingPage() {
       <section id="how">
         <div className="wrap">
           <p className="eyebrow">How it works</p>
-          <h2 className="section-title">Three dimensions. One simple shape.</h2>
+          <h2 className="section-title">Catch a glint. Watch it connect.</h2>
           <p className="section-lede">
-            Every thought finds its place in a wiki that grows with you.{' '}
-            <em>Subject. Topic. Facet.</em> Add bullets when something hits, then explore from any
-            angle.
+            A glint is a curiosity in your own words. Catch one in about thirty seconds. Maggie
+            shows you how it connects to what you've caught before, and your <em>nest</em> grows.
           </p>
 
           <div className="how-grid">
             <div className="how-step">
               <div className="num">01</div>
-              <h3>Subject</h3>
+              <h3>Catch</h3>
               <p>
-                The big buckets you care about. Books, history, AI, music, philosophy, whatever
-                pulls you.
+                Something caught your eye. "Why do crows give gifts to the people who feed them?"
+                Type it or say it. Thirty seconds and it's yours.
               </p>
-              <p className="step-detail">your curiosity, organized</p>
+              <p className="step-detail">catch it before it's gone</p>
             </div>
             <div className="how-step">
               <div className="num">02</div>
-              <h3>Topic</h3>
+              <h3>Connect</h3>
               <p>
-                A specific thread inside a subject. "Why do crows give gifts to the people who feed
-                them?" Capture bullets as they come.
+                Maggie finds what it touches. Both about corvids. Both a paradox. The thread was
+                already in your nest, waiting.
               </p>
-              <p className="step-detail">a conversation you'd want to have</p>
+              <p className="step-detail">where the connections live</p>
             </div>
             <div className="how-step">
               <div className="num">03</div>
-              <h3>Facet</h3>
+              <h3>Compound</h3>
               <p>
-                Cross-cutting tags that connect topics across subjects. Paradoxes. Counterintuitive
-                findings. Convergent ideas.
+                Come back tomorrow and catch another. The nest fills in, old curiosities resurface
+                next to new ones, and the whole thing is yours to browse.
               </p>
-              <p className="step-detail">where unexpected connections live</p>
+              <p className="step-detail">your curiosity, mapped</p>
             </div>
           </div>
         </div>
@@ -190,11 +189,11 @@ export default function LandingPage() {
 
       <section id="modes">
         <div className="wrap">
-          <p className="eyebrow">Five modes</p>
-          <h2 className="section-title">Five ways to look at any thought.</h2>
+          <p className="eyebrow">Go deeper</p>
+          <h2 className="section-title">Five ways to talk a glint through.</h2>
           <p className="section-lede">
-            Every topic opens with the same five tabs. <em>Talk it through</em>, brief yourself, get
-            challenged, find better questions, or pile up thoughts as they come.
+            When a glint is worth more than a catch, open it. <em>Talk it through</em> with Maggie,
+            brief yourself, get challenged, find better questions, or pile up thoughts as they come.
           </p>
 
           <div className="modes-grid">
@@ -272,19 +271,18 @@ export default function LandingPage() {
           <div className="feature-row">
             <div className="feature-text">
               <span className="feature-tag">Glints</span>
-              <span className="soon">Coming soon</span>
-              <h3>The connections you didn't notice.</h3>
+              <h3>The connection was already there.</h3>
               <p>
-                A glint is light catching something shiny you already collected. As your wiki
-                grows, Maggie catches them for you: things you wrote months ago that connect to
-                whatever you're thinking about now.
+                A glint is a curiosity you caught in your own words. The moment you catch one,
+                Maggie shows you what it shares with the rest of your nest: both about wolves, both
+                a paradox, the thread you'd forgotten you started.
               </p>
               <p>
                 Not "Recommended for you." Not a feed. <em>"You wrote about this when..."</em>
               </p>
               <p>
-                It starts with Rediscover, live in the app today: one tap spins you back to a
-                curiosity you'd forgotten. Glints make the trip back smart.
+                The more you catch, the more comes back. Old curiosities resurface next to new ones,
+                worth a look right when they matter.
               </p>
             </div>
             <div className="feature-visual">
@@ -352,8 +350,8 @@ export default function LandingPage() {
           <p className="eyebrow">Why Magpie</p>
           <h2 className="section-title">Notes that come back to you.</h2>
           <p className="section-lede">
-            No streaks. No engagement metrics. No feed. Just the things you find interesting, and a
-            partner who helps you turn them into <em>something you can say out loud</em>.
+            No notifications. No feed. No ads. Just the things you find interesting, and a partner
+            who helps you turn them into <em>something you can say out loud</em>.
           </p>
 
           <div className="why-grid">
@@ -418,7 +416,7 @@ export default function LandingPage() {
           <div className="footcol">
             <h4>Product</h4>
             <a href="#how">How it works</a>
-            <a href="#modes">Five modes</a>
+            <a href="#modes">Go deeper</a>
             <a href="#features">Glints &amp; Draw Out</a>
             <a href="#join">Join waitlist</a>
           </div>
