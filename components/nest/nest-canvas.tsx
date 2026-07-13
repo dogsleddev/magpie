@@ -37,6 +37,8 @@ type Props = {
   externalHighlight?: { type: 'facet' | 'node'; id: string } | null;
   /** push the big subject nodes out to a ring so the interior weaves like a nest */
   subjectsOutside?: boolean;
+  /** land centered + spotlit on this node id once (the "see as nest" jump). */
+  focusNodeId?: string | null;
   className?: string;
 };
 
@@ -59,6 +61,7 @@ export default function NestCanvas({
   onEntityTap,
   externalHighlight = null,
   subjectsOutside = false,
+  focusNodeId = null,
   className,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -70,6 +73,8 @@ export default function NestCanvas({
   const positions = useRef<Map<string, { x: number; y: number }>>(new Map());
   // imperative repaint hook, so toggling Labels repaints a settled (non-ticking) graph
   const repaintRef = useRef<(() => void) | null>(null);
+  // the node we have already flown to, so a graph rebuild does not re-center
+  const focusedRef = useRef<string | null>(null);
 
   useEffect(() => {
     repaintRef.current?.();
@@ -601,6 +606,14 @@ export default function NestCanvas({
       render();
     }
 
+    // The "see as nest" landing: fly to the requested hub once and spotlight it.
+    // Guarded by a ref so a facet toggle (which rebuilds the graph) does not yank
+    // the view back. A missing node (e.g. a hand-typed id) degrades to no-op.
+    if (focusNodeId && byId.has(focusNodeId) && focusedRef.current !== focusNodeId) {
+      focusedRef.current = focusNodeId;
+      setFocus(focusNodeId);
+    }
+
     return () => {
       repaintRef.current = null;
       sim.on('tick', null);
@@ -614,7 +627,7 @@ export default function NestCanvas({
         canvas.removeEventListener('wheel', onWheel);
       }
     };
-  }, [graph, ambient, interactive, repel, linkLen, subjectsOutside]);
+  }, [graph, ambient, interactive, repel, linkLen, subjectsOutside, focusNodeId]);
 
   return (
     <div

@@ -15,17 +15,28 @@ export default async function HubPage({ params }: { params: Promise<{ id: string
     <div className="flex flex-col gap-5 py-2">
       <BackLink href="/library" label="Library" />
 
-      <div>
-        <h1 className="font-display text-2xl font-medium text-text">{hub.name}</h1>
-        <p className="text-xs text-text-dim">
-          {hub.glints.length} glint{hub.glints.length === 1 ? '' : 's'}
-          {hub.partOf.length > 0 && (
-            <>
-              {' · '}
-              <span className="text-text-muted">part of:</span> {hub.partOf.map((p) => p.name).join(', ')}
-            </>
-          )}
-        </p>
+      <div className="flex flex-col gap-2">
+        <div>
+          <h1 className="font-display text-2xl font-medium text-text">{hub.name}</h1>
+          <p className="text-xs text-text-dim">
+            {hub.glints.length} glint{hub.glints.length === 1 ? '' : 's'}
+            {hub.partOf.length > 0 && (
+              <>
+                {' · '}
+                <span className="text-text-muted">part of:</span> {hub.partOf.map((p) => p.name).join(', ')}
+              </>
+            )}
+          </p>
+        </div>
+        {hub.glints.length >= 2 && (
+          <Link
+            href={`/nest?focus=${id}` as Route}
+            className="inline-flex w-max items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-text-muted transition-colors hover:border-teal hover:text-teal"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-teal" />
+            see as nest
+          </Link>
+        )}
       </div>
 
       {hub.narrowsTo.length > 0 && (

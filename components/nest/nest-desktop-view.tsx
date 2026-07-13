@@ -30,10 +30,12 @@ type Initial = { facetMode: NestFacetMode; resonance: boolean; labels: boolean; 
 export default function NestDesktopView({
   source,
   initial,
+  focusEntityId = null,
   onClose,
 }: {
   source: NestSource;
   initial: Initial;
+  focusEntityId?: string | null;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -47,6 +49,9 @@ export default function NestDesktopView({
   const [activeFacet, setActiveFacet] = useState<string | null>(null);
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [tapped, setTapped] = useState<NestTapInfo | null>(null);
+  // The hub we arrived focused on (via "see as nest"). Cleared on Reset so a
+  // manual reset fits the whole nest instead of snapping back to the hub.
+  const [focusTarget, setFocusTarget] = useState<string | null>(focusEntityId);
   // Only mounts client-side (opened from the compact view), so window is safe
   // here. Phones start with the panel tucked away so the nest fills the screen.
   const [panelOpen, setPanelOpen] = useState(
@@ -124,6 +129,7 @@ export default function NestDesktopView({
     setActiveFacet(null);
     setActiveSubject(null);
     setTapped(null);
+    setFocusTarget(null);
     setResetKey((k) => k + 1);
   };
 
@@ -141,6 +147,7 @@ export default function NestDesktopView({
           repel={repel}
           linkLen={linkLen}
           externalHighlight={externalHighlight}
+          focusNodeId={focusTarget}
           subjectsOutside
           onTopicTap={handleTap}
           onEntityTap={(id) => router.push(`/library/${id}` as Route)}

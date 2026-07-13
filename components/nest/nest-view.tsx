@@ -11,11 +11,19 @@ import NestDesktopView from './nest-desktop-view';
 import NestTopicCard from './nest-topic-card';
 import { cn } from '@/lib/utils';
 
-export default function NestView({ source }: { source: NestSource }) {
+export default function NestView({
+  source,
+  focusEntityId = null,
+}: {
+  source: NestSource;
+  focusEntityId?: string | null;
+}) {
   const router = useRouter();
   const [facetMode, setFacetMode] = useState<NestFacetMode>('bridge');
   const [resonance, setResonance] = useState(true);
-  const [entities, setEntities] = useState(false);
+  // Arriving via a hub's "see as nest" jump: start with the entity layer on so
+  // the hub we fly to is actually drawn.
+  const [entities, setEntities] = useState(Boolean(focusEntityId));
   const [labels, setLabels] = useState(true);
   const [tapped, setTapped] = useState<NestTapInfo | null>(null);
   const [desktop, setDesktop] = useState(false);
@@ -68,6 +76,7 @@ export default function NestView({ source }: { source: NestSource }) {
           <NestCanvas
             graph={graph}
             showLabels={labels}
+            focusNodeId={focusEntityId}
             onTopicTap={setTapped}
             onEntityTap={(id) => router.push(`/library/${id}` as Route)}
             className="h-full w-full"
@@ -102,6 +111,7 @@ export default function NestView({ source }: { source: NestSource }) {
         <NestDesktopView
           source={source}
           initial={{ facetMode, resonance, labels, entities }}
+          focusEntityId={focusEntityId}
           onClose={() => setDesktop(false)}
         />
       )}
