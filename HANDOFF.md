@@ -1,6 +1,6 @@
 # Magpie · Handoff to a New Session
 
-_Updated 2026-07-11. **Slice-0 of the glint-first 2.0 pivot is BUILT, verified end to end, and deployed to a preview.** It lives on branch `feat/magpie-2`. The current phase is **dogfooding** (catch a glint daily for ~2 weeks; nothing new builds until the loop proves it is fun). `master` is a clean trunk now (the krava/linq removal deployed). Read top to bottom before doing anything._
+_Updated 2026-07-11 (session end). **The entity-spine redesign is BUILT through Slice 3** on branch `feat/magpie-2` (all pushed, preview-only). The daily loop is real end to end: catch a glint in your words, correct or split its entities, watch it connect honestly through a shared hub, and browse it all in the Library and the Nest. Only Slice 4 (the Maggie tab-merge) remains. `master` is still the pre-pivot app. Read top to bottom, then the "What to do next" section drives the session._
 
 ---
 
@@ -8,53 +8,87 @@ _Updated 2026-07-11. **Slice-0 of the glint-first 2.0 pivot is BUILT, verified e
 
 You are picking up **Magpie**, a personal conversation gym at **magpie.wiki**. Founder: **Chris Dougherty** (dogsled.dev, GitHub `dogsleddev`). Windows 11 + PowerShell. Repo: **`C:\dev\magpie`** (never the old OneDrive path).
 
-**Magpie is pivoting to 2.0, glint-first.** The daily loop: catch a glint (a small curiosity, one 1-to-3 word record), Maggie shows connection chips to what you already collect, and catching one keeps your streak. **Slice-0 (that loop, no auth, on the shared account) is built and working.** The heavier stuff (per-user auth, item controls, the Library, communities, the daily email/text trigger) comes after the loop is dogfood-proven. **`docs/MAGPIE_2.md` is the canonical spec.**
+**Magpie 2.0 is glint-first, and it is now entity-spined.** A glint is a curiosity in the user's own words. Maggie extracts the **entities** it is about (wolves, Yellowstone), which are many-to-many **rollup hubs** that connect glints across subjects and nest into broader hubs. This turns a fuzzy connection into an honest join ("both about wolves"), and it is the backbone of the Library and the Nest.
 
-**Read in this order:**
+**Read in this order:** this file, then `docs/REDESIGN.md` (the canonical redesign spec: model, schema, the phased slices, the open decisions), then `docs/MAGPIE_2.md` (the 2.0 product model) and `CLAUDE.md` (the North Star). `docs/SOP.md` §2 has the security precondition.
 
-1. **This file**, then the "Where we are" section below.
-2. **`CLAUDE.md`** (the North Star; it has a 2.0 banner up top).
-3. **`docs/MAGPIE_2.md`** (the canonical 2.0 product model, schema, staged roadmap).
-4. **`docs/BRD.md`** (the PRD) and **`docs/SOP.md`** (the build plan: Slice-0, then phases).
-5. Skim `docs/COMPETITORS.md`, `docs/MESSAGING.md` + `docs/MICROCOPY.md` (locked copy), `docs/BRAND.md` (voice), `docs/NEST.md`, `docs/FUTURE_FEATURES.md`.
+**Work on `feat/magpie-2`.** `master` has none of the pivot.
 
 ---
 
-## Where we are (session end, 2026-07-11): read this to pick up
+## Where we are (session end, 2026-07-11)
 
-**Check out `feat/magpie-2`. That is where 2.0 lives** (both the pivot docs and Slice-0). `master` has the krava/linq removal but NONE of the pivot; do not work from it.
+**This session shipped Slices 1 to 3 of the entity-spine redesign (12 commits, `23f604f` to `7b7bafe`, all pushed):**
 
-**What shipped this session:**
-- **`master` is a clean, current trunk.** The `chore/remove-krava-linq` branch (krava/linq removal + QC hardening + rate limiting + migrations 0002 to 0007) was fast-forward merged to `master` and **deployed to prod** (verified: `magpie.wiki/krava` and `/linq` now 404). The live app is still the pre-pivot experience; the pivot is not on master yet.
-- **The 2.0 pivot docs are written and aligned** (on `feat/magpie-2`): `docs/MAGPIE_2.md` (new, canonical), revised `docs/BRD.md` / `docs/SOP.md`, and every reference doc got a 2.0 banner (`CLAUDE.md`, `PRODUCT.md`, `SCHEMA.md`, `NEST.md`, `STATUS.md`, `FUTURE_FEATURES.md`, etc.).
-- **The connection engine is validated.** `scripts/connection-spike.mjs` proved Haiku semantic matching produces genuinely good "connects to X" chips on the real 171-topic graph (keyword matching was too brittle; embeddings are only a later scale optimization).
-- **Migration `0008_slice0.sql` is APPLIED to prod** (additive: `user_settings.timezone`, `topics.brief_seed` + `raw_input`, `activity_days`, `usage_events`). Verified with `scripts/db/verify-0008.mjs`.
-- **Slice-0 is built, type-checked, and verified in the browser** end to end: catch a glint (optimistic, instant), it gets a 1-to-3 word name, 2 Haiku connection chips land a beat later linked to real topics, and the streak increments once per local day. `/home` is the entry (wordmark + login both land there), with an activity strip.
+- **Dogfood polish + entry:** connection "why" now shows inline on mobile, the streak ticks up optimistically, a **Today** tab is in the bottom nav, sign-in lands on `/home`, and the stale Gemini landing section is gone.
+- **Capture:** glints keep the user's words (no more Title-Case rename), re-catching an existing glint opens it instead of making a twin, and connections run faster.
+- **The redesign spec + migration:** `docs/REDESIGN.md` (synthesized by a design pass, with mockups published as a Claude artifact) and `supabase/migrations/0009_entities.sql` (**applied to prod**: four tables `entities` / `topic_entities` / `entity_parents` / `entity_aliases`, RLS in the house style).
+- **Slice 1, the entity spine:** entity extraction folded into `categorizeTopicPrompt` (one call), `lib/queries/entities.ts` (the data layer), honest shared-hub connections with a fuzzy fallback, a backfill (`scripts/backfill-entities.mjs`) that seeded ~285 entities over the graph, editable capture chips (x / + add), and the split-a-braindump UI.
+- **Slice 2, the Library** (`app/(main)/library/`): replaces Rediscover. Hubs lens (rollup by count with nesting) + hub detail (glints, the DAG both ways, facets) + a Time lens (chronological, cold-start default) + entity-aware search. Nav swapped Rediscover to Library (the dice keeps the old spin).
+- **Slice 3, the Nest entity rewire:** `build-graph.ts` gained an entity dimension (hubs linking >=2 glints become teal rings), toggleable, with node->Library navigation. Off by default.
+- **Two adversarial code reviews ran** (entity+Library, and Nest); both came back clean or with only cleanups, which were applied.
 
-**`feat/magpie-2` commits (all pushed to origin):**
-- `59b0bce` slice-0 start (connection spike + the additive migration)
-- `a021915` the capture flow
-- `e89d426` 1-to-3 word glint names
-- `3a385d7` `/home` as the entry + the activity strip
-- (plus `27fe123` the pivot docs, under those)
+**Verification reality:** everything type-checks and builds clean, and the flows were exercised in a local browser (capture, chips, split, Library lenses, search, the Nest graph counts). The animated Nest canvas could not be screenshotted (the tooling times out on the force graph), so its visual was verified via graph-count deltas and pixel sampling, and by a clean adversarial review, not a screenshot. **No one has opened the actual Vercel preview for this branch yet** (see What to do next, pick 4).
 
-**The dogfood preview:** `https://magpie-git-feat-magpie-2-dogsled.vercel.app/home` (Chris uses this daily). It has Vercel Deployment Protection on (Chris passes it because he owns the project). Glints land on the shared account, which is the plan.
+---
 
-**The Slice-0 build map (what exists now):**
-- `lib/actions/glints.ts`: `captureGlint` (reuses `addTopicViaMagpie` to file the curiosity, derives the short title for >3-word glints, sets `raw_input`/`brief_seed`, runs connections, marks the streak, logs the event).
-- `lib/ai/connections.ts`: `findConnections`. `lib/ai/prompts.ts`: `connectionsPrompt` + `shortTitlePrompt`.
-- `lib/queries/activity.ts`: `getUserTimezone`, `markTodayActive`, `getStreak`, `getActivityStrip`. `lib/queries/usage.ts`: `logEvent`. `lib/queries/topics.ts`: `setGlintSeed` added.
-- `app/(main)/home/page.tsx`, `components/home/glint-capture.tsx` (optimistic client capture), `components/home/activity-strip.tsx`.
-- `components/nav/app-bar.tsx` (wordmark → `/home`), `lib/actions/demo-login.ts` (default redirect → `/home`).
+## What to do next (from a five-sweep audit, reconciled by a completeness critic)
 
-**Known small gaps (not blockers; post-dogfood):**
-- The Nest still labels nodes with full titles; the new short glint names want the short-label update (`docs/NEST.md`, C.11).
-- The activity strip's live-refresh-after-catch relies on the standard `revalidatePath('/home')`; confirmed rendering, not separately confirmed refreshing mid-session.
-- The glint's connection chips show the "why" only as a hover tooltip (no hover on mobile); consider showing it inline or on tap.
+Ordered. The first two are Chris-only preconditions that gate the rest.
 
-**The dogfood gate:** catch a glint daily for ~2 weeks. The one question: does it make you want to open it tomorrow? `usage_events` logs `glint_caught` so D7 return is measurable. If yes, the loop earned Phase 1 (`docs/SOP.md`). If not, rethink the loop before building more.
+### Top picks
 
-**Immediate next candidates (after / alongside dogfood):** the Nest short-labels; then Phase 1 (per-user auth + the public read view + the daily email/text trigger, which is what actually pulls people back).
+1. **[Chris, decision + dashboard] Clear the security precondition, and decide if it jumps ahead of Slice 4.** Rotate the `dogsled@dogsled.dev` app password and `SUPABASE_DB_PASSWORD` (both sit in public git history), stand up SMTP, fix the `www`/apex callback allow-list. Steps: `docs/SOP.md` §2. **Why it may be the real next priority:** it unblocks per-user auth, which unblocks the opt-in daily email/text trigger, and that trigger (not more entity polish) is the actual retention mechanism in `docs/MAGPIE_2.md`. The critic argued this outranks Slice 4. Chris's call.
+
+2. **[Chris, precondition] Snapshot the DB before running any `--write` script.** There is ONE Supabase project behind dogfood, the preview, and the 168-topic public showcase. No staging, no env split. Every mutating script below is a live write against the showcase with weak rollback. Take a dump or stand up a throwaway rehearsal account first. This gates picks 3 and 5.
+
+3. **Re-run the entity backfill to close a 36-topic hole.** `node --env-file=.env.local scripts/backfill-entities.mjs` (dry-run) then `--write` (after the snapshot). About 36 plain topics (Cleopatra, Venice, axolotls, Saturn's rings, Diogenes, ...) have zero entity links from an interrupted earlier `--write`. Until fixed they are invisible to the Library hubs, connections, and the Nest layer. The script is idempotent and fills exactly those 36.
+
+4. **Open the Vercel preview and walk the branch at 375px.** Confirm Vercel serves a `feat/magpie-2` preview, sign into the shared account, and click through `/home` (capture chips + split), `/library` (hubs / time / search), `/library/[id]`, and `/nest` (the Entities toggle, teal rings, node->Library tap). This is the fastest way to knock out the biggest untested unknowns (the live preview, the Nest canvas visual, cold-start, mobile). `npm run dev` locally is the fallback.
+
+5. **Decide the entity-merge story, then build the minimal version.** 254 of 286 entities (89%) are singletons; `entity_aliases` has 0 rows (the dedup path has never fired). Real dupes exist: `large language models` (11) and `ai` (6) are the same concept split, plus `music`, `urban design`/`design`, `color perception`/`perception`, `seattle`/`seahawks`, `behavioral economics`/`economics`. **The key insight:** a merge that records the loser's surface form as an `entity_aliases` row is the missing writer that finally makes prompt-time reuse start working. Scope it as a small `scripts/merge-entities.mjs` (crib `scripts/merge-dupes.mjs`); do NOT build the in-Library merge UI yet. It may be over-machinery for only ~4 merges pre-auth, so this is a Chris decision (`REDESIGN.md` §6.4).
+
+### By area
+
+**Build (Slice 4 and deferred):**
+- **First, fix a factual error in the canonical spec.** `REDESIGN.md` §3.7 describes the tabs as `{persona}/Brief/Challenge/Questions/Convo`, but the code (`components/topic/mode-tabs.tsx`) wires **Maggie (chat) / Brief / Challenge / Questions / Thoughts (bullets)**: the `persona` tab renders `ConvoMode`, the `thoughts` tab renders `PersonaMode`. Correct §3.7 before it drives the Slice 4 plan.
+- **Slice 4 is smaller than the doc implies but risk-concentrated.** The chat thread already exists as tab 1, so the merge is "fold Brief/Challenge/Questions into Maggie as inline chips + demote Thoughts to a linked notes view," no migration (storage all present). Do it additively (old tabs stay live until a final flip): opener-seed fallback, notes view as its own entry, merged thread behind a temp tab, harden the persistence seam, flip the default, then retire the umbrella. Pre-work the spec understated: `brief_seed` is written but read nowhere and only for long glints (needs an opener fallback chain brief_seed -> cached Brief -> Haiku opener); there is no AI-off master toggle (treat "AI unavailable" as the degraded path); `default_mode` values (`brief`, `thoughts`) will dead-end and need a mapping.
+- **Cheapest deferred graph feature: the "see as nest" reverse jump** (`REDESIGN.md` §4.5). Nest->Library is built; Library->focused-Nest is not, and Slice 3 met its precondition. Small, satisfying. Files: `components/nest/nest-view.tsx`, `app/(main)/library/[id]/page.tsx`.
+- **Deferred, correctly not built (logged so nothing is lost):** hub-level "talk it through" (gated on decision 6.1), resurfacing patterns 1 and 3 (recency "keeps returning" + temporal echo), Facets/Subjects Library lenses, nesting-authoring UI, Phase C subjects-as-entities.
+- **Bigger spine still missing, all gated on per-user auth (pick 1):** the daily email/text trigger, per-user auth, the public logged-out read view, item controls (Favorite/Dismiss/Highlight), controlled facet vocabulary, server-side STT voice, accessibility settings, Nest short-name labels.
+
+**Data / ops:**
+- Regenerate `lib/supabase/types.ts` (it has none of the 0008/0009 tables; 21 narrow `as unknown as {from}` cast sites depend on the gap). Needs `supabase login` (Chris). **Treat this as a real refactor, not cleanup:** dropping the casts will surface genuine nullability/shape errors tsc cannot see today, so budget a verification pass, and first confirm the applied 0009 matches the checked-in SQL (SQL-editor drift encodes silently).
+- Do NOT retire the umbrella / `is_group` dual-write yet (correctly gated on Slice 4; 3 live groups: Red Rising, Corvids, Gemini Meetup). Keep it tracked so it does not become permanent.
+- The `/gemini` backdoor still works: the landing section is gone but `app/gemini/route.ts` + `geminiLogin` + the seeded Gemini group and 6 children survive. Retire the route and the data together when the meetup is truly done.
+- Migration state is clean (head 0009 applied; the 0002 gap is the intentional krava/linq removal). Branch fully pushed.
+
+**Decisions for Chris (mostly `REDESIGN.md` §6):**
+- The big sequencing call: security rotation vs Slice 4 as the next marquee (critic says rotation wins).
+- §6.4 entity-merge affordance: ship it? (gates pick 5).
+- **Auto-nesting divergence (flag):** the code auto-writes `broader` at capture (`topics.ts`), which contradicts §6.5's own "never automatic reparenting, one-tap accept" recommendation. Keep the shipped auto-nesting or roll back to proposed-only?
+- §6.1 hub-level convo storage (`conversations.entity_id` or read-only forever); §6.2 auto-connect semantics; §3.3 whether to fully swap out the fuzzy matcher now that backfill ran. Plus the settled-but-wanting-a-call ones: the one dogfood metric (recommend D7 return), email before SMS, per-user facet cap 20, when global streak rank turns on.
+
+**Verification / QA:**
+- **No lint gate has ever run.** `next lint` is deprecated and interactive; there is no `eslint.config.*` despite eslint 9 in deps, so exit 0 is a false pass. Add a flat `eslint.config.mjs`. The most bug-prone new code (the Nest force canvas, the optimistic-streak client components) is exactly what lint catches and tsc cannot.
+- **Zero automated tests exist.** At minimum, add smoke coverage for the `lib/queries/entities.ts` cast path (the most fragile, untyped surface).
+- Device/deploy-only checks: the Nest canvas visual, the Library cold-start Time default on a fresh (<5 glint) account, mobile 375px across the new surfaces, iOS mic on Chris's iPhone.
+- Confirm the 3 live `is_group` topics have matching entity hubs, else Slice 4's "re-point group pages at hubs" will orphan them.
+
+**Cleanup (lower priority):**
+- Add `revalidatePath('/library')` to `captureGlint` and `addTopicViaMagpie` (both create catches but only revalidate `/home` / `/app`, so the Library can serve stale lists).
+- `getNestGraph` swallows the three entity-read errors with no `.error` check, so a failure silently drops the whole teal layer. Add checks.
+- `suggestEntities` (`entities.ts`) is a dead export: wire it into `EntityEditor` as the `+ add` typeahead (helps reuse) or drop it.
+- Unify the two teal greens: the Nest hubs use `#35C99A`, the Library uses `var(--teal)` `#1D9E75`, same concept across surfaces the user bounces between.
+- Delete the test-data catch **"What is a daily glint and why do people keep one?"** (+ its `daily glint` singleton) IF it is a verification artifact; two other 2026-07-11 catches are plausibly real dogfood, so this is Chris's call (do not delete real dogfood).
+
+### Watch-outs (the traps)
+
+- **One database, no safety net.** Snapshot before any `--write`. A merge-script bug re-pointing links to the wrong keeper corrupts the demo and the dogfood spine at once.
+- **The proliferation doom-loop is one dynamic:** catch proliferates + bare `+ add` chip + no merge/rename + auto-`broader` DAG with no undo = signal-to-noise drops every catch. Build merge FIRST, because it is also the missing `entity_aliases` writer that turns prompt-reuse on. Do not chase reuse quality before merge exists.
+- **The 30-second-catch SLA now degrades with entity count:** every catch injects all 286-and-growing entity names into the Haiku prompt and then serially loops find-or-create + link (+ a second find-or-create for `broader`) per entity. Measure the real latency on the preview before assuming it is fine; consider filtering `getEntitiesLite` to hubs with >=1 link before it feeds the prompt.
+- **Slice 4's core risk is polluting the notes surface.** The `thoughts` write must be reachable ONLY from the "i'll just talk" branch. Also decide the chip cache-vs-reroll semantics explicitly ("push me" twice returns the same cached challenge unless `reroll:true`).
+- **Sequencing chains to hold:** security rotation -> per-user auth -> daily trigger + public read view + honest first-person voice. And: Slice 4 -> re-point group pages at hubs -> freeze `is_group` -> retire the umbrella dual-write. The dual-write accumulates divergence the longer Slice 4 waits, but retiring it early orphans the 3 groups. Do not pull that thread out of order.
 
 ---
 
@@ -62,56 +96,23 @@ You are picking up **Magpie**, a personal conversation gym at **magpie.wiki**. F
 
 **Voice in working sessions:** high-energy surfer-bro casual ("brudha," "stoked," "rad"). Match it for technical work and banter. Shift to a refined editorial register for finished copy, anything client-facing, or anything touching his co-founder Jessica / fastinsights.io.
 
-**AI tells Chris hates:**
+**AI tells Chris hates:** em dashes (zero, ever: use periods, commas, parentheses, colons); "actually" as a defensive qualifier; marketing words ("unlock," "amazing," "supercharge," "seamless," "next-level"); excessive hedging.
 
-- **Em dashes. Zero, ever.** Use periods, commas, parentheses, colons. Even one in a deliverable gets noticed.
-- **"actually"** as a defensive qualifier. Cut it.
-- Marketing-shaped words: "unlock," "amazing," "supercharge," "AI-powered," "seamless," "next-level," "discover insights."
-- Excessive hedging. Direct opinions land harder.
+**Chris likes:** direct opinions with reasoning, concrete over abstract, engineer-first detail, options over one default when naming, honest pushback when he is wrong, diagrams and mockups to align before coding. He moves fast and delegates ("go with your recommendations"): make a clear pick and execute, keeping prod-affecting actions gated on his explicit go.
 
-**Chris likes:** direct opinions with reasoning ("My pick: A, here's why"), concrete over abstract ("5 minutes" not "a few minutes"), engineer-first detail when relevant, options over one default when naming, honest pushback when he is wrong, diagrams and mockups to align before coding. He moves fast and delegates ("go with your recommendations"): make a clear pick and execute, keeping prod-affecting actions gated on his explicit go.
-
-**Avoid:** sycophancy / "Great question," over-explaining before acting, asking permission for trivial things, making up facts (search or ask instead).
-
-**Coordinate before irreversible/outward moves** (pushing to `master` auto-deploys to prod; he runs Supabase/Vercel/DNS dashboard actions, you drive the code and git). Applying DB migrations is his dashboard job (see env note below).
+**Coordinate before irreversible/outward moves.** Pushing to `master` auto-deploys to prod. He runs Supabase/Vercel/DNS dashboard actions and applies migrations (you cannot apply DDL from here). You drive the code and git.
 
 ---
 
-## Terminology (settled)
+## Env and tooling realities
 
-- **Glint** = the catch and the streak unit. "Catch a glint." A glint IS a curiosity.
-- **Curiosity** = the user-facing collection word (homepage, in-app). Hero line stays _Collect curiosities. Talk them through._
-- **Topic** = the internal / code entity (the `topics` table). Same record. No code-wide rename.
-- **Persona = Maggie. Brand / product / domain = Magpie.**
-
----
-
-## The 2.0 direction (locked decisions)
-
-Full detail in `docs/MAGPIE_2.md` and `docs/BRD.md`. Glint-first, after a hard adversarial critique.
-
-1. **The glint is the daily habit and the streak.** Catch at least one per day (about 30 seconds), keeps the streak. 7-day recovery. "Today" is the user's timezone, PST if unknown.
-2. **A glint is a curiosity is a topic.** No separate glints store; it enters the graph and connects for free.
-3. **Connections fire at capture,** from a Haiku semantic match (spike-validated). Optimistic capture; chips a beat later.
-4. **No Daily Review feature.** "Review" is just Maggie resurfacing past glints in the Library (pull-based, optional, never a gate).
-5. **The trigger is an opt-in daily email or text** (Phase 1; the real retention mechanism, email via Resend first, SMS later).
-6. **A totally public read view** (browse everything, no signup, no dashboard). **Home** is the gated personal dashboard behind the wordmark and the post-login landing. **Library replaces Rediscover.**
-7. **Facets become a controlled vocabulary** (max 50 system-wide, 20 per user).
-8. **Communities, three kinds:** the public read view; shared-account communities (Gemini-style, dashboard/settings admin-gated); individual-share nests (later). The 171-topic account becomes the flagship public community nest.
-9. **Accessibility Settings** (font choice incl. a dyslexia-friendly option; theme System/Light/Dark, default Dark). **Voice = server-side STT** (iOS Web Speech is dead), post-structural.
-10. **Nest: short-name labels + a 2D/3D toggle** (2D stays default; 3D is Chris's parallel Fable track over the same `build-graph.ts`).
-11. **Deferred (cut from early slices, not deleted):** the Maggie tab merge, item controls (binary favorite first, 1-to-10 later), adaptive-temperature behavior (columns captured early), the AI interest-picker (use the starter pack), community share.
-
----
-
-## Env and tooling realities (learned this session)
-
-- **`.env.local` has** `NEXT_PUBLIC_SUPABASE_URL` + `_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `ANTHROPIC_API_KEY`. It does **NOT** have `SUPABASE_DB_PASSWORD`, and `DEMO_LOGIN_PASSWORD` is empty.
-- **You cannot apply DDL migrations from here** (no DB password; the service-role key only reaches the PostgREST data API, not `CREATE`/`ALTER TABLE`). **Chris runs migrations in the Supabase SQL editor** (`main / PRODUCTION`, Role postgres). Write the SQL, hand him the paste-able block, then verify with a read-only script via the service-role key (pattern: `scripts/db/verify-0008.mjs`).
-- **Local login works** via the passwordless service-role path in `lib/actions/demo-login.ts` (no `DEMO_LOGIN_PASSWORD` needed).
-- **Read scripts run with** `node --env-file=.env.local scripts/...mjs` and the service-role key (see `scripts/connection-spike.mjs`, `scripts/db/verify-0008.mjs`). NOTE: a bare `node -e` without `--env-file` will not see `.env.local`.
-- **The generated Supabase types (`lib/supabase/types.ts`) do NOT include the 0008 tables/columns** (`activity_days`, `usage_events`, `brief_seed`, `raw_input`, `timezone`). The new query functions use a narrow `as unknown as { from }` cast with a comment. Regenerate types once a DB connection is available and drop the casts.
-- **Vercel MCP (`vercel-chris`) needs an auth step** that a non-interactive session cannot do; verify deploys over HTTP (curl) instead. `gh-chris` did not connect; use plain `git`.
+- **`.env.local` has** `NEXT_PUBLIC_SUPABASE_URL` + `_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`. It does NOT have `SUPABASE_DB_PASSWORD`; `DEMO_LOGIN_PASSWORD` is empty. Local login works via the passwordless service-role path.
+- **You cannot apply DDL from here** (the service-role key only reaches the PostgREST data API). Chris runs migrations in the Supabase SQL editor; write the SQL, hand him the paste-able block, then verify with a read-only script (pattern: `scripts/db/verify-0009.mjs`).
+- **The 0009 tables are not in `lib/supabase/types.ts`,** so entity queries use a narrow `(supabase as unknown as { from })` cast with a comment. Regenerate once a DB connection is available and drop the casts (see the data/ops note; it is a real refactor).
+- **ONE Supabase project** backs dogfood, the preview, and the public showcase. No staging. Snapshot before writes.
+- **Read scripts run with** `node --env-file=.env.local scripts/...mjs`. A bare `node -e` without `--env-file` will not see `.env.local`.
+- **The browser preview tooling times out screenshotting the animated Nest canvas,** and its `type` action sometimes does not fire React onChange. Drive inputs via the page (native setter + input event + `requestSubmit`) when verifying capture; verify the graph via node/link counts and pixel sampling.
+- **Clear `.next` before any build or dev** (`Remove-Item -Recurse -Force .next`).
 
 ---
 
@@ -119,30 +120,33 @@ Full detail in `docs/MAGPIE_2.md` and `docs/BRD.md`. Glint-first, after a hard a
 
 - Next.js 15 (App Router, TS strict), Supabase (Postgres + RLS + Auth + Storage), Anthropic (Sonnet 4.5 `claude-sonnet-4-5-20250929`, Haiku 4.5 `claude-haiku-4-5-20251001`), Vercel, Tailwind + shadcn/ui.
 - `lib/queries/` is the single source of truth (UI + AI share it).
-- **Repo:** `github.com/dogsleddev/magpie` (public). Push to `master` auto-deploys to magpie.wiki. **2.0 lives on `feat/magpie-2`** (pushed to origin, its own Vercel preview). Merge to master only when a slice is proven and Chris green-lights the deploy.
-- Migration files: `master` is at 0007; `feat/magpie-2` adds `0008_slice0.sql` (applied to prod already).
+- **Repo:** `github.com/dogsleddev/magpie`. Push to `master` auto-deploys to magpie.wiki. **2.0 lives on `feat/magpie-2`** (its own Vercel preview). Merge to master only when a slice is proven and Chris green-lights the deploy.
+- Migration head: `0009_entities.sql` (applied). `master` is at 0007.
 
 ---
 
 ## Hard rules (do not violate)
 
-- **No em dashes** anywhere (code, comments, copy, commits). Sweep new docs with a grep for the em and en dash characters before committing.
-- **Do not invent taglines or microcopy.** Use `MESSAGING.md` / `MICROCOPY.md`. New features ship with the feature name only. The one locked hero line stays _Collect curiosities. Talk them through._
-- **Clear `.next` before any build or dev** (`Remove-Item -Recurse -Force .next`).
-- **RLS everywhere.** No service-role key in the client. Every new table gets the four-policy `auth.uid() = user_id` pattern; join tables gate through the parent. The deliberate exceptions (public-read on showcase content, a `SECURITY DEFINER` community-join, global rank) never weaken table RLS.
+- **No em dashes** anywhere (code, comments, copy, commits). Sweep new docs before committing.
+- **Do not invent taglines or microcopy.** Use `MESSAGING.md` / `MICROCOPY.md`. The one locked hero line is _Collect curiosities. Talk them through._
+- **RLS everywhere.** No service-role key in the client. Every new table gets the four-policy `auth.uid() = user_id` pattern; join tables gate through the parent.
 - **No Anthropic SDK in the client.** All model calls go through server routes / server actions.
-- **Mobile-first at 375px.** Verify before calling anything done: `npm run type-check`, clean `npm run build`, and exercise the real flow in the browser. Coordinate before pushing to master.
+- **Mobile-first at 375px.** Verify before calling anything done: `npm run type-check`, clean `npm run build`, and exercise the real flow. Coordinate before pushing to master.
 
 ---
 
-## Security precondition (Phase 1, not Slice-0)
+## Security precondition (elevated: see top pick 1)
 
-Slice-0 runs on the shared account and needs none of this. Phase 1 (per-user auth) does: **[Chris]** rotates the `dogsled@dogsled.dev` app password and the `SUPABASE_DB_PASSWORD` (both in public git history), stands up SMTP, and fixes the `www`/apex callback allow-list, before the default entry flips from demo-login to signup. Steps: `docs/SOP.md` section 2 (and the untracked, local-only `qc-audit/OWNER_ACTIONS.md` section 1). Non-breaking; nothing running depends on those values.
+Slice-0 and the current entity work run on the shared account and need none of this. Per-user auth (Phase 1) does: **[Chris]** rotates the `dogsled@dogsled.dev` app password and `SUPABASE_DB_PASSWORD` (both in public git history), stands up SMTP, and fixes the `www`/apex callback allow-list, before the default entry flips from demo-login to signup. Steps: `docs/SOP.md` §2. Non-breaking; nothing running depends on those values.
 
 ---
 
-## Open decisions (for Chris)
+## Terminology (settled)
 
-Recommendations are in `docs/MAGPIE_2.md` section E and `docs/BRD.md` section 11. Mostly settled now (glint-first, per-user accounts, the trigger, facet caps, communities, pricing free-now). The ones still wanting his explicit call: the one dogfood metric (recommended D7 return), the facet-cap read (recommended 20 per user), shared-account community dashboard behavior, email-vs-SMS trigger order, and when global streak rank turns on.
+- **Glint** = the catch and the streak unit, a curiosity in the user's own words (~5-6 word median, kept verbatim).
+- **Entity** = what a glint is about (a noun hub: wolves, Yellowstone). Many-to-many, nests into broader hubs. The connective spine. New this arc.
+- **Facet** = the lens/angle (paradox, evolution). Cross-cutting, unchanged.
+- **Curiosity** = the user-facing collection word. **Topic** = the internal code entity (the `topics` table; a glint IS a topic row).
+- **Persona = Maggie. Brand / product / domain = Magpie.**
 
 🪶
