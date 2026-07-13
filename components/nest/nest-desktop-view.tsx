@@ -7,6 +7,7 @@ import { RotateCcw, X } from 'lucide-react';
 import { buildNestGraph, subjectColor } from '@/lib/nest/build-graph';
 import type { NestFacetMode, NestSource } from '@/lib/nest/types';
 import NestCanvas, { type NestTapInfo } from './nest-canvas';
+import Nest3DCanvas from './nest-3d-lazy';
 import NestTopicCard from './nest-topic-card';
 import BottomTabBar from '@/components/nav/bottom-tab-bar';
 import { cn } from '@/lib/utils';
@@ -49,6 +50,7 @@ export default function NestDesktopView({
   const [activeFacet, setActiveFacet] = useState<string | null>(null);
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [tapped, setTapped] = useState<NestTapInfo | null>(null);
+  const [view, setView] = useState<'2d' | '3d'>('2d');
   // The hub we arrived focused on (via "see as nest"). Cleared on Reset so a
   // manual reset fits the whole nest instead of snapping back to the hub.
   const [focusTarget, setFocusTarget] = useState<string | null>(focusEntityId);
@@ -139,20 +141,31 @@ export default function NestDesktopView({
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-bg">
       <div className="absolute inset-0">
-        <NestCanvas
-          key={resetKey}
-          graph={graph}
-          showLabels={labels}
-          ambient={drift}
-          repel={repel}
-          linkLen={linkLen}
-          externalHighlight={externalHighlight}
-          focusNodeId={focusTarget}
-          subjectsOutside
-          onTopicTap={handleTap}
-          onEntityTap={(id) => router.push(`/library/${id}` as Route)}
-          className="h-full w-full"
-        />
+        {view === '3d' ? (
+          <Nest3DCanvas
+            key={resetKey}
+            graph={graph}
+            drift={drift}
+            onSelect={handleTap}
+            onEntityTap={(id) => router.push(`/library/${id}` as Route)}
+            className="h-full w-full"
+          />
+        ) : (
+          <NestCanvas
+            key={resetKey}
+            graph={graph}
+            showLabels={labels}
+            ambient={drift}
+            repel={repel}
+            linkLen={linkLen}
+            externalHighlight={externalHighlight}
+            focusNodeId={focusTarget}
+            subjectsOutside
+            onTopicTap={handleTap}
+            onEntityTap={(id) => router.push(`/library/${id}` as Route)}
+            className="h-full w-full"
+          />
+        )}
       </div>
 
       {/* title */}
@@ -185,6 +198,24 @@ export default function NestDesktopView({
 
         {panelOpen && (
           <div className="flex flex-col gap-3.5">
+            <Group label="View">
+              <div className="flex rounded-lg border border-border bg-bg-input p-0.5">
+                {(['2d', '3d'] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setView(v)}
+                    className={cn(
+                      'flex-1 rounded-md px-2 py-1.5 text-xs font-medium uppercase transition-colors',
+                      view === v ? 'bg-teal text-bg' : 'text-text-muted hover:text-text',
+                    )}
+                  >
+                    {v === '2d' ? '2D' : '3D'}
+                  </button>
+                ))}
+              </div>
+            </Group>
+
             <Group label="Facet dimension">
               <div className="flex rounded-lg border border-border bg-bg-input p-0.5">
                 {FACET_MODES.map((m) => (
@@ -218,10 +249,12 @@ export default function NestDesktopView({
               <SwitchRow on={drift} onClick={() => setDrift((v) => !v)} label="Living drift" />
             </div>
 
-            <Group label="Physics">
-              <Slider label="Repel" value={repel} min={20} max={220} onCommit={setRepel} />
-              <Slider label="Link length" value={linkLen} min={14} max={80} onCommit={setLinkLen} />
-            </Group>
+            {view === '2d' && (
+              <Group label="Physics">
+                <Slider label="Repel" value={repel} min={20} max={220} onCommit={setRepel} />
+                <Slider label="Link length" value={linkLen} min={14} max={80} onCommit={setLinkLen} />
+              </Group>
+            )}
 
             <Group label="Subjects">
               <div className="grid grid-cols-2 gap-x-2 gap-y-1">
@@ -296,7 +329,9 @@ export default function NestDesktopView({
 
       {/* hint, parked above the tab bar */}
       <p className="pointer-events-none absolute bottom-20 left-1/2 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full bg-bg/50 px-3.5 py-1.5 text-center text-xs text-text-dim backdrop-blur">
-        drag to pan · pinch or scroll to zoom · tap a node · double-tap to focus
+        {view === '3d'
+          ? 'drag to spin · scroll or pinch to zoom · right-drag to pan · tap a node'
+          : 'drag to pan · pinch or scroll to zoom · tap a node · double-tap to focus'}
       </p>
 
       <BottomTabBar variant="overlay" />
