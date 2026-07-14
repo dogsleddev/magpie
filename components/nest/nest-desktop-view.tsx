@@ -146,6 +146,8 @@ export default function NestDesktopView({
             key={resetKey}
             graph={graph}
             drift={drift}
+            showLabels={labels}
+            externalHighlight={externalHighlight}
             onSelect={handleTap}
             onEntityTap={(id) => router.push(`/library/${id}` as Route)}
             className="h-full w-full"
@@ -185,6 +187,25 @@ export default function NestDesktopView({
         <X className="h-3.5 w-3.5" /> Exit desktop view
       </button>
 
+      {/* 2D/3D lives outside the panel: on phones the panel starts collapsed, and
+          the view switch should never be something you have to go digging for. */}
+      <div className="absolute right-4 top-16 z-20 flex rounded-full border border-border bg-bg-card/85 p-0.5 shadow-lg backdrop-blur">
+        {(['2d', '3d'] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setView(v)}
+            aria-pressed={view === v}
+            className={cn(
+              'rounded-full px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors',
+              view === v ? 'bg-teal text-bg' : 'text-text-muted hover:text-text',
+            )}
+          >
+            {v === '2d' ? '2D' : '3D'}
+          </button>
+        ))}
+      </div>
+
       {/* docked control panel */}
       <div className="absolute left-4 top-16 z-10 max-h-[calc(100vh-10rem)] w-64 overflow-y-auto rounded-2xl border border-border bg-bg-card/85 p-3.5 text-[13px] shadow-2xl backdrop-blur">
         <button
@@ -198,24 +219,6 @@ export default function NestDesktopView({
 
         {panelOpen && (
           <div className="flex flex-col gap-3.5">
-            <Group label="View">
-              <div className="flex rounded-lg border border-border bg-bg-input p-0.5">
-                {(['2d', '3d'] as const).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setView(v)}
-                    className={cn(
-                      'flex-1 rounded-md px-2 py-1.5 text-xs font-medium uppercase transition-colors',
-                      view === v ? 'bg-teal text-bg' : 'text-text-muted hover:text-text',
-                    )}
-                  >
-                    {v === '2d' ? '2D' : '3D'}
-                  </button>
-                ))}
-              </div>
-            </Group>
-
             <Group label="Facet dimension">
               <div className="flex rounded-lg border border-border bg-bg-input p-0.5">
                 {FACET_MODES.map((m) => (
