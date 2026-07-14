@@ -231,6 +231,7 @@ export default function Nest3DCanvas({
       // teal-to-purple plumage palette out into pale pastel. `flat` turns it off
       // so nodes render at exactly the colour buildNestGraph specified.
       flat
+      gl={{ antialias: true }}
       // Match the 2D canvas's battery discipline: only render continuously while
       // drifting (auto-rotate). Otherwise render on demand, so an idle nest costs
       // no frames. drei's OrbitControls invalidates on interaction and while it
@@ -243,20 +244,21 @@ export default function Nest3DCanvas({
       onCreated={({ gl }) => void (gl.domElement.style.touchAction = 'none')}
     >
       <color attach="background" args={[BG]} />
-      <fog attach="fog" args={[BG, radius * 1.5, radius * 4.4]} />
+      {/* Fog is a depth cue for the far side only. It used to start at 1.5x radius
+          with the camera sitting at 2.6x, so it hazed the entire nest and cost the
+          crispness the 2D view gets for free. Now it only bites well behind centre. */}
+      <fog attach="fog" args={[BG, radius * 2.6, radius * 6]} />
       <ClipPlanes radius={radius} />
       <Repaint dep={`${hovered}|${selected}|${externalHighlight?.id ?? ''}|${showLabels}`} />
-      {/* Keep the lights low: the nodes are meant to be self-lit points of light,
-          not lit plastic. Just enough directional to hint at form. */}
-      <hemisphereLight args={['#fbfaf6', '#0a0a09', 0.22]} />
-      <directionalLight position={[radius, radius * 1.4, radius * 1.2]} intensity={0.3} />
+      {/* No lights on purpose: the nodes are unlit flat colour, exactly like the 2D
+          canvas's filled circles. Shading them was what made them read as soft balls. */}
 
       <lineSegments key={`${graph.nodes.length}:${graph.links.length}`}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[linePositions, 3]} />
           <bufferAttribute attach="attributes-color" args={[lineColors, 3]} />
         </bufferGeometry>
-        <lineBasicMaterial vertexColors transparent opacity={0.34} depthWrite={false} />
+        <lineBasicMaterial vertexColors transparent opacity={0.26} depthWrite={false} />
       </lineSegments>
 
       {graph.nodes.map((n) => {
@@ -377,17 +379,6 @@ const NodeMesh = memo(function NodeMesh({
     return dim ? c.multiplyScalar(0.26) : c;
   }, [src, dim]);
 
-  // Emissive-dominant so each node reads as a glowing point of the exact plumage
-  // hue, rather than a shaded ball. With tone mapping off, ~0.9 lands vivid but
-  // does not blow out to white.
-  const glow = dim
-    ? 0.06
-    : node.type === 'subject'
-      ? 1.0
-      : node.type === 'facet'
-        ? 0.7
-        : 0.9;
-
   // Every node hovers (to light its constellation, like 2D), but only the ones
   // that go somewhere get the pointer cursor.
   const handlers = {
@@ -403,17 +394,17 @@ const NodeMesh = memo(function NodeMesh({
     },
   };
 
+  // Unlit flat colour, which is exactly what the 2D canvas draws (a filled circle
+  // of the node's hue). Shading the spheres gave every node a soft gradient and a
+  // muddy edge; flat colour gives back the 2D crispness while perspective,
+  // occlusion and the far fog still carry the depth.
+
   if (node.type === 'facet') {
     // a 3D diamond, echoing the 2D facet glyph
     return (
       <mesh position={position} {...handlers}>
         <octahedronGeometry args={[r, 0]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={glow}
-          roughness={0.6}
-        />
+        <meshBasicMaterial color={color} />
       </mesh>
     );
   }
@@ -422,27 +413,16 @@ const NodeMesh = memo(function NodeMesh({
     // a teal ring hub, echoing the 2D hollow entity node
     return (
       <mesh position={position} rotation={[Math.PI / 2.4, 0, 0]} {...handlers}>
-        <torusGeometry args={[r, r * 0.22, 10, 28]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={glow}
-          roughness={0.5}
-        />
+        <torusGeometry args={[r, r * 0.22, 12, 32]} />
+        <meshBasicMaterial color={color} />
       </mesh>
     );
   }
 
   return (
     <mesh position={position} {...handlers}>
-      <sphereGeometry args={[r, 16, 16]} />
-      <meshStandardMaterial
-        color={color}
-        emissive={color}
-        emissiveIntensity={glow}
-        roughness={0.45}
-        metalness={0.05}
-      />
+      <sphereGeometry args={[r, 24, 24]} />
+      <meshBasicMaterial color={color} />
     </mesh>
   );
 });
