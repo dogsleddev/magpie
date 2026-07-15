@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
+import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import type { NestGraph, NestLink, NestNode } from '@/lib/nest/types';
 import { computeLayout3d, radiusOf, type Vec3 } from '@/lib/nest/layout-3d';
@@ -308,6 +309,20 @@ export default function Nest3DCanvas({
         );
       })}
 
+      {/* Shine. Bloom bleeds a soft halo off the bright nodes so they read as
+          points of light, not flat discs. The threshold sits above the dimmed
+          nodes and the faint links, so only the live (bright) nodes glow, which
+          reinforces the highlight. multisampling keeps node edges crisp. */}
+      <EffectComposer multisampling={4}>
+        <Bloom
+          intensity={0.85}
+          luminanceThreshold={0.28}
+          luminanceSmoothing={0.9}
+          radius={0.72}
+          mipmapBlur
+        />
+      </EffectComposer>
+
       <OrbitControls
         makeDefault
         enablePan
@@ -376,7 +391,11 @@ const NodeMesh = memo(function NodeMesh({
     node.type === 'facet' ? FACET_COLOR : node.type === 'entity' ? ENTITY_COLOR : node.color;
   const color = useMemo(() => {
     const c = toColor(src);
-    return dim ? c.multiplyScalar(0.26) : c;
+    // Bright nodes are pushed slightly past 1.0 (HDR) so the bloom pass has real
+    // energy to bleed into a halo; the dominant hue channel stays dominant, so the
+    // core keeps its colour. Dim nodes darken below the bloom threshold and stay
+    // matte, so only live nodes glow.
+    return c.multiplyScalar(dim ? 0.26 : 1.35);
   }, [src, dim]);
 
   // Every node hovers (to light its constellation, like 2D), but only the ones
