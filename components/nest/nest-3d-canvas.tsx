@@ -41,6 +41,23 @@ function toColor(str: string): THREE.Color {
   return new THREE.Color(str);
 }
 
+const _hsl = { h: 0, s: 0, l: 0 };
+/**
+ * Make a node colour read as a vivid, distinct hue under bloom. The plumage ramp
+ * sits at 60-66% lightness (already pastel), and pushing that into HDR clipped the
+ * cores toward white, so bloom bled white haze and the whole nest looked grey. Here
+ * we crank saturation and hold lightness at ~0.5 so the core keeps its hue, then a
+ * gentle HDR push gives bloom coloured energy. Dim nodes go dark + desaturated so
+ * they drop below the bloom threshold and recede.
+ */
+function vivid(src: string, dim: boolean): THREE.Color {
+  const c = toColor(src);
+  c.getHSL(_hsl);
+  if (dim) return c.setHSL(_hsl.h, _hsl.s * 0.45, _hsl.l * 0.2);
+  const s = Math.min(1, _hsl.s * 1.7 + 0.14);
+  return c.setHSL(_hsl.h, s, 0.5).multiplyScalar(1.18);
+}
+
 const endpointId = (e: NestLink['source']): string => (typeof e === 'object' ? e.id : e);
 
 function labelColor(type: NestNode['type']): string {
@@ -315,10 +332,10 @@ export default function Nest3DCanvas({
           reinforces the highlight. multisampling keeps node edges crisp. */}
       <EffectComposer multisampling={4}>
         <Bloom
-          intensity={0.85}
-          luminanceThreshold={0.28}
-          luminanceSmoothing={0.9}
-          radius={0.72}
+          intensity={0.6}
+          luminanceThreshold={0.32}
+          luminanceSmoothing={0.85}
+          radius={0.62}
           mipmapBlur
         />
       </EffectComposer>
@@ -389,14 +406,7 @@ const NodeMesh = memo(function NodeMesh({
   // depth-testing, so spheres would show through each other.
   const src =
     node.type === 'facet' ? FACET_COLOR : node.type === 'entity' ? ENTITY_COLOR : node.color;
-  const color = useMemo(() => {
-    const c = toColor(src);
-    // Bright nodes are pushed slightly past 1.0 (HDR) so the bloom pass has real
-    // energy to bleed into a halo; the dominant hue channel stays dominant, so the
-    // core keeps its colour. Dim nodes darken below the bloom threshold and stay
-    // matte, so only live nodes glow.
-    return c.multiplyScalar(dim ? 0.26 : 1.35);
-  }, [src, dim]);
+  const color = useMemo(() => vivid(src, dim), [src, dim]);
 
   // Every node hovers (to light its constellation, like 2D), but only the ones
   // that go somewhere get the pointer cursor.
