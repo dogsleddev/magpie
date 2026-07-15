@@ -15,7 +15,7 @@ const FACET_COLOR = '#C9C6BC'; // soft plumage white
 const ENTITY_COLOR = '#35C99A'; // bright teal: the connective entity layer
 
 /** Iridescent ramp across the teal -> blue -> purple plumage range, one hue per subject. */
-export function subjectColor(index: number, total: number, light = 60, sat = 62): string {
+export function subjectColor(index: number, total: number, light = 60, sat = 74): string {
   const hue = total <= 1 ? 200 : 150 + (282 - 150) * (index / (total - 1));
   return `hsl(${Math.round(hue)} ${sat}% ${light}%)`;
 }

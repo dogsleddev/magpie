@@ -162,7 +162,6 @@ export default function NestDesktopView({
             linkLen={linkLen}
             externalHighlight={externalHighlight}
             focusNodeId={focusTarget}
-            subjectsOutside
             onTopicTap={handleTap}
             onEntityTap={(id) => router.push(`/library/${id}` as Route)}
             className="h-full w-full"
